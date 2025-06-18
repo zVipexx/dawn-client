@@ -1,3 +1,5 @@
+## This is just a fork. The original client was made by irrvlo.
+
 # Dawn Client
 
 A light Electron client for Kirka.io. Join our [discord](https://discord.gg/VsMEQ3HWs2) for support and update notifications.
