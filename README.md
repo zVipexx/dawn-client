@@ -1,1 +1,1 @@
-Forked from Juice Client
+Dawn Client - Forked from Juice Client
