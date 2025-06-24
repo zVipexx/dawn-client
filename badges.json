@@ -1554,8 +1554,8 @@
     "gradient": {
       "rot": "to right",
       "stops": [
-        "#DCADBA",
-        "#986C80"
+        "#986C80",
+        "#DCADBA"
       ]
     },
     "badges": [
