@@ -8,7 +8,7 @@ A light Electron client for Kirka.io. Join our [discord](https://discord.gg/VsME
 
 - [Releases](https://github.com/zVipexx/dawn-client/releases)
 
-Only Windows releases are currently available. More platforms to come soon.
+Only Windows and macOS releases are currently available. Linux support is to come soon.
 # What features does this have?
 
 - Uncapped FPS
