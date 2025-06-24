@@ -1961,7 +1961,7 @@
   },
   {
     "shortId": "NGD7JK",
-    "booster": false,
+    "booster": true,
     "gradient": {
       "rot": "to right",
       "stops": [
