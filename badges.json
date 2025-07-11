@@ -1946,20 +1946,6 @@
     }
   },
   {
-  "shortId": "0YO8UE",
-    "gradient": {
-      "rot": "to right",
-      "stops": [
-        "#FFD700",
-        "#FFD700"
-      ],
-      "shadow": "0px 0px 15px #FFFFFF"
-    },
-    "badges": [
-      "https://i.imgur.com/GuLTa7C.png"
-    ]
-  },
-  {
     "shortId": "NGD7JK",
     "booster": true,
     "gradient": {
