@@ -1614,30 +1614,6 @@
     "booster": false
   },
   {
-    "discord": "536285172337868801",
-    "shortId": "RFXB4H",
-    "booster": false,
-    "gradient": {
-      "rot": "90deg",
-      "stops": [
-        "rgb(203, 255, 230) 0%",
-        "rgb(203, 255, 230) 20%",
-        "rgb(175, 233, 255) 20%",
-        "rgb(175, 233, 255) 40%",
-        "rgb(191, 185, 255) 40%",
-        "rgb(191, 185, 255) 60%",
-        "rgb(255, 207, 234) 60%",
-        "rgb(255, 207, 234) 80%",
-        "rgb(254, 255, 190) 80%",
-        "rgb(254, 255, 190) 100%"
-      ],
-      "shadow": "0px 0px 5px rgba(191, 185, 255, 0.5)"
-    },
-    "badges": [
-      "https://i.imgur.com/UKtxvks.png"
-    ]
-  },
-  {
     "discord": "1155941840806215821",
     "shortId": "KEWOIS",
     "booster": false
@@ -1966,6 +1942,22 @@
     "badges": [
       "https://i.imgur.com/RoZtAFm.png",
       "https://i.imgur.com/WcD2nes.png"
+    ]
+  },
+  {
+    "discord": "536285172337868801",
+    "shortId": "RFXB4H",
+    "booster": false,
+    "gradient": {
+      "rot": "180deg",
+      "stops": [
+        "#b83a04",
+        "#d38204"
+      ],
+      "shadow": "0px 0px 5px #4b2e0e"
+    },
+    "badges": [
+      "https://i.imgur.com/UKtxvks.png"
     ]
   }
 ]
