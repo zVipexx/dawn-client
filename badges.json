@@ -1945,7 +1945,6 @@
     ]
   },
   {
-    "discord": "536285172337868801",
     "shortId": "RFXB4H",
     "booster": false,
     "gradient": {
@@ -1957,7 +1956,8 @@
       "shadow": "0px 0px 5px #4b2e0e"
     },
     "badges": [
-      "https://i.imgur.com/UKtxvks.png"
+      "https://i.imgur.com/UKtxvks.png",
+      "https://i.imgur.com/4pVVJ98.png"
     ]
   }
 ]
