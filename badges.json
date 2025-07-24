@@ -1963,17 +1963,9 @@
   {
     "shortId": "FAASA8",
     "booster": true,
-    "gradient": {
-      "rot": "to right",
-      "stops": [
-        "#FFFFFF",
-        "#FFFFFF"
-      ],
-      "shadow": "0px 0px 0px rgb(0, 0, 0)"
-    },
     "badges": [
       "https://i.imgur.com/RoZtAFm.png",
-      "https://i.imgur.com/msrfz9N.png"
+      "https://i.imgur.com/WcD2nes.png"
     ]
   }
 ]
