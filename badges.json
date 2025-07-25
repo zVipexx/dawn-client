@@ -1945,19 +1945,21 @@
     ]
   },
   {
-    "shortId": "RFXB4H",
-    "booster": false,
-    "gradient": {
-      "rot": "180deg",
-      "stops": [
-        "#EEB900 45%",
-        "#FF2200 100%"
-      ],
-      "shadow": "0 0 4px #FF2200"
-    },
-    "badges": [
-      "https://i.imgur.com/UKtxvks.png",
-      "https://i.imgur.com/STZRfxK.png"
-    ]
+  "shortId": "RFXB4H",
+  "booster": false,
+  "gradient": {
+    "rot": "180deg",
+    "stops": [
+      "#EEB900 45%",
+      "#FF2200 100%"
+    ],
+    "shadow": "0 0 4px #FF2200, 1px 1px 2px #FF2200, -1px -1px 2px #FF2200, 1px -1px 2px #FF2200, -1px 1px 2px #FF2200"
+  },
+  "textFill": "transparent",
+  "stroke": "transparent",
+  "badges": [
+    "https://i.imgur.com/UKtxvks.png",
+    "https://i.imgur.com/STZRfxK.png"
+  ]
   }
 ]
