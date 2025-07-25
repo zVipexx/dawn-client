@@ -1953,10 +1953,8 @@
       "#EEB900 45%",
       "#FF2200 100%"
     ],
-    "shadow": "0 0 4px #FF2200"
+    "shadow": "0 0 4px #EEB900"
   },
-  "textFill": "transparent",
-  "stroke": "transparent",
   "badges": [
     "https://i.imgur.com/UKtxvks.png",
     "https://i.imgur.com/STZRfxK.png"
