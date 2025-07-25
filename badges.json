@@ -1951,9 +1951,8 @@
       "rot": "0deg",
       "stops": [
         "#b83a04 0%",
-        "#d38204 50%"
-      ],
-      "shadow": "0px 0px 5px #4b2e0e"
+        "#d38204 100%"
+      ]
     },
     "badges": [
       "https://i.imgur.com/UKtxvks.png",
