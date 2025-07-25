@@ -1950,9 +1950,10 @@
     "gradient": {
       "rot": "180deg",
       "stops": [
-        "#CB881D 40%",
-        "#FF1900 100%"
-      ]
+        "#EEB900 45%",
+        "#FF2200 100%"
+      ],
+      "shadow": "0 0 4px #FF2200"
     },
     "badges": [
       "https://i.imgur.com/UKtxvks.png",
