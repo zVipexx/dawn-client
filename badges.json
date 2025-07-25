@@ -1948,10 +1948,10 @@
     "shortId": "RFXB4H",
     "booster": false,
     "gradient": {
-      "rot": "0deg",
+      "rot": "180deg",
       "stops": [
-        "#b83a04 0%",
-        "#d38204 100%"
+        "#CB881D 40%",
+        "#FF1900 100%"
       ]
     },
     "badges": [
