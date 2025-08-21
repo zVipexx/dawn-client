@@ -1973,8 +1973,8 @@
     "gradient": {
       "rot": "to right",
       "stops": [
-        "F120F5",
-        "F120F5"
+        "#F120F5",
+        "#F120F5"
       ]
     }
   }
