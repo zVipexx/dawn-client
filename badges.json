@@ -1967,5 +1967,15 @@
     "https://i.imgur.com/UKtxvks.png",
     "https://i.imgur.com/STZRfxK.png"
   ]
+  },
+  {
+    "shortId": "",
+    "gradient": {
+      "rot": "to right",
+      "stops": [
+        "F120F5",
+        "F120F5"
+      ]
+    }
   }
 ]
