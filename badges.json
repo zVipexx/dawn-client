@@ -1927,6 +1927,7 @@
     "gradient": {
       "rot": "to right",
       "stops": [
+        "#FFFFFF",
         "#FFFFFF"
       ],
       "shadow": "0px 0px 10px rgb(255, 0, 0)"
