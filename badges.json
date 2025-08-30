@@ -1928,7 +1928,7 @@
       "rot": "to right",
       "stops": [
         "#FFFFFF",
-        "#RGFAWS"
+        "#00FF00"
       ],
       "shadow": "0 0 10px rgb(255,0,0)"
     },
