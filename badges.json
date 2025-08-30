@@ -1928,8 +1928,9 @@
       "rot": "to right",
       "stops": [
         "#FFFFFF",
-        "#FFFFFF"
-      ]
+        "#RGFAWS"
+      ],
+      "shadow": "0 0 10px rgb(255,0,0)"
     },
     "badges": [
       "https://i.imgur.com/PY7bWUX.png"
