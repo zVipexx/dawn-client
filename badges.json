@@ -1927,13 +1927,13 @@
     "gradient": {
       "rot": "to right",
       "stops": [
-        "#8B0000",
-        "#4B0082"
+        "#FFFFFF"
       ],
-      "shadow": "0px 0px 10px rgb(155, 27, 48)"
+      "shadow": "0px 0px 10px rgb(255, 0, 0)"
     },
     "badges": [
-      "https://i.imgur.com/PY7bWUX.png"
+      "https://i.imgur.com/PY7bWUX.png",
+      "https://cdn.discordapp.com/attachments/1398036935095615500/1411049337177510038/372001730_SUBSCRIBE_BUTTON_400px.gif?ex=68b3e65a&is=68b294da&hm=70c40e0bc44e4753a0222b3f436914df4680b2a1580db7a105b5ee8ff35fd708&"
     ]
   },
   {
