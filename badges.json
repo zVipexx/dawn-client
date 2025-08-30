@@ -1923,7 +1923,7 @@
   },
   {
     "shortId": "1110KH",
-    "booster": false,
+    "booster": true,
     "gradient": {
       "rot": "to right",
       "stops": [
