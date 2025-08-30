@@ -1923,11 +1923,14 @@
   },
   {
     "shortId": "1110KH",
-    "booster": false,
+    "booster": true,
     "gradient": {
       "rot": "to right",
-      "stops": ["#FDFDFD", "#FFFFFF"],
-      "shadow": "2px 2px 10px rgb(255,0,0)"
+      "stops": [
+        "#8B0000",
+        "#4B0082"
+      ],
+      "shadow": "0px 0px 10px rgb(155, 27, 48)"
     },
     "badges": [
       "https://i.imgur.com/PY7bWUX.png"
@@ -1935,18 +1938,16 @@
   },
   {
     "shortId": "FAASA8",
-    "booster": true,
     "gradient": {
       "rot": "to right",
       "stops": [
         "#FFFFFF",
         "#FFFFFF"
       ],
-      "shadow": "0px 0px 10px #FFFFFF"
+      "shadow": "0px 0px 10px rgb(255,0,0)"
     },
     "badges": [
-      "https://i.imgur.com/RoZtAFm.png",
-      "https://i.imgur.com/WcD2nes.png"
+      "https://i.imgur.com/RoZtAFm.png"
     ]
   },
   {
