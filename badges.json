@@ -1973,9 +1973,10 @@
     "gradient": {
       "rot": "to right",
       "stops": [
-        "#F120F5",
-        "#F120F5"
-      ]
+        "#FFFFFF",
+        "#FFFFFF"
+      ],
+      "shadow": "0px 0px 5px rgb(255,0,0)"
     }
   }
 ]
