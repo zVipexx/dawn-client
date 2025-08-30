@@ -1926,12 +1926,9 @@
     "booster": false,
     "gradient": {
       "rot": "to right",
-      "stops": [
-        "#FFFFFF",
-        "#FFFFFF"
-      ]
+      "stops": ["#FDFDFD", "#FFFFFF"],
+      "shadow": "2px 2px 10px rgb(255,0,0)"
     },
-    "shadow": "0 0 10px rgb(255,0,0)",
     "badges": [
       "https://i.imgur.com/PY7bWUX.png"
     ]
