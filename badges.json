@@ -1931,7 +1931,7 @@
         "#FFFFFF"
       ]
     }
-    "shadow": "0px 0px 5px rgb(255,0,0)",
+    "shadow": "0px 0px 10px rgb(255,0,0)",
     "badges": [
       "https://i.imgur.com/PY7bWUX.png"
     ]
