@@ -1965,5 +1965,16 @@
       "https://i.imgur.com/UKtxvks.png",
       "https://i.imgur.com/STZRfxK.png"
     ]
+  },
+  {
+    "shortId": "CAGCUU",
+    "gradient": {
+      "rot": "to right",
+      "stops": [
+        "#FFFFFF",
+        "#FFFFFF"
+      ],
+      "shadow": "0px 0px 10px #FFFFFF"
+    }
   }
 ]
