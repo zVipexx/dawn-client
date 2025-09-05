@@ -1971,10 +1971,10 @@
     "gradient": {
       "rot": "to right",
       "stops": [
-        "#FFFFFF",
-        "#FFFFFF"
+        "#63FFF7",
+        "#63FFF7"
       ],
-      "shadow": "0px 0px 10px #FFFFFF"
+      "shadow": "0px 0px 10px #63FFF7"
     }
   }
 ]
