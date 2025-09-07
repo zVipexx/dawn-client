@@ -38,6 +38,8 @@ Only Windows and macOS releases are currently available. Linux support is to com
 - Proxy Link Support
 - Menu Keybind Reminder
 - No Pulp (aka smooth)
+- Skin Changer for client-side skins
+- Sound Swapper for custom sounds
 
 ## Hotkeys
 | Hotkey | Description |
@@ -55,7 +57,7 @@ Only Windows and macOS releases are currently available. Linux support is to com
 
 # Is it safe?
 
-Dawn Client is 100% completely safe to use. Releases are built directly with the source code using Github Workflows (Thanks Error!). If you face any issues, join our [discord](https://discord.gg/VsMEQ3HWs2) to report bugs.
+Dawn Client is 100% completely safe to use. If you face any issues, join our [discord](https://discord.gg/VsMEQ3HWs2) to report bugs.
 
 ## Credits
 
