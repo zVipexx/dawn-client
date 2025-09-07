@@ -1,0 +1,12 @@
+[
+  {
+    "clan": "dawn",
+    "gradient": {
+      "rot": "0deg",
+      "stops": [
+        "#00FF00",
+        "#F8C829"
+      ]
+    }
+  }
+]
