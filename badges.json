@@ -1976,5 +1976,11 @@
       ],
       "shadow": "0px 0px 10px #63FFF7"
     }
+  },
+  {
+    "shortId": "NEWBIE",
+    "badges": [
+      "https://i.imgur.com/LaQfETE.png"
+    ]
   }
 ]
