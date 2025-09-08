@@ -2,11 +2,13 @@
   {
     "clan": "dawn",
     "gradient": {
-      "rot": "0deg",
+      "rot": "to right",
       "stops": [
-        "#00FF00",
-        "#F8C829"
+        "#25DFC4",
+        "#E4E518",
+        "#25DFC4"
       ]
-    }
+    },
+    "animated": true,
   }
 ]
