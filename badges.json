@@ -1953,6 +1953,20 @@
     ]
   },
   {
+    "shortId": "D84BWU",
+    "gradient": {
+      "rot": "to right",
+      "stops": [
+        "rgb(255,0,0)",
+        "rgb(255,0,0)"
+      ],
+      "shadow": "0px 0px 15px rgb(255,0,0)"
+    },
+    "badges": [
+      "https://i.imgur.com/RoZtAFm.png"
+    ]
+  },
+  {
     "shortId": "RFXB4H",
     "booster": false,
     "gradient": {
