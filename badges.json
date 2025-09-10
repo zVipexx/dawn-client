@@ -1947,7 +1947,7 @@
         "#FFFFFF",
         "rgb(255,0,0)"
       ],
-      "shadow": "0px 0px 15px rgb(255,0,0)"
+      "shadow": "0px 0px 5px rgb(255,0,0)"
     },
     "animated": true,
     "badges": [
