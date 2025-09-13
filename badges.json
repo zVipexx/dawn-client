@@ -1995,5 +1995,19 @@
       ],
       "shadow": "0px 0px 10px #63FFF7"
     }
+  },
+  {
+    "shortId": "68CF77",
+    "gradient": {
+      "rot": "to bottom",
+      "stops": [
+        "#FBABFF",
+        "#A8FCFF"
+      ],
+      "shadow": "0px 0px 10px rgba(251, 171, 255, 0.5)"
+    },
+    "badges": [
+      "https://i.imgur.com/kV6vyev.png"
+    ]
   }
 ]
