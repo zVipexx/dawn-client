@@ -2001,8 +2001,8 @@
     "gradient": {
       "rot": "to bottom",
       "stops": [
-        "#FBABFF",
-        "#A8FCFF"
+        "#FBABFF 0%",
+        "#A8FCFF 50%"
       ],
       "shadow": "0px 0px 10px rgba(251, 171, 255, 0.5)"
     },
