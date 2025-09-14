@@ -17,7 +17,7 @@
   {
     "discord": "1132415037512896612",
     "shortId": "AZ0KBI",
-    "booster": true
+    "booster": false
   },
   {
     "discord": "257709390537162752",
@@ -85,7 +85,7 @@
   {
     "discord": "309177951331680257",
     "shortId": "5JZU6N",
-    "booster": true
+    "booster": false
   },
   {
     "discord": "1140978866630959197",
@@ -199,7 +199,7 @@
   {
     "discord": "244864542922899456",
     "shortId": "5JGL9Z",
-    "booster": true,
+    "booster": false,
     "gradient": {
       "rot": "to bottom",
       "stops": [
@@ -391,7 +391,7 @@
   {
     "discord": "871895500490678273",
     "shortId": "H8N3U4",
-    "booster": true,
+    "booster": false,
     "gradient": {
       "rot": "to top",
       "stops": [
@@ -518,7 +518,7 @@
   {
     "discord": "1258843157261586483",
     "shortId": "8SO88E",
-    "booster": true
+    "booster": false
   },
   {
     "discord": "994748187753590945",
@@ -795,7 +795,7 @@
   {
     "discord": "936422097805271110",
     "shortId": "VKM3XJ",
-    "booster": true,
+    "booster": false,
     "gradient": {
       "rot": "to right",
       "stops": [
@@ -1346,7 +1346,7 @@
   {
     "discord": "660077546163142678",
     "shortId": "N09I1B",
-    "booster": true
+    "booster": false
   },
   {
     "discord": "1263092653906726943",
@@ -1401,7 +1401,7 @@
   {
     "discord": "793675787110449212",
     "shortId": "TXX7O5",
-    "booster": true
+    "booster": false
   },
   {
     "discord": "611460568301174805",
@@ -1551,7 +1551,7 @@
   {
     "discord": "878338589702897694",
     "shortId": "8HK8O2",
-    "booster": true,
+    "booster": false,
     "gradient": {
       "rot": "to right",
       "stops": [
@@ -1682,7 +1682,7 @@
   {
     "discord": "740736061180870798",
     "shortId": "N47WEJ",
-    "booster": true
+    "booster": false
   },
   {
     "discord": "1298623218516758533",
@@ -1692,7 +1692,7 @@
   {
     "discord": "382567651215409153",
     "shortId": "6ZXZYV",
-    "booster": true
+    "booster": false
   },
   {
     "discord": "1365085793030504468",
@@ -1824,7 +1824,7 @@
   {
     "discord": "735111217856905216",
     "shortId": "RO3YX6",
-    "booster": true
+    "booster": false
   },
   {
     "discord": "753083762107219988",
