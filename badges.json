@@ -433,6 +433,20 @@
     ]
   },
   {
+    "shortId": "8HK8O2",
+    "gradient": {
+      "rot": "to right",
+      "stops": [
+        "#986C80",
+        "#DCADBA"
+      ]
+    },
+    "badges": [
+      "https://cdn.discordapp.com/emojis/1372761921278709823.webp?size=96&animated=true",
+      "https://cdn.discordapp.com/emojis/1124321945505243186.webp?size=96&animated=true"
+    ]
+  },
+  {
     "shortId": "1HGYFQ",
     "gradient": {
       "rot": "to right",
