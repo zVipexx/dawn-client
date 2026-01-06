@@ -1,0 +1,2322 @@
+[
+  {
+    "weapon": "VITA",
+    "skinname": "Lunar",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Mirror",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Ukiyo",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Cassiope",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Quilliam",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Arcade",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Rosed",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Playmate",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Fragile",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Blast VITA",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Cyber VITA",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Dragonic VITA",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Spooky",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Void VITA",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Cosmos",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Sleepy",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "2025 VITA",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Slayer",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Meteor",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Smile",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Astra",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Anarchy",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Bros",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Fallen",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Fudge",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Hotrod VITA",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Rosy",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Vintage",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Gold",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Love",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Legend",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Nyan Cat",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Labyrinth",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Sweater",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Noble",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Sunset",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Rogue",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Globe",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Machinery",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Chromatic",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Liberty",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Empress",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Polychrome",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Cyborg",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Gilded",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Thief",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "CheckUV",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Landoh",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Vivid",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Trolled",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "2022",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Black Metal",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Darling",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Blue Hell",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Heatwave",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Metallic Rainbow",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Terminator",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Sam",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Santa",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Gift",
+    "rarity": "epic"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Samurai",
+    "rarity": "epic"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Paques",
+    "rarity": "epic"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Blood Crystal",
+    "rarity": "epic"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Candy Illusion",
+    "rarity": "epic"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Cult",
+    "rarity": "epic"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Fur",
+    "rarity": "epic"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Ghost",
+    "rarity": "epic"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Hardened",
+    "rarity": "epic"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Hubbard",
+    "rarity": "epic"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Nebula",
+    "rarity": "epic"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Peachy",
+    "rarity": "epic"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Blueberry",
+    "rarity": "rare"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Leopard",
+    "rarity": "rare"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Magma",
+    "rarity": "rare"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Mohito",
+    "rarity": "rare"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Pink Camouflage",
+    "rarity": "rare"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Polygun",
+    "rarity": "rare"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Reptile",
+    "rarity": "rare"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Scale",
+    "rarity": "rare"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Spotted",
+    "rarity": "rare"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Circuit",
+    "rarity": "common"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Cover",
+    "rarity": "common"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Hunter",
+    "rarity": "common"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "RedMoon",
+    "rarity": "common"
+  },
+  {
+    "weapon": "VITA",
+    "skinname": "Watery",
+    "rarity": "common"
+  },
+  {
+    "weapon": "AR-9",
+    "skinname": "Metro",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "AR-9",
+    "skinname": "Astral",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "AR-9",
+    "skinname": "Infernal",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "AR-9",
+    "skinname": "Cyber AR-9",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "AR-9",
+    "skinname": "Blast AR-9",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "AR-9",
+    "skinname": "Dragonic AR-9",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "AR-9",
+    "skinname": "Void AR-9",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "AR-9",
+    "skinname": "Hotrod AR-9",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "AR-9",
+    "skinname": "Underwater",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "AR-9",
+    "skinname": "Master",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "AR-9",
+    "skinname": "Crazy",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "AR-9",
+    "skinname": "Mommy",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "AR-9",
+    "skinname": "Cloudy",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "AR-9",
+    "skinname": "Godzilla",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "AR-9",
+    "skinname": "Cyberpunk",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "AR-9",
+    "skinname": "Eva",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "AR-9",
+    "skinname": "Lightning",
+    "rarity": "epic"
+  },
+  {
+    "weapon": "AR-9",
+    "skinname": "Carbon Fade",
+    "rarity": "epic"
+  },
+  {
+    "weapon": "AR-9",
+    "skinname": "Hannah",
+    "rarity": "epic"
+  },
+  {
+    "weapon": "AR-9",
+    "skinname": "LEO",
+    "rarity": "epic"
+  },
+  {
+    "weapon": "AR-9",
+    "skinname": "Moira",
+    "rarity": "epic"
+  },
+  {
+    "weapon": "AR-9",
+    "skinname": "Obsidian",
+    "rarity": "epic"
+  },
+  {
+    "weapon": "AR-9",
+    "skinname": "Spectacular",
+    "rarity": "epic"
+  },
+  {
+    "weapon": "AR-9",
+    "skinname": "Admiral",
+    "rarity": "rare"
+  },
+  {
+    "weapon": "AR-9",
+    "skinname": "Contrast",
+    "rarity": "rare"
+  },
+  {
+    "weapon": "AR-9",
+    "skinname": "Cyan",
+    "rarity": "rare"
+  },
+  {
+    "weapon": "AR-9",
+    "skinname": "Greg",
+    "rarity": "rare"
+  },
+  {
+    "weapon": "AR-9",
+    "skinname": "Fabric",
+    "rarity": "common"
+  },
+  {
+    "weapon": "AR-9",
+    "skinname": "Brown",
+    "rarity": "common"
+  },
+  {
+    "weapon": "AR-9",
+    "skinname": "Pegas",
+    "rarity": "common"
+  },
+  {
+    "weapon": "AR-9",
+    "skinname": "Sky",
+    "rarity": "common"
+  },
+  {
+    "weapon": "AR-9",
+    "skinname": "Spilled",
+    "rarity": "common"
+  },
+  {
+    "weapon": "AR-9",
+    "skinname": "Zelda",
+    "rarity": "common"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Blackhole",
+    "rarity": "paranormal"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Antique",
+    "rarity": "paranormal"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "New",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Saurus",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Flaming",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Constellations",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Splash",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Electra",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Loved",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Faded",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Spring",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Archverse",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Infarction",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Sunday",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Reflections",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Glitter",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Lucky",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Tyrant",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Bloo",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Honey",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Placate",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Drake",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Firecracker",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Bone",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Jade",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "2024",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Cyber Bayonet",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Pencil",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Caring",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Dragonic Bayonet",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Blast Bayonet",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Retro",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Void Bayonet",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "2025 Bayonet",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Alpha",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Hypnotic",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Engravement",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Love Bites",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Charmed",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Streaks",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Heather",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Eclipse",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Icing",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Cornfield",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Undead",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Ornaments",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Twilight",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Or",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Ritual",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Turtle",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Alighted",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Cryptex",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Eggs",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Hot Rod",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Hotrod Bayonet",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Koi",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Nerida",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Forge",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Butterflies",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Old",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Zen",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Easter",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Bled",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Rebel",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Kin",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Wrapping",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Beach",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Tradition",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Vapor",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Glance",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Shard",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Eruption",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Vampire",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Champion",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Radioactive",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "22",
+    "rarity": "epic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Psychedelic",
+    "rarity": "epic"
+  },
+  {
+    "weapon": "Bayonet",
+    "skinname": "Cane",
+    "rarity": "epic"
+  },
+  {
+    "weapon": "LAR",
+    "skinname": "Cyber LAR",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "LAR",
+    "skinname": "Blast LAR",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "LAR",
+    "skinname": "Dragonic LAR",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "LAR",
+    "skinname": "Void LAR",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "LAR",
+    "skinname": "Chroma",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "LAR",
+    "skinname": "Hotrod LAR",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "LAR",
+    "skinname": "Korunami",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "LAR",
+    "skinname": "Ramses",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "LAR",
+    "skinname": "Howl",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "LAR",
+    "skinname": "MemeStar",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "LAR",
+    "skinname": "Black Metal 2.0",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "LAR",
+    "skinname": "Orbit",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "LAR",
+    "skinname": "Proton Beam",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "LAR",
+    "skinname": "Rar",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "LAR",
+    "skinname": "Normal Map",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "LAR",
+    "skinname": "Lux",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "LAR",
+    "skinname": "Cyber",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "LAR",
+    "skinname": "Galaxy",
+    "rarity": "epic"
+  },
+  {
+    "weapon": "LAR",
+    "skinname": "Lava",
+    "rarity": "epic"
+  },
+  {
+    "weapon": "LAR",
+    "skinname": "Plum",
+    "rarity": "epic"
+  },
+  {
+    "weapon": "LAR",
+    "skinname": "Rasta",
+    "rarity": "epic"
+  },
+  {
+    "weapon": "LAR",
+    "skinname": "Simplicity",
+    "rarity": "epic"
+  },
+  {
+    "weapon": "LAR",
+    "skinname": "Kyoto",
+    "rarity": "rare"
+  },
+  {
+    "weapon": "LAR",
+    "skinname": "Chess",
+    "rarity": "rare"
+  },
+  {
+    "weapon": "LAR",
+    "skinname": "Fun",
+    "rarity": "rare"
+  },
+  {
+    "weapon": "LAR",
+    "skinname": "Redline",
+    "rarity": "rare"
+  },
+  {
+    "weapon": "LAR",
+    "skinname": "Saliman",
+    "rarity": "rare"
+  },
+  {
+    "weapon": "LAR",
+    "skinname": "Summer",
+    "rarity": "rare"
+  },
+  {
+    "weapon": "LAR",
+    "skinname": "Supermind",
+    "rarity": "rare"
+  },
+  {
+    "weapon": "LAR",
+    "skinname": "Bush",
+    "rarity": "common"
+  },
+  {
+    "weapon": "LAR",
+    "skinname": "Pecan",
+    "rarity": "common"
+  },
+  {
+    "weapon": "LAR",
+    "skinname": "Rusty",
+    "rarity": "common"
+  },
+  {
+    "weapon": "LAR",
+    "skinname": "Steely",
+    "rarity": "common"
+  },
+  {
+    "weapon": "M60",
+    "skinname": "Born",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "M60",
+    "skinname": "Cyber M60",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "M60",
+    "skinname": "Blast M60",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "M60",
+    "skinname": "Dragonic M60",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "M60",
+    "skinname": "Void M60",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "M60",
+    "skinname": "Hotrod M60",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "M60",
+    "skinname": "Rampage",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "M60",
+    "skinname": "PCB",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "M60",
+    "skinname": "Republica",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "M60",
+    "skinname": "Tank",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "M60",
+    "skinname": "Hell let loose",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "M60",
+    "skinname": "Diablo",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "M60",
+    "skinname": "Bee",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "M60",
+    "skinname": "Crash",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "M60",
+    "skinname": "Checker",
+    "rarity": "epic"
+  },
+  {
+    "weapon": "M60",
+    "skinname": "Hadley",
+    "rarity": "epic"
+  },
+  {
+    "weapon": "M60",
+    "skinname": "Pink Demon",
+    "rarity": "epic"
+  },
+  {
+    "weapon": "M60",
+    "skinname": "Zebra",
+    "rarity": "epic"
+  },
+  {
+    "weapon": "M60",
+    "skinname": "Gem",
+    "rarity": "rare"
+  },
+  {
+    "weapon": "M60",
+    "skinname": "Hexagon",
+    "rarity": "rare"
+  },
+  {
+    "weapon": "M60",
+    "skinname": "Hope",
+    "rarity": "rare"
+  },
+  {
+    "weapon": "M60",
+    "skinname": "Larry",
+    "rarity": "rare"
+  },
+  {
+    "weapon": "M60",
+    "skinname": "Ruth",
+    "rarity": "rare"
+  },
+  {
+    "weapon": "M60",
+    "skinname": "Attention",
+    "rarity": "common"
+  },
+  {
+    "weapon": "M60",
+    "skinname": "George",
+    "rarity": "common"
+  },
+  {
+    "weapon": "M60",
+    "skinname": "Mili",
+    "rarity": "common"
+  },
+  {
+    "weapon": "M60",
+    "skinname": "Turquoise",
+    "rarity": "common"
+  },
+  {
+    "weapon": "MAC-10",
+    "skinname": "Catalyst",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "MAC-10",
+    "skinname": "Cyber MAC-10",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "MAC-10",
+    "skinname": "Rub1x",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "MAC-10",
+    "skinname": "Blast MAC-10",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "MAC-10",
+    "skinname": "Dragonic MAC-10",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "MAC-10",
+    "skinname": "Schaedel",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "MAC-10",
+    "skinname": "Void MAC-10",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "MAC-10",
+    "skinname": "Spectrum",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "MAC-10",
+    "skinname": "Mindframe",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "MAC-10",
+    "skinname": "Clover",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "MAC-10",
+    "skinname": "Hotrod MAC-10",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "MAC-10",
+    "skinname": "Tag",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "MAC-10",
+    "skinname": "Retrowave",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "MAC-10",
+    "skinname": "Andromeda",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "MAC-10",
+    "skinname": "Red Reaper",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "MAC-10",
+    "skinname": "Savage",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "MAC-10",
+    "skinname": "Pool Blaster",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "MAC-10",
+    "skinname": "Fire",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "MAC-10",
+    "skinname": "Toy",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "MAC-10",
+    "skinname": "Milo",
+    "rarity": "epic"
+  },
+  {
+    "weapon": "MAC-10",
+    "skinname": "Molten Core",
+    "rarity": "epic"
+  },
+  {
+    "weapon": "MAC-10",
+    "skinname": "Strips",
+    "rarity": "epic"
+  },
+  {
+    "weapon": "MAC-10",
+    "skinname": "Crystal",
+    "rarity": "rare"
+  },
+  {
+    "weapon": "MAC-10",
+    "skinname": "Donut",
+    "rarity": "rare"
+  },
+  {
+    "weapon": "MAC-10",
+    "skinname": "Lemon",
+    "rarity": "rare"
+  },
+  {
+    "weapon": "MAC-10",
+    "skinname": "Malachite",
+    "rarity": "rare"
+  },
+  {
+    "weapon": "MAC-10",
+    "skinname": "Maxwell",
+    "rarity": "rare"
+  },
+  {
+    "weapon": "MAC-10",
+    "skinname": "Sleep",
+    "rarity": "rare"
+  },
+  {
+    "weapon": "MAC-10",
+    "skinname": "Beet",
+    "rarity": "common"
+  },
+  {
+    "weapon": "MAC-10",
+    "skinname": "Bloody",
+    "rarity": "common"
+  },
+  {
+    "weapon": "MAC-10",
+    "skinname": "Dandelion",
+    "rarity": "common"
+  },
+  {
+    "weapon": "MAC-10",
+    "skinname": "Land",
+    "rarity": "common"
+  },
+  {
+    "weapon": "MAC-10",
+    "skinname": "Marbled",
+    "rarity": "common"
+  },
+  {
+    "weapon": "MAC-10",
+    "skinname": "Striped",
+    "rarity": "common"
+  },
+  {
+    "weapon": "MAC-10",
+    "skinname": "Tingey",
+    "rarity": "common"
+  },
+  {
+    "weapon": "Revolver",
+    "skinname": "Soak",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Revolver",
+    "skinname": "Wave Dot",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Revolver",
+    "skinname": "Black Flame",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Revolver",
+    "skinname": "Cyber Revolver",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Revolver",
+    "skinname": "Blast Revolver",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Revolver",
+    "skinname": "Hologram",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Revolver",
+    "skinname": "Lis",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Revolver",
+    "skinname": "Void Revolver",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Revolver",
+    "skinname": "Dragonic Revolver",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Revolver",
+    "skinname": "Ivoire",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Revolver",
+    "skinname": "Pulse",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Revolver",
+    "skinname": "Crystalized",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Revolver",
+    "skinname": "Ganache",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Revolver",
+    "skinname": "Hotrod Revolver",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Revolver",
+    "skinname": "Tagged",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Revolver",
+    "skinname": "Festive",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "Revolver",
+    "skinname": "Alien Hazard",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "Revolver",
+    "skinname": "Watermelon",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "Revolver",
+    "skinname": "Volcaic",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "Revolver",
+    "skinname": "Blackout",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "Revolver",
+    "skinname": "Fade",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "Revolver",
+    "skinname": "Whiteout",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "Revolver",
+    "skinname": "Murdered",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "Revolver",
+    "skinname": "Height",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "Revolver",
+    "skinname": "Swirl",
+    "rarity": "epic"
+  },
+  {
+    "weapon": "Revolver",
+    "skinname": "Complexity",
+    "rarity": "epic"
+  },
+  {
+    "weapon": "Revolver",
+    "skinname": "Flow",
+    "rarity": "epic"
+  },
+  {
+    "weapon": "Revolver",
+    "skinname": "Infra",
+    "rarity": "epic"
+  },
+  {
+    "weapon": "Revolver",
+    "skinname": "Magic Splat",
+    "rarity": "epic"
+  },
+  {
+    "weapon": "Revolver",
+    "skinname": "Magnum",
+    "rarity": "epic"
+  },
+  {
+    "weapon": "Revolver",
+    "skinname": "Artic Illusion",
+    "rarity": "rare"
+  },
+  {
+    "weapon": "Revolver",
+    "skinname": "Atomic",
+    "rarity": "rare"
+  },
+  {
+    "weapon": "Revolver",
+    "skinname": "Case Hardened",
+    "rarity": "rare"
+  },
+  {
+    "weapon": "Revolver",
+    "skinname": "Karo",
+    "rarity": "rare"
+  },
+  {
+    "weapon": "Revolver",
+    "skinname": "Monkey",
+    "rarity": "rare"
+  },
+  {
+    "weapon": "Revolver",
+    "skinname": "Mystic",
+    "rarity": "rare"
+  },
+  {
+    "weapon": "Revolver",
+    "skinname": "Viking",
+    "rarity": "rare"
+  },
+  {
+    "weapon": "Revolver",
+    "skinname": "Zzzz",
+    "rarity": "rare"
+  },
+  {
+    "weapon": "Revolver",
+    "skinname": "Ace",
+    "rarity": "common"
+  },
+  {
+    "weapon": "Revolver",
+    "skinname": "Crimson",
+    "rarity": "common"
+  },
+  {
+    "weapon": "Revolver",
+    "skinname": "Critical",
+    "rarity": "common"
+  },
+  {
+    "weapon": "Revolver",
+    "skinname": "Crosses",
+    "rarity": "common"
+  },
+  {
+    "weapon": "Revolver",
+    "skinname": "Danger",
+    "rarity": "common"
+  },
+  {
+    "weapon": "Revolver",
+    "skinname": "Hex",
+    "rarity": "common"
+  },
+  {
+    "weapon": "Revolver",
+    "skinname": "Navy",
+    "rarity": "common"
+  },
+  {
+    "weapon": "Revolver",
+    "skinname": "Royalty",
+    "rarity": "common"
+  },
+  {
+    "weapon": "Revolver",
+    "skinname": "Smoked",
+    "rarity": "common"
+  },
+  {
+    "weapon": "Revolver",
+    "skinname": "Starlinked",
+    "rarity": "common"
+  },
+  {
+    "weapon": "SCAR",
+    "skinname": "Apollo",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "SCAR",
+    "skinname": "Cyber SCAR",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "SCAR",
+    "skinname": "Imperial",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "SCAR",
+    "skinname": "Blast SCAR",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "SCAR",
+    "skinname": "Dragonic SCAR",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "SCAR",
+    "skinname": "Void SCAR",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "SCAR",
+    "skinname": "Nova",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "SCAR",
+    "skinname": "Hotrod SCAR",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "SCAR",
+    "skinname": "Ultraviolet",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "SCAR",
+    "skinname": "Tide",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "SCAR",
+    "skinname": "Scarlet",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "SCAR",
+    "skinname": "Vocaloid",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "SCAR",
+    "skinname": "Demon",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "SCAR",
+    "skinname": "Waves",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "SCAR",
+    "skinname": "Cargo",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "SCAR",
+    "skinname": "Awesome",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "SCAR",
+    "skinname": "Psycho",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "SCAR",
+    "skinname": "Scarey",
+    "rarity": "epic"
+  },
+  {
+    "weapon": "SCAR",
+    "skinname": "Rainbow",
+    "rarity": "epic"
+  },
+  {
+    "weapon": "SCAR",
+    "skinname": "Heart",
+    "rarity": "epic"
+  },
+  {
+    "weapon": "SCAR",
+    "skinname": "Latern",
+    "rarity": "epic"
+  },
+  {
+    "weapon": "SCAR",
+    "skinname": "Sakura",
+    "rarity": "epic"
+  },
+  {
+    "weapon": "SCAR",
+    "skinname": "Universe",
+    "rarity": "epic"
+  },
+  {
+    "weapon": "SCAR",
+    "skinname": "Pineapple",
+    "rarity": "rare"
+  },
+  {
+    "weapon": "SCAR",
+    "skinname": "Forest",
+    "rarity": "rare"
+  },
+  {
+    "weapon": "SCAR",
+    "skinname": "Metallic",
+    "rarity": "rare"
+  },
+  {
+    "weapon": "SCAR",
+    "skinname": "Shiny",
+    "rarity": "rare"
+  },
+  {
+    "weapon": "SCAR",
+    "skinname": "Volcano",
+    "rarity": "rare"
+  },
+  {
+    "weapon": "SCAR",
+    "skinname": "Friendly",
+    "rarity": "common"
+  },
+  {
+    "weapon": "SCAR",
+    "skinname": "Military",
+    "rarity": "common"
+  },
+  {
+    "weapon": "SCAR",
+    "skinname": "Pale",
+    "rarity": "common"
+  },
+  {
+    "weapon": "SCAR",
+    "skinname": "Camouflage",
+    "rarity": "common"
+  },
+  {
+    "weapon": "SCAR",
+    "skinname": "Picea",
+    "rarity": "common"
+  },
+  {
+    "weapon": "SCAR",
+    "skinname": "Spicy",
+    "rarity": "common"
+  },
+  {
+    "weapon": "SCAR",
+    "skinname": "Stripes",
+    "rarity": "common"
+  },
+  {
+    "weapon": "Shark",
+    "skinname": "Rad",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Shark",
+    "skinname": "Regal",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Shark",
+    "skinname": "Hearted",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Shark",
+    "skinname": "Playdate",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Shark",
+    "skinname": "Orchid",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Shark",
+    "skinname": "Ambrosia",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Shark",
+    "skinname": "Egg Hunt",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Shark",
+    "skinname": "Heartbeat",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Shark",
+    "skinname": "Flower",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Shark",
+    "skinname": "Billion",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Shark",
+    "skinname": "Splush",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Shark",
+    "skinname": "Aries",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Shark",
+    "skinname": "Hellbent",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Shark",
+    "skinname": "Back To School",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Shark",
+    "skinname": "Cyber Shark",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Shark",
+    "skinname": "Blast Shark",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Shark",
+    "skinname": "Nyan Shark",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Shark",
+    "skinname": "Dragonic Shark",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Shark",
+    "skinname": "Monarch",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Shark",
+    "skinname": "1337",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Shark",
+    "skinname": "Void Shark",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Shark",
+    "skinname": "Fortunate",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Shark",
+    "skinname": "2025 Shark",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Shark",
+    "skinname": "Decorations",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Shark",
+    "skinname": "Stitches",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Shark",
+    "skinname": "Majestic",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Shark",
+    "skinname": "Diane",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Shark",
+    "skinname": "Hotrod Shark",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Shark",
+    "skinname": "Rabbit",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Shark",
+    "skinname": "Spooder",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Shark",
+    "skinname": "Starstruck",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Shark",
+    "skinname": "Kiss",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "Shark",
+    "skinname": "Bushido",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "Shark",
+    "skinname": "Sunflower",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "Shark",
+    "skinname": "Dissident",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "Shark",
+    "skinname": "Candy",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "Shark",
+    "skinname": "Ostern",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "Shark",
+    "skinname": "P-40",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "Shark",
+    "skinname": "Yule",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "Shark",
+    "skinname": "Cheesy",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "Shark",
+    "skinname": "Bay",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "Shark",
+    "skinname": "Ice Cold",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "Shark",
+    "skinname": "Megalodon",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "Shark",
+    "skinname": "Mossy",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "Shark",
+    "skinname": "Taurus",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "Shark",
+    "skinname": "Celebrate",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "Shark",
+    "skinname": "Solar",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "Shark",
+    "skinname": "Petal",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "Shark",
+    "skinname": "Azure",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "Shark",
+    "skinname": "Kraken",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "Shark",
+    "skinname": "New Year",
+    "rarity": "epic"
+  },
+  {
+    "weapon": "Shark",
+    "skinname": "Waveform",
+    "rarity": "epic"
+  },
+  {
+    "weapon": "Shark",
+    "skinname": "Widow",
+    "rarity": "epic"
+  },
+  {
+    "weapon": "Shark",
+    "skinname": "Shark",
+    "rarity": "common"
+  },
+  {
+    "weapon": "Tomahawk",
+    "skinname": "Cherry",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Tomahawk",
+    "skinname": "Capricorn",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Tomahawk",
+    "skinname": "Damascus",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Tomahawk",
+    "skinname": "Cyber Tomahawk",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Tomahawk",
+    "skinname": "Dragonic Tomahawk",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Tomahawk",
+    "skinname": "Void Tomahawk",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Tomahawk",
+    "skinname": "Blast Tomahawk",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Tomahawk",
+    "skinname": "Alucard",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Tomahawk",
+    "skinname": "Hotrod Tomahawk",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Weatie",
+    "skinname": "Cyber Weatie",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Weatie",
+    "skinname": "Blast Weatie",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Weatie",
+    "skinname": "Dragonic Weatie",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Weatie",
+    "skinname": "Void Weatie",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Weatie",
+    "skinname": "Hotrod Weatie",
+    "rarity": "mythic"
+  },
+  {
+    "weapon": "Weatie",
+    "skinname": "Alien",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "Weatie",
+    "skinname": "Teflon",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "Weatie",
+    "skinname": "Aztek",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "Weatie",
+    "skinname": "Jap",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "Weatie",
+    "skinname": "Wacky",
+    "rarity": "legendary"
+  },
+  {
+    "weapon": "Weatie",
+    "skinname": "Toxic",
+    "rarity": "epic"
+  },
+  {
+    "weapon": "Weatie",
+    "skinname": "Curry",
+    "rarity": "epic"
+  },
+  {
+    "weapon": "Weatie",
+    "skinname": "Fading Waves",
+    "rarity": "epic"
+  },
+  {
+    "weapon": "Weatie",
+    "skinname": "Glacial",
+    "rarity": "epic"
+  },
+  {
+    "weapon": "Weatie",
+    "skinname": "Neon",
+    "rarity": "epic"
+  },
+  {
+    "weapon": "Weatie",
+    "skinname": "Winter",
+    "rarity": "epic"
+  },
+  {
+    "weapon": "Weatie",
+    "skinname": "Bubblegum",
+    "rarity": "rare"
+  },
+  {
+    "weapon": "Weatie",
+    "skinname": "Grass",
+    "rarity": "rare"
+  },
+  {
+    "weapon": "Weatie",
+    "skinname": "Isolation",
+    "rarity": "rare"
+  },
+  {
+    "weapon": "Weatie",
+    "skinname": "Nuclear Waste",
+    "rarity": "rare"
+  },
+  {
+    "weapon": "Weatie",
+    "skinname": "Try",
+    "rarity": "rare"
+  },
+  {
+    "weapon": "Weatie",
+    "skinname": "Evening",
+    "rarity": "common"
+  },
+  {
+    "weapon": "Weatie",
+    "skinname": "Iron",
+    "rarity": "common"
+  },
+  {
+    "weapon": "Weatie",
+    "skinname": "Noir",
+    "rarity": "common"
+  },
+  {
+    "weapon": "Weatie",
+    "skinname": "Swamp",
+    "rarity": "common"
+  },
+  {
+    "weapon": "Weatie",
+    "skinname": "Violet",
+    "rarity": "common"
+  },
+  {
+    "weapon": "Weatie",
+    "skinname": "Yellow Camo",
+    "rarity": "common"
+  }
+]
