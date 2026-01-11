@@ -582,5 +582,18 @@
     "badges": [
       "https://i.imgur.com/fNFsLhr.png"
     ]
+  },
+  {
+    "shortId": "UVPDN2",
+    "gradient": {
+      "rot": "0deg",
+      "stops": [
+        "#FCFCFC 30%",
+        "#FF0000 50%"
+      ]
+    },
+    "badges": [
+      "https://i.imgur.com/INqNJbi.png"
+    ]
   }
 ]
