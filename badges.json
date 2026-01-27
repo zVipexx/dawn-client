@@ -463,15 +463,16 @@
   {
     "shortId": "SAVAGE",
     "gradient": {
-      "rot": "to bottom",
+      "rot": "315deg",
       "stops": [
-        "#D24235",
-        "#FFFFA0"
-      ],
-      "shadow": "0px 0px 10px rgba(210, 66, 53, 0.6)"
+        "#622697 28%",
+        "#bae347 28%",
+        "#bae347 72%",
+        "#622697 72%"
+      ]
     },
     "badges": [
-      "https://i.imgur.com/Hk3Ql4j.png"
+      "https://i.imgur.com/MvHTo12.png"
     ]
   },
   {
