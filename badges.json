@@ -106,7 +106,7 @@
         "#da3231",
         "#da3231"
       ],
-      "shadow": "0px 0px 0.5rem rgb(218, 50, 49, 0.5)"
+      "shadow": "0px 0px 0.5rem rgba(218, 50, 49, 0.5)"
     },
     "badges": [
       "https://i.imgur.com/a2ar9f2.png"
