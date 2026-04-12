@@ -1,0 +1,42 @@
+[
+  {
+    "category": "general",
+    "img": "https://example.com/images/news1.png",
+    "imgType": "thumbnail",
+    "title": "Welcome to the New Season!",
+    "content": "The new season has started with exciting updates and challenges.",
+    "link": "https://example.com/news/new-season",
+    "updatedAt": 1696000000000,
+    "live": false
+  },
+  {
+    "category": "promotional",
+    "img": "https://example.com/images/promo_banner.png",
+    "imgType": "banner",
+    "title": "Special Offer: 50% Off!",
+    "content": "Get 50% off on all in-game items for a limited time.",
+    "link": "https://example.com/promo/50-off",
+    "updatedAt": 1696100000000,
+    "live": false
+  },
+  {
+    "category": "event",
+    "img": "https://example.com/images/event.png",
+    "imgType": "thumbnail",
+    "title": "Upcoming Tournament",
+    "content": "Join the upcoming tournament and win amazing prizes.",
+    "link": "https://example.com/events/tournament",
+    "updatedAt": 1696200000000,
+    "live": true
+  },
+  {
+    "category": "alert",
+    "img": "",
+    "imgType": "thumbnail",
+    "title": "Server Maintenance",
+    "content": "Scheduled server maintenance on July 30th from 2 AM to 6 AM UTC.",
+    "link": "",
+    "updatedAt": 1696300000000,
+    "live": false
+  }
+]

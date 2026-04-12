@@ -1,0 +1,34 @@
+{
+  "name": "dawn-client",
+  "version": "1.0.8",
+  "description": "Electron client for Kirka.io",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder"
+  },
+  "keywords": [],
+  "author": "zVipexx",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^10.4.7",
+    "electron-builder": "^26.0.12"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zVipexx/dawn-client.git"
+  },
+  "dependencies": {
+    "discord-rpc": "^4.0.1",
+    "electron-localshortcut": "^3.2.1",
+    "electron-store": "^8.2.0",
+    "electron-updater": "^6.2.1",
+    "ffmpeg-static": "^5.2.0",
+    "fluent-ffmpeg": "^2.1.3",
+    "fs-extra": "^11.3.1",
+    "lamejs": "^1.2.1"
+  },
+  "optionalDependencies": {
+    "dmg-license": "^1.0.11"
+  }
+}

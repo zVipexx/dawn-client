@@ -1,0 +1,714 @@
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+
+<div class="menu" data-theme="dark" data-active="true">
+  <div class="menu-titlebar">Dawn Client</div>
+  <aside class="sidebar">
+    <div class="search-input">
+      <i class="fas fa-search"></i>
+      <input type="text" class="juice search" placeholder="Search..." />
+    </div>
+    <div class="sep"></div>
+    <div class="tab-group">
+      <div data-tab="ui" class="juice tab active">
+        <i class="fas fa-tv"></i>
+        UI
+      </div>
+      <div data-tab="game" class="juice tab">
+        <i class="fas fa-gamepad"></i>
+        Game
+      </div>
+      <div data-tab="gallery" class="juice tab">
+        <i class="fas fa-image"></i>
+        Gallery
+      </div>
+    </div>
+    <div class="sep"></div>
+    <div class="tab-group">
+      <div data-tab="performance" class="juice tab">
+        <i class="fas fa-tachometer-alt"></i>
+        Performance
+      </div>
+      <div data-tab="client" class="juice tab">
+        <i class="fas fa-cog"></i>
+        Client
+      </div>
+      <div data-tab="scripts" class="juice tab">
+        <i class="fas fa-file-code"></i>
+        Scripts
+      </div>
+      <div data-tab="about" class="juice tab">
+        <i class="fas fa-circle-info"></i>
+        About
+      </div>
+    </div>
+    <div class="footer">
+      <span class="keybind"></span>
+      <span class="sep"></span>
+      <div class="bottom">
+        <span class="ver"></span>
+        <span class="user"></span>
+      </div>
+    </div>
+  </aside>
+  <div class="content">
+    <div id="ui-options" class="juice options active">
+      <div class="option-group">
+        <div class="option">
+          <span>Enable CSS</span>
+          <div class="checkbox">
+            <input type="checkbox" id="css_enabled" data-setting="css_enabled" />
+            <label for="css_enabled"></label>
+          </div>
+        </div>
+        <div class="option">
+          <span>CSS Link</span>
+          <input type="text" placeholder="https://.../.css" data-setting="css_link" />
+        </div>
+        <div class="option dropdown">
+          <div class="top">
+            <i class="fas fa-angle-down"></i>
+            <span>Quick CSS</span>
+          </div>
+          <div class="content">
+            <textarea placeholder="input css here" data-setting="advanced_css"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="option-group">
+        <div class="option">
+          <span>Hide Chat</span>
+          <div class="checkbox">
+            <input type="checkbox" id="hide_chat" data-setting="hide_chat" />
+            <label for="hide_chat"></label>
+          </div>
+        </div>
+        <div class="option">
+          <span>Hide Kill Icon Text</span>
+          <div class="checkbox">
+            <input type="checkbox" id="hide_kill_text" data-setting="hide_kill_text" />
+            <label for="hide_kill_text"></label>
+          </div>
+        </div>
+        <div class="option">
+          <span>Hide Interface</span>
+          <div class="checkbox">
+            <input type="checkbox" id="hide_interface" data-setting="hide_interface" />
+            <label for="hide_interface"></label>
+          </div>
+        </div>
+      </div>
+      <div class="option-group">
+        <div class="option">
+          <span>Chat Height</span>
+          <input type="range" min="0" max="20" step="0.25" class="range" data-setting="chat_height">
+        </div>
+      </div>
+      <div class="option-group">
+        <div class="option">
+          <span>UI Animations</span>
+          <div class="checkbox">
+            <input type="checkbox" id="ui_animations" data-setting="ui_animations" />
+            <label for="ui_animations"></label>
+          </div>
+        </div>
+      </div>
+      <div class="option-group">
+        <div class="option">
+          <span>Interface Opacity</span>
+          <input type="range" min="0" max="100" class="range" data-setting="interface_opacity" />
+        </div>
+        <div class="option">
+          <span>Interface Bounds</span>
+          <input type="range" min="0" max="2" class="range" data-setting="interface_bounds" />
+        </div>
+      </div>
+      <div class="option-group">
+        <div class="option">
+          <div class="left">
+            <span>Lobby Keybind Reminder</span>
+            <div class="description">Display the lobby keybind reminder</div>
+          </div>
+          <div class="checkbox">
+            <input type="checkbox" id="lobby_keybind_reminder" data-setting="lobby_keybind_reminder" />
+            <label for="lobby_keybind_reminder"></label>
+          </div>
+        </div>
+      </div>
+      <div class="option-group">
+        <div class="option">
+          <div class="left">
+            <span>Badges and Gradient Names</span>
+            <div class="description">Display user customizations</div>
+          </div>
+          <div class="checkbox">
+            <input type="checkbox" id="customizations" data-setting="customizations" />
+            <label for="customizations"></label>
+          </div>
+        </div>
+        <div class="option">
+          <div class="left">
+            <span>Clan Gradients</span>
+            <div class="description">Display clan customizations</div>
+          </div>
+          <div class="checkbox">
+            <input type="checkbox" id="clancustomizations" data-setting="clancustomizations" />
+            <label for="clancustomizations"></label>
+          </div>
+        </div>
+        <div class="option">
+          <div class="left">
+            <span>Gradient Animations</span>
+            <div class="description">This WILL impact your fps while visible</div>
+          </div>
+          <div class="checkbox">
+            <input type="checkbox" id="animations" data-setting="animations" />
+            <label for="animations"></label>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="game-options" class="juice options">
+      <div class="option-group">
+        <div class="option">
+          <span>Permanent Crosshair</span>
+          <div class="checkbox">
+            <input type="checkbox" id="perm_crosshair" data-setting="perm_crosshair" />
+            <label for="perm_crosshair"></label>
+          </div>
+        </div>
+        <div class="option">
+          <span>Permanent Tablist</span>
+          <div class="checkbox">
+            <input type="checkbox" id="perm_tablist" data-setting="perm_tablist" />
+            <label for="perm_tablist"></label>
+          </div>
+        </div>
+        <div class="option">
+          <span>Hitmarker Link</span>
+          <input type="text" placeholder="https://.../.png" data-setting="hitmarker_link" />
+        </div>
+        <div class="option">
+          <span>Kill Icon Link</span>
+          <input type="text" placeholder="https://.../.png" data-setting="killicon_link" />
+        </div>
+      </div>
+      <div class="option-group">
+        <div class="option">
+          <span>Rave Mode</span>
+          <div class="checkbox">
+            <input type="checkbox" id="rave_mode" data-setting="rave_mode" />
+            <label for="rave_mode"></label>
+          </div>
+        </div>
+        <div class="option">
+          <div class="left">
+            <span>Colored Kill Feed</span>
+            <span class="description">Color kills by team</span>
+          </div>
+          <div class="checkbox">
+            <input type="checkbox" id="colored_killfeed" data-setting="colored_killfeed" />
+            <label for="colored_killfeed"></label>
+          </div>
+        </div>
+      </div>
+      <div class="option-group">
+        <div class="option">
+          <div class="left">
+            <span>Spectate Button</span>
+            <div class="description">Show spectate button in friends list</div>
+          </div>
+          <div class="checkbox">
+            <input type="checkbox" id="spectate_button" data-setting="spectate_button" />
+            <label for="spectate_button"></label>
+          </div>
+        </div>
+      </div>
+      <div class="option-group">
+        <div class="option">
+          <div class="left requires-refresh">
+            <span>Show Trade Buttons</span>
+            <span class="description">Show Offer, Bump and Cancel buttons above global chat</span>
+          </div>
+          <div class="checkbox">
+            <input type="checkbox" id="show_trade_buttons" data-setting="show_trade_buttons" />
+            <label for="show_trade_buttons"></label>
+          </div>
+        </div>
+        <div class="option">
+          <div class="left">
+            <span>Accept Trades on Click</span>
+            <div class="description">You still have to press enter to confirm</div>
+          </div>
+          <div class="checkbox">
+            <input type="checkbox" id="accept_on_click" data-setting="accept_on_click" />
+            <label for="accept_on_click"></label>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="gallery-options" class="juice options">
+      <div class="juice-button" id="open-gallery-folder">
+        <span>Open Gallery Folder</span>
+      </div>
+    </div>
+    <div id="performance-options" class="juice options">
+      <div class="option-group">
+        <div class="option requires-restart">
+          <span>Unlimited FPS</span>
+          <div class="checkbox">
+            <input type="checkbox" id="unlimited_fps" data-setting="unlimited_fps" />
+            <label for="unlimited_fps"></label>
+          </div>
+        </div>
+        <div class="option requires-restart">
+          <span>In Process GPU</span>
+          <div class="checkbox">
+            <input type="checkbox" id="in_process_gpu" data-setting="in_process_gpu" />
+            <label for="in_process_gpu"></label>
+          </div>
+        </div>
+      </div>
+      <div class="option-group">
+        <div class="option requires-restart">
+          <span>Auto Fullscreen</span>
+          <div class="checkbox">
+            <input type="checkbox" id="auto_fullscreen" data-setting="auto_fullscreen" />
+            <label for="auto_fullscreen"></label>
+          </div>
+        </div>
+        <div class="option">
+          <span>Skip Loading Screen</span>
+          <div class="checkbox">
+            <input type="checkbox" id="skip_loading" data-setting="skip_loading" />
+            <label for="skip_loading"></label>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="client-options" class="juice options">
+      <div class="option-group">
+        <div class="option requires-restart">
+          <div class="left">
+            <span>Discord Activity</span>
+            <span class="description">
+              Display Dawn Client as your Discord activity
+            </span>
+          </div>
+          <div class="checkbox">
+            <input type="checkbox" id="discord_rpc" data-setting="discord_rpc" />
+            <label for="discord_rpc"></label>
+          </div>
+        </div>
+        <div class="option custom">
+          <div class="left">
+            <span>Menu Toggle Keybind</span>
+            <span class="description">
+              Customizable keybind to toggle the menu
+            </span>
+          </div>
+          <button class="juice change-keybind"></button>
+        </div>
+      </div>
+      <div class="option-group">
+        <div class="option local-customizations">
+          <div class="left">
+            <span>Local Customizations</span>
+            <span class="description">
+              Make your own gradient and badges that only you can see
+            </span>
+          </div>
+          <div class="checkbox">
+            <input type="checkbox" id="local_customizations" data-setting="local_customizations" />
+            <label for="local_customizations"></label>
+          </div>
+        </div>
+        <div class="option dropdown custom_gradient">
+          <div class="top requires-refresh">
+            <i class="fas fa-angle-down"></i>
+            <span>Gradient</span>
+          </div>
+          <div class="content">
+            <div class="option animated">
+              <div class="left">
+                <span>Animated Gradient</span>
+                <div class="description">For a smooth animation put your starting color at the end as well</div>
+                <div class="description">This WILL impact your fps while visible</div>
+              </div>
+              <div class="checkbox">
+                <input type="checkbox" id="local_animated_gradient" data-setting="local_animated_gradient" />
+                <label for="local_animated_gradient"></label>
+              </div>
+            </div>
+            <div class="option shadow">
+              <div class="left">
+                <span>Gradient Text Shadow</span>
+              </div>
+              <div class="right"
+                style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
+                <input type="text" class="shadow-value" placeholder="0" style="width: 21.5%" maxlength="2" />
+                <div class="slider">
+                  <input type="range" id="local_gradient_shadow" data-setting="local_gradient_shadow" min="0"
+                    max="100" />
+                  <label for="local_gradient_shadow"></label>
+                </div>
+              </div>
+            </div>
+            <div class="option shadow-color" style="justify-content: flex-end">
+              <div class="color-input" style="display: flex; width: 38.4%; margin-top: 0.5rem; margin-bottom: 1.5rem;">
+                <input type="text" class="hex" placeholder="#FFFFFF" maxlength="7" />
+                <input type="color" class="color-picker" value="#FFFFFF" />
+              </div>
+            </div>
+            <div class="option rotation">
+              <div class="left">
+                <span>Gradient Rotation</span>
+              </div>
+              <div class="right"
+                style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
+                <input type="text" class="rotation-value" placeholder="90" style="width: 21.5%" maxlength="3" />
+                <div class="slider">
+                  <input type="range" id="local_gradient_rotation" data-setting="local_gradient_rotation" min="0"
+                    max="360" />
+                  <label for="local_gradient_rotation"></label>
+                </div>
+              </div>
+            </div>
+            <div class="colors">
+              <div class="juice-button add-color-btn" id="add-btn">
+                <i class="fas fa-plus"></i>
+                <span>Add Color</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="option dropdown custom_badges">
+          <div class="top requires-refresh">
+            <i class="fas fa-angle-down"></i>
+            <span>Badges</span>
+          </div>
+          <div class="content">
+            <div class="badges">
+              <div class="juice-button add-badge-btn" id="add-btn">
+                <i class="fas fa-plus"></i>
+                <span>Add Badge</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="option-group">
+        <div class="option">
+          <div class="left requires-refresh">
+            <span>General News</span>
+            <span class="description">Dawn-related news</span>
+          </div>
+          <div class="checkbox">
+            <input type="checkbox" id="general_news" data-setting="general_news" />
+            <label for="general_news"></label>
+          </div>
+        </div>
+        <div class="option">
+          <div class="left requires-refresh">
+            <span>Promotional News</span>
+            <span class="description">Live events (has a "LIVE" indicator)</span>
+          </div>
+          <div class="checkbox">
+            <input type="checkbox" id="promotional_news" data-setting="promotional_news" />
+            <label for="promotional_news"></label>
+          </div>
+        </div>
+        <div class="option">
+          <div class="left requires-refresh">
+            <span>Event News</span>
+            <span class="description">Events that you can participate in</span>
+          </div>
+          <div class="checkbox">
+            <input type="checkbox" id="event_news" data-setting="event_news" />
+            <label for="event_news"></label>
+          </div>
+        </div>
+        <div class="option">
+          <div class="left requires-refresh">
+            <span>Alerts</span>
+            <span class="description">Important alerts mainly posted by Kirka Staff</span>
+          </div>
+          <div class="checkbox">
+            <input type="checkbox" id="alert_news" data-setting="alert_news" />
+            <label for="alert_news"></label>
+          </div>
+        </div>
+      </div>
+      <div class="option-group">
+        <div class="option">
+          <span>Menu Theme</span>
+          <select id="menu_theme" data-setting="menu_theme">
+            <option value="dark">Dark</option>
+            <option value="light">Light</option>
+            <option value="dawn">Dawn</option>
+            <option value="glass">Glass</option>
+          </select>
+        </div>
+      </div>
+      <div class="option-group">
+        <div class="option requires-refresh">
+          <span>Proxy URL</span>
+          <select id="base_url" data-setting="base_url">
+            <option value="https://kirka.io/">kirka.io</option>
+            <option value="https://snipers.io/">snipers.io</option>
+            <option value="https://ask101math.com/">ask101math.com</option>
+            <option value="https://fpsiogame.com/">fpsiogame.com</option>
+            <option value="https://cloudconverts.com/">cloudconverts.com</option>
+          </select>
+        </div>
+      </div>
+      <div class="option-group">
+        <div class="option">
+          <button id="open-swapper-folder" class="juice-button">
+            <span class="text">Open Swapper Folder</span>
+            <div class="custom-border"></div>
+          </button>
+          <button id="open-scripts-folder" class="juice-button">
+            <span class="text">Open Scripts Folder</span>
+            <div class="custom-border"></div>
+          </button>
+        </div>
+        <div class="option">
+          <button id="import-settings" class="juice-button">
+            <span class="text">Import Settings</span>
+            <div class="custom-border"></div>
+          </button>
+          <button id="export-settings" class="juice-button">
+            <span class="text">Export Settings</span>
+            <div class="custom-border"></div>
+          </button>
+        </div>
+        <div class="option">
+          <button id="reset-juice-settings" class="juice-button large">
+            <span class="text">Reset Dawn Client Settings</span>
+            <span class="description"> This action cannot be undone</span>
+            <div class="custom-border"></div>
+          </button>
+        </div>
+        <div class="option">
+          <button id="remote-to-static-links" class="juice-button large requires-refresh">
+            <span class="test">Replace Remote Links with Static Links</span>
+            <span class="description">
+              This will speed up your customizations. This action cannot be
+              undone
+            </span>
+            <div class="custom-border"></div>
+          </button>
+        </div>
+      </div>
+    </div>
+    <div id="scripts-options" class="juice options">
+      <div class="option-group">
+        <div class="option">
+          <div class="left">
+            <span>Pack/Chest Opener</span>
+            <span class="description">Refresh to stop</span>
+          </div>
+          <select id="opener">
+          </select>
+        </div>
+      </div>
+      <div class="option-group">
+        <div class="option">
+          <div class="left requires-refresh">
+            <span>Custom List Price</span>
+            <span class="description">
+              Allows you to set a custom price for items in the market
+            </span>
+          </div>
+          <div class="checkbox">
+            <input type="checkbox" id="custom_list_price" data-setting="custom_list_price" />
+            <label for="custom_list_price"></label>
+          </div>
+        </div>
+        <div class="option">
+          <div class="left requires-refresh">
+            <span>Market Names</span>
+            <span class="description">Displays seller Username and ID in the market</span>
+          </div>
+          <div class="checkbox">
+            <input type="checkbox" id="market_names" data-setting="market_names" />
+            <label for="market_names"></label>
+          </div>
+        </div>
+      </div>
+      <div class="option-group">
+        <div>
+          <div class="option">
+            <div class="left requires-restart" id="title-option">
+              <span>Skin Changer</span>
+              <div class="description">Only works for client-side</div>
+            </div>
+          </div>
+          <div class="option">
+            <span>Select Gun</span>
+            <select id="skin-select">
+              <option value="revolver">Revolver</option>
+              <option value="bayonet">Bayonet</option>
+              <option value="tomahawk">Tomahawk</option>
+              <option value="scar">SCAR</option>
+              <option value="shark">Shark</option>
+              <option value="weatie">Weatie</option>
+              <option value="vita">VITA</option>
+              <option value="ar9">AR-9</option>
+              <option value="lar">LAR</option>
+              <option value="m60">M60</option>
+              <option value="mac10">MAC-10</option>
+            </select>
+          </div>
+          <div class="option">
+            <div class="left">
+              <span>Upload image</span>
+              <span class="description">Accepts .webp, .png, .jpg and .jpeg</span>
+              <input type="file" id="skin-file" accept=".webp, .png, .jpg, .jpeg" style="display: none;" />
+            </div>
+            <div class="juice-button" id="upload-skin" onclick="document.getElementById('skin-file').click()">
+              <span>Select file</span>
+              <div class="description">Or drag and drop</div>
+            </div>
+          </div>
+          <div class="option" id="load-from-url">
+            <div class="left">
+              <span>Load from URL</span>
+            </div>
+            <input type="text" id="file-url" placeholder="https://..." />
+          </div>
+          <div class="option">
+            <img id="preview" style="max-width: 150px; max-height: 150px;" />
+          </div>
+          <div class="option">
+            <button id="save-skin" class="juice-button">Save Skin</button>
+            <button id="open-skins-folder" class="juice-button">Open Skins Folder</button>
+          </div>
+        </div>
+      </div>
+      <div class="option-group">
+        <div class="option">
+          <div class="left requires-restart">
+            <span>Sound Swapper</span>
+            <span class="description">Allows you to swap sounds</span>
+          </div>
+        </div>
+        <div class="option">
+          <span>Select Sound</span>
+          <select id="sound-select">
+            <option value="dash">Dash</option>
+            <option value="reload">Reload</option>
+            <option value="hit">Hit</option>
+            <option value="kill1">Kill 1</option>
+            <option value="kill2">Kill 2</option>
+            <option value="kill3">Kill 3</option>
+            <option value="kill4">Kill 4</option>
+            <option value="kill5">Kill 5</option>
+            <option value="wound1">Wound 1</option>
+            <option value="wound2">Wound 2</option>
+            <option value="userevolver">Use Revolver</option>
+            <option value="usebayonet">Use Bayonet/Tomahawk</option>
+            <option value="usescar">Use SCAR</option>
+            <option value="useshark">Use Shark</option>
+            <option value="useweatie">Use Weatie</option>
+            <option value="usevita">Use VITA</option>
+            <option value="usear9">Use AR-9</option>
+            <option value="uselar">Use LAR</option>
+            <option value="usem60">Use M60</option>
+            <option value="usemac10">Use MAC-10</option>
+            <option value="stepdirt">Step on Dirt</option>
+            <option value="stepgrass">Step on Grass</option>
+            <option value="stepmud">Step on Mud</option>
+            <option value="stepsand">Step on Sand</option>
+            <option value="stepstone">Step on Stone</option>
+          </select>
+        </div>
+        <div class="option">
+          <span>Upload .mp3</span>
+          <input type="file" id="sound-file" accept=".mp3" style="display: none;" />
+          <div class="juice-button" id="upload-sound" onclick="document.getElementById('sound-file').click()">
+            <span>Select file</span>
+            <div class="description">Or drag and drop</div>
+          </div>
+        </div>
+        <div class="option">
+          <div id="sound-preview-container" style="display:none; margin-top:10px; align-items:center; gap:10px;">
+            <div id="sound-play-btn" class="circle-btn play"></div>
+            <div class="volume-control">
+              <div id="sound-volume-icon" class="circle-btn">🔊</div>
+              <input type="range" id="sound-volume" min="0" max="1" step="0.01" value="1">
+            </div>
+            <span id="sound-filename" style="margin-left:10px; font-weight:bold;"></span>
+          </div>
+        </div>
+        <div class="option">
+          <button id="save-sound" class="juice-button">Save Sound</button>
+          <button id="open-sounds-folder" class="juice-button">Open Sounds Folder</button>
+        </div>
+      </div>
+    </div>
+    <div id="about-client" class="juice options">
+      <div class="option-group">
+        <div class="about-top header">
+          <img src="https://i.imgur.com/1ETqqkj.png" />
+          <div class="about-info">
+            <span class="title">Dawn Client</span>
+            <div class="about-more">
+              <div>
+                <span class="ver"></span>
+                <span class="author">forked by Vipex</span>
+              </div>
+              <div class="about-buttons">
+                <a href="https://kirka.io/profile/1110KH" class="about-kirka">
+                  <img src="https://kirka.io/favicon.ico" />
+                  <div class="custom-border"></div>
+                </a>
+                <a href="https://discord.gg/VsMEQ3HWs2" target="_blank" class="about-discord">
+                  <i class="fab fa-discord"></i>
+                  <div class="custom-border"></div>
+                </a>
+                <a href="https://github.com/zVipexx/dawn-client" target="_blank" class="about-github">
+                  <i class="fab fa-github"></i>
+                  <div class="custom-border"></div>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="option-group">
+        <div class="credits">
+          <span class="title">A special thanks to these people!</span>
+          <p>- Cheeseburger for the updated Chest/Pack opener</p>
+          <p>
+            - CarrySheriff for original Chest/Pack opener, Map Images Repo, Market Names
+            and Custom List Price
+          </p>
+          <p>- AwesomeSam for a basic Resource Swapper</p>
+          <p>- Error430 for optimizations</p>
+          <p>
+            - robertpakalns for various bug fixes, optimizations, and tweaks
+          </p>
+          <p>
+            - irrvlo for the original Juice Client and Kirka Tools
+          </p>
+        </div>
+      </div>
+      <div class="option-group">
+        <div class="hotkeys">
+          <span class="title">Hotkeys:</span>
+          <p>- F2: Screenshot and copy to clipboard</p>
+          <p>- F4: Return to https://kirka.io</p>
+          <p>- F5: Reload page</p>
+          <p>- F6: Load URL</p>
+          <p>- F7: Copy URL</p>
+          <p>- F11: Fullscreen</p>
+          <p>- F12 or Ctrl + Shift + I: Open Devtools</p>
+          <p></p>
+          <p>- Shift + Click on a name in global chat: Open player profile</p>
+          <p>- Shift + Click on a link in friends list: Copy game link</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,28 @@
+appId: com.zvipexx.dawn
+productName: Dawn Client
+directories:
+  output: "build"
+npmRebuild: false
+asarUnpack:
+  - "**/node_modules/ffmpeg-static/**"
+win:
+  target:
+    - target: nsis
+  icon: "src/assets/img/icon.png"
+  artifactName: "${name}-setup-win-${version}.${ext}"
+mac:
+  target: dmg
+  icon: "src/assets/img/icon.icns"
+  artifactName: "${name}-setup-mac-${version}.${ext}"
+linux:
+  target:
+    - AppImage
+    - tar.gz
+  category: Game
+  icon: "src/assets/img/icon.png"
+  artifactName: "${name}-${version}-linux-${arch}.${ext}"
+publish:
+  - provider: github
+    owner: zVipexx
+    repo: dawn-client
+    releaseType: release
