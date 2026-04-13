@@ -489,10 +489,9 @@
     "gradient": {
       "rot": "to right",
       "stops": [
-        "#FFFFFF",
-        "#FFFFFF"
-      ],
-      "shadow": "0px 0px 10px #FFFFFF"
+        "#dfb1d4",
+        "#dfb1d4"
+      ]
     }
   },
   {
