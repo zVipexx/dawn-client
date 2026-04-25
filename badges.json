@@ -574,5 +574,18 @@
     "badges": [
       "https://i.imgur.com/wNgCQpr.png"
     ]
+  },
+  {
+    "shortId": "CHRIST",
+    "gradient": {
+      "rot": "0deg",
+      "stops": [
+        "#000000",
+        "#000000"
+      ]
+    },
+    "badges": [
+      "https://i.imgur.com/TSlOXyK.png"
+    ]
   }
 ]
