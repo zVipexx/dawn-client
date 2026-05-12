@@ -346,14 +346,16 @@
   {
     "shortId": "DUAH01",
     "gradient": {
-      "rot": "to top",
+      "rot": "90deg",
       "stops": [
-        "#000000",
-        "#000000"
+        "#000000 0%",
+        "#ff0000 50%",
+        "#000000 100%"
       ]
     },
+    "animated": true,
     "badges": [
-      "https://i.imgur.com/t3YFC86.png"
+      "https://i.imgur.com/0hopSNU.png"
     ]
   },
   {
