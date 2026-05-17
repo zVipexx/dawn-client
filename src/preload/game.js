@@ -34,14 +34,18 @@ const observeForElement = (selector, functionToRun, target = document.body) => {
     for (const mutation of mutations) {
       if (mutation.type === "childList" && mutation.addedNodes.length > 0) {
         mutation.addedNodes.forEach(node => {
-          if (node.nodeType === Node.ELEMENT_NODE && node.matches(selector)) {
-            functionToRun(node);
+          if (node.nodeType === Node.ELEMENT_NODE) {
+            if (node.matches(selector)) {
+              functionToRun(node);
+            } else {
+              const inner = node.querySelector(selector);
+              if (inner) functionToRun(inner);
+            }
           }
         });
       }
     }
   });
-
   observer.observe(target, { childList: true, subtree: true });
   return observer;
 };
@@ -77,14 +81,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       fetch(
         "https://raw.githubusercontent.com/zVipexx/dawn-client/refs/heads/main/clans.json"
       ).then((r) => r.json()),
-      fetch(
-        "https://raw.githubusercontent.com/zVipexx/dawn-client/refs/heads/main/weapons.json"
-      ).then((r) => r.json()),
     ])
 
     localStorage.setItem("juice-customizations", JSON.stringify(customizations))
     localStorage.setItem("juice-clans", JSON.stringify(clan))
-    localStorage.setItem("weapons", JSON.stringify(weapons))
   }
   fetchAll();
 
@@ -404,58 +404,88 @@ document.addEventListener("DOMContentLoaded", async () => {
         return;
       }
 
+      let dragSrcIndex = null;
+
       presets.forEach((preset, index) => {
         const item = document.createElement("div");
         item.className = "room-preset-item";
+        item.dataset.index = index;
         item.innerHTML = `
+          <i class="fas fa-grip-vertical room-preset-drag-handle"></i>
           <input class="room-preset-name-input" type="text" value="${preset.name}" />
           <div class="room-preset-actions">
             <i class="fas fa-play room-preset-action apply" title="Apply"></i>
+            <i class="fas fa-upload room-preset-action override" title="Override"></i>
             <i class="fas fa-trash room-preset-action delete" title="Delete"></i>
           </div>
         `;
 
-        const nameInput = item.querySelector(".room-preset-name-input");
+        const handle = item.querySelector(".room-preset-drag-handle");
+        handle.draggable = true;
 
+        handle.addEventListener("dragstart", (e) => {
+          dragSrcIndex = index;
+          e.dataTransfer.effectAllowed = "move";
+          setTimeout(() => item.classList.add("dragging"), 0);
+        });
+
+        item.addEventListener("dragend", () => {
+          item.classList.remove("dragging");
+          list.querySelectorAll(".room-preset-item").forEach(el => el.classList.remove("drag-over"));
+        });
+
+        item.addEventListener("dragover", (e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = "move";
+          list.querySelectorAll(".room-preset-item").forEach(el => el.classList.remove("drag-over"));
+          item.classList.add("drag-over");
+        });
+
+        item.addEventListener("drop", (e) => {
+          e.preventDefault();
+          if (dragSrcIndex === null || dragSrcIndex === index) return;
+          const [moved] = presets.splice(dragSrcIndex, 1);
+          presets.splice(index, 0, moved);
+          savePresets();
+          renderPresets(container, modal);
+        });
+
+        const nameInput = item.querySelector(".room-preset-name-input");
         nameInput.onchange = () => {
           preset.name = nameInput.value.trim() || preset.name;
           nameInput.value = preset.name;
           savePresets();
         };
-
         nameInput.onclick = (e) => e.stopPropagation();
 
-        item.querySelector(".apply").onclick = async (e) => {
-          e.stopPropagation();
-          const icon = item.querySelector(".apply");
+        const applyIcon = item.querySelector(".apply");
+        const runApply = async () => {
           if (item.dataset.loading === "true") return;
           item.dataset.loading = "true";
-
-          icon.className = "fas fa-spinner fa-spin room-preset-action";
+          applyIcon.className = "fas fa-spinner fa-spin room-preset-action";
           await applyPreset(modal, preset);
-          icon.className = "fas fa-check room-preset-action";
-
+          applyIcon.className = "fas fa-check room-preset-action";
           setTimeout(() => {
-            icon.className = "fas fa-play room-preset-action apply";
+            applyIcon.className = "fas fa-play room-preset-action apply";
             delete item.dataset.loading;
           }, 1000);
         };
 
-        item.ondblclick = async (e) => {
-          if (e.target.closest(".room-preset-action")) return;
-          if (e.target.closest(".room-preset-name-input")) return;
+        applyIcon.onclick = (e) => { e.stopPropagation(); runApply(); };
 
-          const icon = item.querySelector(".apply");
-          if (item.dataset.loading === "true") return;
-          item.dataset.loading = "true";
+        item.ondblclick = (e) => {
+          if (e.target.closest(".room-preset-action") || e.target.closest(".room-preset-name-input")) return;
+          runApply();
+        };
 
-          icon.className = "fas fa-spinner fa-spin room-preset-action";
-          await applyPreset(modal, preset);
+        item.querySelector(".override").onclick = (e) => {
+          e.stopPropagation();
+          const icon = item.querySelector(".override");
+          preset.settings = scrapeSettings(modal);
+          savePresets();
           icon.className = "fas fa-check room-preset-action";
-          
           setTimeout(() => {
-            icon.className = "fas fa-play room-preset-action apply";
-            delete item.dataset.loading;
+            icon.className = "fas fa-upload room-preset-action override";
           }, 1000);
         };
 
@@ -483,7 +513,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         </div>
         <div class="room-presets-list"></div>
         <div class="juice-button save-preset">
-          <i class="fas fa-plus"></i> SAVE CURRENT
+          SAVE CURRENT
         </div>
       `;
 
@@ -496,15 +526,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         const btn = sidebar.querySelector(".save-preset");
         btn.innerHTML = `<i class="fas fa-check"></i> SAVED!`;
-        btn.style.background = "transparent";
         btn.style.color = "#fff";
-        btn.style.pointerEvents = "none";
 
         setTimeout(() => {
-          btn.innerHTML = `<i class="fas fa-plus"></i> SAVE CURRENT`;
+          btn.innerHTML = "SAVE CURRENT";
           btn.style.background = "";
           btn.style.color = "";
-          btn.style.pointerEvents = "";
         }, 1500);
       };
 
@@ -709,6 +736,19 @@ document.addEventListener("DOMContentLoaded", async () => {
       );
 
       shortIdCard = document.querySelector(".avatar-info .username").textContent.trim().split("#")[1];
+      localStorage.setItem("user-id", shortIdCard);
+
+      const lobbyNickname = document.querySelector(
+        ".team-section .heads .nickname"
+      );
+
+      const nicknames = JSON.parse(localStorage.getItem("nicknames") || "{}");
+      const entry = nicknames[shortIdCard];
+
+      if (entry?.nickname) {
+        const textNode = [...lobbyNickname.childNodes].find(n => n.nodeType === Node.TEXT_NODE);
+        if (textNode) textNode.textContent = entry.nickname;
+      }
 
       const applyCustomizations = () => {
         if (customizations?.find((c) => c.shortId === shortIdCard)) {
@@ -716,9 +756,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             (c) => c.shortId === shortIdCard
           );
 
-          const lobbyNickname = document.querySelector(
-            ".team-section .heads .nickname"
-          );
 
           if (customs.gradient) {
             lobbyNickname.style.display = "inline-block";
@@ -898,9 +935,27 @@ document.addEventListener("DOMContentLoaded", async () => {
       }, 100);
     };
 
-    observeForElement(".quests", () => {
-      setTimeout(() => applyLobbyChanges(), 500);
-    });
+    let loading = null;
+    let polling = null;
+
+    const run = () => {
+      clearTimeout(loading);
+      clearTimeout(polling);
+
+      loading = setTimeout(() => {
+        const tryApply = () => {
+          const profile = document.querySelector(".avatar-info .username");
+          if (profile) {
+            applyLobbyChanges();
+          } else {
+            polling = setTimeout(tryApply, 10);
+          }
+        };
+        tryApply();
+      }, 0);
+    };
+
+    run();
   };
 
   const handleServers = async () => {
@@ -949,10 +1004,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       container.style = "display: flex; gap: 0.5rem; margin-left: 1rem;";
 
       const makeDivButton = (label, bg, borderTop, borderBottom) => {
-        const head = document.querySelector(".servers .chat-head");
-        head.style.position = "relative";
-        head.style.zIndex = "1";
-
         const div = document.createElement("div");
         div.innerText = label.toUpperCase();
         div.style = `
@@ -1052,12 +1103,94 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   };
 
-  let disconnectObservers = () => {};
+  let disconnectObservers = () => { };
 
   const handleProfile = () => {
     disconnectObservers();
 
     const settings = ipcRenderer.sendSync("get-settings");
+
+    const addNicknameButton = () => {
+      const profile = document.querySelector(".tab-content > .profile-cont > .profile");
+      const shortId = profile.querySelector(".card-profile .copy-cont .value")?.textContent.trim().split("#")[1];
+      if (!profile || !shortId) return;
+      const nicknameDiv = document.createElement("div");
+      nicknameDiv.className = "edit-nickname";
+      nicknameDiv.innerHTML = '<i class="fa-solid fa-pen-to-square"></i> Edit Nickname';
+      nicknameDiv.addEventListener("click", (e) => {
+        const nickname = profile.querySelector(".nickname");
+
+        const overlay = document.createElement("div");
+        overlay.className = "nickname-overlay";
+
+        const modal = document.createElement("div");
+        modal.className = "nickname-modal";
+
+        const header = document.createElement("h2");
+        header.textContent = "CHANGE NICKNAME";
+        header.className = "nickname-header";
+
+        const input = document.createElement("input");
+        input.type = "text";
+        input.className = "nickname-input";
+        input.maxLength = 20;
+
+        const applyBtn = document.createElement("button");
+        applyBtn.innerHTML = `APPLY<span style="font-size:0.65em;font-weight:normal;opacity:0.75;line-height:1.2;">Reloads Client</span>`;
+        applyBtn.className = "nickname-apply-btn";
+
+        const nicknames = JSON.parse(localStorage.getItem("nicknames") || "{}");
+        const existingEntry = nicknames[shortId];
+        const rawUsername = profile.querySelector(".card-profile .copy-cont .value")?.textContent.trim();
+        const originalName = existingEntry?.original || rawUsername?.split("#")[0].trim() || nickname.textContent.trim();
+        input.placeholder = originalName;
+
+        const closeModal = () => {
+          overlay.classList.remove("visible");
+          overlay.addEventListener("transitionend", () => {
+            overlay.remove();
+          }, { once: true });
+        };
+
+        const resetNickname = () => {
+          delete nicknames[shortId];
+          localStorage.setItem("nicknames", JSON.stringify(nicknames));
+          closeModal();
+          window.location.reload();
+        };
+
+        applyBtn.addEventListener("click", () => {
+          const newName = input.value.trim();
+          if (!newName) {
+            resetNickname();
+            return;
+          }
+          nicknames[shortId] = { original: originalName, nickname: newName };
+          localStorage.setItem("nicknames", JSON.stringify(nicknames));
+          closeModal();
+          window.location.reload();
+        });
+
+        const closeBtn = document.createElement("button");
+        closeBtn.className = "nickname-close-btn";
+        closeBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="svg-icon svg-icon--__close__"><use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="/img/icons.8d8d28b5.svg#__close__"></use></svg>`;
+
+        closeBtn.addEventListener("click", closeModal);
+        overlay.addEventListener("click", (e) => {
+          if (e.target === overlay) closeModal();
+        });
+
+        modal.appendChild(closeBtn);
+        modal.appendChild(header);
+        modal.appendChild(input);
+        modal.appendChild(applyBtn);
+        overlay.appendChild(modal);
+        document.querySelector("#app").appendChild(overlay);
+        requestAnimationFrame(() => overlay.classList.add("visible"));
+        input.focus();
+      });
+      profile.appendChild(nicknameDiv);
+    };
 
     const applyCardChanges = () => {
       const profile = document.querySelector(".tab-content > .profile-cont > .profile");
@@ -1093,11 +1226,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (!name || !valueElem) return;
 
         const rawText = valueElem.innerText.split(" ")[0];
-        const num = Number(rawText.replace(/[^\d]/g, ""));
+        const num = Number(rawText.replace(/,/g, "").replace(/[^\d.]/g, ""));
         if (!Number.isFinite(num)) return;
 
+        const trailingText = valueElem.innerText.slice(rawText.length);
         statMap[name] = { stat, valueElem, num };
-        valueElem.innerText = num.toLocaleString();
+        valueElem.innerText = num.toLocaleString() + trailingText;
       });
 
       games = statMap.games?.num ?? statMap.played?.num ?? null;
@@ -1124,12 +1258,20 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const applyCustomizations = () => {
       const profile = document.querySelector(".tab-content > .profile-cont > .profile");
+      const shortId = profile.querySelector(".card-profile .copy-cont .value")?.textContent.trim().split("#")[1];
       const userClan = profile.querySelector(".clan-tag")?.textContent.trim();
       const content = profile.querySelector(".profile > .content");
+      const nickname = profile.querySelector(".nickname");
+
+      const nicknames = JSON.parse(localStorage.getItem("nicknames") || "{}");
+      const entry = nicknames[shortId];
+
+      if (entry?.nickname) {
+        const textNode = [...nickname.childNodes].find(n => n.nodeType === Node.TEXT_NODE);
+        if (textNode) textNode.textContent = entry.nickname;
+      }
 
       if (settings.customizations && userClan) {
-        const shortId = profile.querySelector(".card-profile .copy-cont .value").textContent.trim().split("#")[1];
-        const nickname = profile.querySelector(".nickname");
         const clan = profile.querySelector(".clan-tag");
         profile.querySelector(".you").style = "width: 100%";
         nickname.style.cssText +=
@@ -1250,6 +1392,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         const tryApply = () => {
           const profile = document.querySelector(".tab-content .statistics");
           if (profile) {
+            const profileCont = document.querySelector(".tab-content > .profile-cont > .profile");
+            if (profileCont?.dataset.applied) return;
+            if (profileCont) profileCont.dataset.applied = "true";
+            addNicknameButton();
             applyCustomizations();
             applyCardChanges();
           } else {
@@ -1271,44 +1417,268 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const handleInGame = () => {
     let settings = ipcRenderer.sendSync("get-settings");
+    const nicknames = JSON.parse(localStorage.getItem("nicknames") || "{}");
+
     let red_players = [];
     let blue_players = [];
+    let dm_players = []
+
+    const playerCache = new Map();
 
     const updatePlayerLists = () => {
       red_players = [];
       blue_players = [];
+      dm_players = [];
 
-      const red_players_cont = document.querySelectorAll(".desktop-game-interface .player-left-cont .player-cont");
-      const blue_players_cont = document.querySelectorAll(".desktop-game-interface .player-right-cont .player-cont");
+      const process = (conts, list) => {
+        conts.forEach((player) => {
+          const nickname = player.querySelector(".nickname")?.innerText;
+          const shortId = player.querySelector(".short-id")?.innerText.replace("#", "");
+          const entry = nicknames[shortId];
+          if (nickname) {
+            const p = { display: nickname.trim(), original: entry?.original, shortId, nickname: entry?.nickname };
+            list.push(p);
+            playerCache.set(nickname.trim(), p);
+            if (entry?.original) playerCache.set(entry.original, p);
+            if (entry?.nickname) playerCache.set(entry.nickname, p);
+            playerCache.set(shortId, p);
+          }
+        });
+      };
 
-      red_players_cont.forEach((player) => {
-        const nickname = player.querySelector(".nickname")?.innerText;
-        if (nickname) red_players.push(nickname.trim());
-      });
-
-      blue_players_cont.forEach((player) => {
-        const nickname = player.querySelector(".nickname")?.innerText;
-        if (nickname) blue_players.push(nickname.trim());
-      });
+      process(document.querySelectorAll(".desktop-game-interface .player-left-cont .player-cont"), red_players);
+      process(document.querySelectorAll(".desktop-game-interface .player-right-cont .player-cont"), blue_players);
+      process(document.querySelectorAll(".desktop-game-interface .tab-info .player-cont"), dm_players);
     };
 
-    const colorKillFeed = () => {
-      if (!settings.colored_killfeed) return;
-      const killBarItem = document.querySelectorAll(".desktop-game-interface .kill-bar-cont .kill-bar-item");
-      killBarItem.forEach((item) => {
-        const killer = item.firstChild;
-        if (!killer || !killer.innerText) return;
+    const findPlayer = (name) => {
+      const all = [...red_players, ...blue_players, ...dm_players];
+      return all.find(p => p.display === name || p.original === name || p.nickname === name)
+        ?? playerCache.get(name);
+    };
 
-        const killerName = killer.innerText.trim();
-        if (red_players.includes(killerName)) {
-          item.classList.add("red");
-          item.classList.remove("blue");
-        } else if (blue_players.includes(killerName)) {
-          item.classList.add("blue");
-          item.classList.remove("red");
+    const setDisplay = (el, text) => {
+      if (el.closest(".message")?.querySelector(".text.SERVER")) {
+        console.trace("setDisplay called on SERVER message with:", text);
+      }
+      let overlay = el.querySelector(".juice-nickname-overlay");
+      if (!overlay) {
+        overlay = document.createElement("span");
+        overlay.className = "juice-nickname-overlay";
+        overlay.style.cssText = "white-space:nowrap;line-height:inherit;font-family:inherit;font-weight:inherit;";
+        el.appendChild(overlay);
+      }
+      overlay.innerText = text;
+      overlay.style.display = "inline";
+      overlay.style.fontSize = "1.2rem";
+      el.style.fontSize = "0";
+    };
+
+    const clearDisplay = (el) => {
+      const overlay = el.querySelector(".juice-nickname-overlay");
+      if (overlay) overlay.remove();
+      el.style.fontSize = "";
+    };
+
+    const updateKillFeed = () => {
+      if (!settings.colored_killfeed) return;
+      const all = [...red_players, ...blue_players, ...dm_players];
+      const killBarItems = document.querySelectorAll(".desktop-game-interface .kill-bar-cont .kill-bar-item");
+
+      killBarItems.forEach((item) => {
+        const killer = item.querySelector(".killer-name");
+        const victim = item.querySelector(".name-kill");
+
+        item.classList.remove("red", "blue");
+
+        if (killer) {
+          clearDisplay(killer);
+          const currentText = killer.innerText.trim();
+          const match = findPlayer(currentText);
+          if (match) {
+            if (red_players.includes(match)) item.classList.add("red");
+            else if (blue_players.includes(match)) item.classList.add("blue");
+            if (match.nickname) setDisplay(killer, match.nickname);
+          }
+        }
+
+        if (victim) {
+          clearDisplay(victim);
+          const currentText = victim.innerText.trim();
+          const match = findPlayer(currentText);
+          if (match?.nickname) setDisplay(victim, match.nickname);
         }
       });
     };
+
+    let updatingMessages = false;
+
+    const originalTexts = new WeakMap();
+
+    const processMessage = (message) => {
+      const body = message.querySelector(".text");
+      if (!body) return;
+
+      const classes = [...body.classList];
+      const typeClass = classes.find(c => c !== "text");
+      if (!typeClass) return;
+
+      const author = message.querySelector(".author-name");
+      const players = [...red_players, ...blue_players, ...dm_players];
+
+      if (typeClass === "SERVER" || typeClass === "ERROR") {
+        if (author) clearDisplay(author);
+        if (typeClass === "SERVER") {
+          const textNode = [...body.childNodes].find(n => n.nodeType === Node.TEXT_NODE);
+          if (!textNode) return;
+          let text = textNode.textContent;
+          players.forEach((player) => {
+            if (!player.nickname || !player.original) return;
+            text = text.replace(new RegExp(`${player.nickname}#${player.shortId}`, "g"), `${player.original}#${player.shortId}`);
+          });
+          players.forEach((player) => {
+            if (!player.nickname || !player.original) return;
+            text = text.replace(new RegExp(`${player.original}#${player.shortId}`, "g"), `${player.nickname}#${player.shortId}`);
+          });
+          if (text !== textNode.textContent) textNode.textContent = text;
+        }
+        return;
+      }
+
+      if (typeClass === "JOIN" || typeClass === "LEAVE") {
+        const textNode = [...body.childNodes].find(n => n.nodeType === Node.TEXT_NODE);
+        if (!textNode) return;
+        const suffix = typeClass === "JOIN" ? " joined the game" : " left the game";
+        const name = textNode.textContent.replace(suffix, "").trim();
+        const match = findPlayer(name);
+        if (match?.nickname) textNode.textContent = match.nickname + suffix;
+        return;
+      }
+
+      if (!message.querySelector(".lvl")) return;
+      if (!author) return;
+
+      const authorName = typeClass;
+      const match = findPlayer(authorName);
+      if (match?.nickname) setDisplay(author, match.nickname + ":\u00A0\u00A0");
+      else clearDisplay(author);
+    };
+
+    const updateMessages = () => {
+      if (updatingMessages) return;
+      updatingMessages = true;
+      try {
+        document.querySelectorAll(".messages-cont .message").forEach(processMessage);
+      } finally {
+        updatingMessages = false;
+      }
+    };
+
+    const updateEndModal = () => {
+      const leaderNicknames = document.querySelectorAll(".end-modal .leaders .nickname");
+      leaderNicknames.forEach((el) => {
+        const raw = el.innerText.trim();
+        const match = findPlayer(raw);
+        if (match?.nickname) setDisplay(el, match.nickname);
+        else clearDisplay(el);
+      });
+
+      const playerNicknames = document.querySelectorAll(".end-modal .player-cont .nickname");
+      playerNicknames.forEach((el) => {
+        const raw = el.innerText.trim();
+        const stripped = raw.replace(/^\(\d+\)\s*/, "");
+        const match = findPlayer(stripped);
+        if (match?.nickname) setDisplay(el, `(${raw.match(/^\((\d+)\)/)?.[1]}) ${match.nickname}`);
+        else clearDisplay(el);
+      });
+
+      updateMessages();
+
+      const chatCont = document.querySelector(".end-modal .messages-cont");
+      if (chatCont) {
+        const observedNodes = new WeakSet();
+
+        const observeMessages = () => {
+          document.querySelectorAll(".messages-cont .message").forEach((message) => {
+            const body = message.querySelector(".text");
+            if (!body) return;
+            const textNode = [...body.childNodes].find(n => n.nodeType === Node.TEXT_NODE);
+            if (!textNode || observedNodes.has(textNode)) return;
+
+            observedNodes.add(textNode);
+            new MutationObserver(() => {
+              if (settings.customizations && !updatingMessages) updateMessages();
+            }).observe(textNode, { characterData: true });
+          });
+        };
+
+        observeMessages();
+
+        new MutationObserver(() => {
+          observeMessages();
+          if (settings.customizations && !updatingMessages) updateMessages();
+        }).observe(chatCont, { childList: true });
+      }
+    };
+
+    const updateDeathCont = () => {
+      const nickname = document.querySelector(".death-cont .nickname");
+      const shortId = document.querySelector(".death-cont .short-id")?.textContent.trim().split("#")[1];
+
+      const entry = nicknames[shortId];
+
+      if (entry?.nickname) {
+        const textNode = [...nickname.childNodes].find(n => n.nodeType === Node.TEXT_NODE);
+        if (textNode) textNode.textContent = entry.nickname;
+      }
+    }
+
+    const spectatingObservers = [];
+
+    const updateSpectating = () => {
+      spectatingObservers.forEach(o => o.disconnect());
+
+      const fpsElems = document.querySelectorAll(".infos .fps");
+      fpsElems.forEach((fpsElem) => {
+        const fullText = fpsElem.textContent.trim();
+        const match = fullText.match(/#([A-Z0-9]+)/);
+        if (!match) return;
+
+        const shortId = match[1];
+        const entry = nicknames[shortId];
+        if (!entry?.nickname) return;
+
+        const textNode = [...fpsElem.childNodes].find(n => n.nodeType === Node.TEXT_NODE);
+        if (textNode) textNode.textContent = textNode.textContent.replace(/\S+#[A-Z0-9]+/, `${entry.nickname}#${shortId}`);
+      });
+
+      spectatingObservers.forEach(o => {
+        const infosElems = document.querySelectorAll(".infos");
+        infosElems.forEach(infosElem => o.observe(infosElem, { characterData: true, subtree: true, childList: true }));
+      });
+    };
+
+    const updateOverlay = () => {
+      const isVisible = !!document.querySelector("#overlay #fps")?.textContent.trim();
+      const teamPlayersState = document.querySelector(".team-players-state");
+      if (!teamPlayersState) return;
+      teamPlayersState.style.visibility = isVisible ? "hidden" : "";
+    };
+
+    const updateTeammates = () => {
+      const teammates = document.querySelectorAll(".team-panel .teammate");
+      teammates.forEach((teammate) => {
+        const nickname = teammate.querySelector(".teammate-name");
+        const shortId = teammate.querySelector(".teammate-short-id")?.textContent.trim().split("#")[1];
+
+        const entry = nicknames[shortId];
+
+        if (entry?.nickname) {
+          const textNode = [...nickname.childNodes].find(n => n.nodeType === Node.TEXT_NODE);
+          if (textNode) textNode.textContent = entry.nickname;
+        }
+      })
+    }
 
     const updateKD = () => {
       const kills = document.querySelector(".kill-death .kill");
@@ -1384,6 +1754,14 @@ document.addEventListener("DOMContentLoaded", async () => {
             nickname.style = "";
             playerLeft.style = "";
             return;
+          }
+
+          const entry = nicknames[shortId];
+
+          if (entry?.nickname) {
+            const currentText = nickname.innerText.trim();
+            const textNode = [...nickname.childNodes].find(n => n.nodeType === Node.TEXT_NODE);
+            if (textNode) textNode.textContent = entry.nickname;
           }
 
           const customs = customizations?.find((c) => c.shortId === shortId);
@@ -1480,6 +1858,15 @@ document.addEventListener("DOMContentLoaded", async () => {
             nickname.style = "";
             playerLeft.style = "";
             return;
+          }
+
+          const entry = nicknames[shortId];
+
+          if (entry?.nickname) {
+            const currentText = [...nickname.childNodes]
+              .find(n => n.nodeType === Node.TEXT_NODE)?.textContent.trim();
+            const textNode = [...nickname.childNodes].find(n => n.nodeType === Node.TEXT_NODE);
+            if (textNode) textNode.textContent = entry.nickname;
           }
 
           const customs = customizations?.find((c) => c.shortId === shortId);
@@ -1612,18 +1999,27 @@ document.addEventListener("DOMContentLoaded", async () => {
       document.querySelector(".kill-death .kd").remove();
     }
 
+    const observers = new Map();
+
     const observeShortIds = () => {
       const tabPlayers = document.querySelectorAll(".desktop-game-interface .player-cont");
-
       tabPlayers.forEach(player => {
-        const shortIdElem = player.querySelector(".short-id");
-        if (!shortIdElem || shortIdElem.dataset.observerAttached) return;
+        const shortIdElem = player.querySelector(".nickname");
+        if (!shortIdElem || observers.has(shortIdElem)) return;
 
-        shortIdElem.dataset.observerAttached = "true";
-
-        new MutationObserver(() => {
+        const obs = new MutationObserver(() => {
+          observers.forEach(o => o.disconnect());
           applyCustomizationsTab();
-        }).observe(shortIdElem, {
+          applyCustomizationsEsc();
+          observers.forEach((o, elem) => o.observe(elem, {
+            characterData: true,
+            subtree: true,
+            childList: true
+          }));
+        });
+
+        observers.set(shortIdElem, obs);
+        obs.observe(shortIdElem, {
           characterData: true,
           subtree: true,
           childList: true
@@ -1631,8 +2027,33 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
     };
 
+    let lastUrl = location.href;
+    new MutationObserver(() => {
+      if (location.href !== lastUrl) {
+        lastUrl = location.href;
+        observers.forEach(o => o.disconnect());
+        observers.clear();
+      }
+    }).observe(document, { subtree: true, childList: true });
+
     observeShortIds();
     applyCustomizationsEsc();
+    if (document.querySelector(".infos")) {
+      const infosElems = document.querySelectorAll(".infos");
+      infosElems.forEach((infosElem) => {
+        const obs = new MutationObserver(() => updateSpectating());
+        spectatingObservers.push(obs);
+        obs.observe(infosElem, { characterData: true, subtree: true, childList: true });
+      });
+    } else {
+      observeForElement(".desktop-game-interface .infos", () => {
+        const infosElem = document.querySelector(".infos");
+        updateSpectating();
+        new MutationObserver(() => {
+          updateSpectating();
+        }).observe(infosElem, { characterData: true });
+      });
+    }
 
     const playerContainer = document.querySelector(".desktop-game-interface .player-list .player-cont");
     if (playerContainer) applyCustomizationsTab();
@@ -1647,14 +2068,99 @@ document.addEventListener("DOMContentLoaded", async () => {
       observerTab.observe(playerListContainer, { childList: true, subtree: false });
     })
 
+    observeForElement(".esc-interface", applyCustomizationsEsc);
+    observeForElement(".death-cont .user-card", updateDeathCont);
+    observeForElement(".end-modal", updateEndModal, document.querySelector("#app"));
+
+    const overlay = document.querySelector("#overlay");
+    if (overlay && settings.hide_teamstate_overlay) {
+      new MutationObserver(() => updateOverlay()).observe(overlay, { characterData: true, subtree: true, childList: true });
+    }
+
+    let chatObserverAttached = false;
+
+    const attachChatObserver = () => {
+      if (chatObserverAttached) return;
+      const chatCont = document.querySelector(".desktop-game-interface .messages-cont");
+      if (!chatCont) return;
+      chatObserverAttached = true;
+
+      const observedMessages = new WeakSet();
+
+      const observeMessage = (message) => {
+        if (observedMessages.has(message)) return;
+        observedMessages.add(message);
+        processMessage(message);
+
+        const body = message.querySelector(".text");
+        if (!body) return;
+
+        const getTextNode = () => [...body.childNodes].find(n => n.nodeType === Node.TEXT_NODE);
+
+        let textNodeObserver = null;
+
+        const attachTextNodeObserver = () => {
+          if (textNodeObserver) textNodeObserver.disconnect();
+          const textNode = getTextNode();
+          if (!textNode) return;
+          textNodeObserver = new MutationObserver(() => {
+            if (!settings.customizations) return;
+            processMessage(message);
+            attachTextNodeObserver();
+          });
+          textNodeObserver.observe(textNode, { characterData: true });
+        };
+
+        attachTextNodeObserver();
+
+        new MutationObserver(() => {
+          if (!settings.customizations) return;
+          attachTextNodeObserver();
+          processMessage(message);
+        }).observe(body, { childList: true });
+      };
+
+      new MutationObserver((mutations) => {
+        if (!settings.customizations) return;
+        for (const mutation of mutations) {
+          mutation.addedNodes.forEach(node => {
+            if (node.nodeType !== Node.ELEMENT_NODE || !node.classList.contains("message")) return;
+            observeMessage(node);
+          });
+        }
+      }).observe(chatCont, { childList: true });
+    };
+
+    const bottomLeft = document.querySelector("#bottom-left");
+    if (bottomLeft) {
+      new MutationObserver(() => {
+        const chatCont = document.querySelector(".desktop-game-interface .messages-cont");
+        if (chatCont) {
+          attachChatObserver();
+        } else {
+          chatObserverAttached = false;
+          chatObserver?.disconnect();
+          chatObserver = null;
+        }
+      }).observe(bottomLeft, { childList: true });
+    }
+
     const warmupTimer = document.querySelector(".warmup-timer");
     if (!warmupTimer) {
       updatePlayerLists();
-      const killBarCont = document.querySelector(".kill-bar-cont");
-      const killBarObserver = new MutationObserver(() => {
-        if (settings.colored_killfeed) colorKillFeed();
-      });
-      killBarObserver.observe(killBarCont, { childList: true });
+      updateMessages();
+      updateTeammates();
+      const observeElement = (selector, setting, execute) => {
+        const elem = document.querySelector(selector);
+        if (!elem) return;
+        new MutationObserver(() => {
+          if (setting()) execute();
+        }).observe(elem, { childList: true });
+      };
+
+      observeElement(".kill-bar-cont", () => settings.colored_killfeed, updateKillFeed);
+      observeElement(".teammates-list", () => settings.customizations, updateTeammates);
+      attachChatObserver();
       return;
     } else {
       const warmupInterval = setInterval(() => {
@@ -1663,19 +2169,23 @@ document.addEventListener("DOMContentLoaded", async () => {
           red_players = [];
           blue_players = [];
           updatePlayerLists();
+          updateMessages();
+          updateTeammates();
           applyCustomizationsTab();
-          const killBarCont = document.querySelector(".kill-bar-cont");
-          const killBarObserver = new MutationObserver(() => {
-            if (settings.colored_killfeed) colorKillFeed();
-          });
-          killBarObserver.observe(killBarCont, { childList: true });
+          const observeElement = (selector, setting, execute) => {
+            const elem = document.querySelector(selector);
+            if (!elem) return;
+            new MutationObserver(() => {
+              if (setting()) execute();
+            }).observe(elem, { childList: true });
+          };
+
+          observeElement(".kill-bar-cont", () => settings.colored_killfeed, updateKillFeed);
+          observeElement(".teammates-list", () => settings.customizations, updateTeammates);
+          attachChatObserver();
         }
       }, 1000);
     }
-
-    observeForElement(".esc-interface", () => {
-      applyCustomizationsEsc();
-    });
   };
 
   const handleMarket = () => {
@@ -1689,8 +2199,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const handleFriends = () => {
     const settings = ipcRenderer.sendSync("get-settings");
+    const nicknames = JSON.parse(localStorage.getItem("nicknames") || "{}");
 
-    document.addEventListener("click", (e) => {
+    if (window.copyGameLink) {
+      document.removeEventListener("click", window.copyGameLink);
+    }
+
+    window.copyGameLink = (e) => {
       if (e.shiftKey && e.target.classList.contains("online")) {
         const online = e.target;
         if (online && online.innerText.includes("in game")) {
@@ -1702,7 +2217,9 @@ document.addEventListener("DOMContentLoaded", async () => {
           });
         }
       }
-    });
+    };
+
+    document.addEventListener("click", window.copyGameLink);
 
     const friendsCont = document.querySelector(".friends > .content > .allo");
     const addFriends = document.querySelector(".friends > .add-friends");
@@ -1719,24 +2236,56 @@ document.addEventListener("DOMContentLoaded", async () => {
           <span class="search-text">Search</span>
           <span>Press Enter to search</span>
         </div>
-        <input type="text" placeholder="ENTER USERNAME OR ID" class="search-input" style="border: .125rem solid #202639; outline: none; background: #2f3957; width: 100%; height: 2.875rem; padding-left: .5rem; box-sizing: border-box; font-weight: 600; font-size: 1rem; color: #f2f2f2; box-shadow: 0 1px 2px rgba(0,0,0,.4), inset 0 0 8px rgba(0,0,0,.4); border-radius: .25rem;"/>`;
+        <input type="text" placeholder="ENTER USERNAME OR ID" class="search-input" style="border: .125rem solid #202639; outline: none; background: #2f3957; width: 100%; height: 2.875rem; padding-left: .5rem; box-sizing: border-box; font-weight: 600; font-size: 1rem; color: #f2f2f2; box-shadow: 0 1px 2px rgba(0,0,0,.4), inset 0 0 8px rgba(0,0,0,.4); border-radius: .25rem; transition: border-color 0.2s;"/>
+        <span class="lookup-toggle" style="margin-top: 0.25rem; font-size: 0.75rem; color: rgba(255,255,255,0.4); cursor: pointer; user-select: none; transition: color 0.15s ease; text-decoration: underline;">Player Lookup</span>
+      `;
       addFriends.appendChild(searchFriends);
 
-      searchFriends
-        .querySelector(".search-input")
-        .addEventListener("input", (e) => {
-          const query = e.target.value.toLowerCase();
+      const input = searchFriends.querySelector(".search-input");
+      const toggle = searchFriends.querySelector(".lookup-toggle");
+      let lookupMode = false;
+
+      const lookup = () => {
+        const id = input.value.trim().replace(/^#/, "").toUpperCase();
+        if (id.length === 6) {
+          window.location.href = `https://kirka.io/profile/${id}`;
+        } else {
+          input.style.borderColor = "rgba(255, 0, 0, 0.4)";
+          setTimeout(() => (input.style.borderColor = "rgba(76, 175, 138, 0.4)"), 1000);
+        }
+      };
+
+      toggle.addEventListener("click", () => {
+        lookupMode = !lookupMode;
+        toggle.style.color = lookupMode ? "#4caf8a" : "rgba(255,255,255,0.4)";
+        input.style.borderColor = lookupMode ? "rgba(76, 175, 138, 0.4)" : "#202639";
+        input.placeholder = lookupMode ? "ENTER PLAYER ID..." : "ENTER USERNAME OR ID";
+
+        if (lookupMode) {
+          document.querySelectorAll(".friend").forEach((f) => (f.style.display = "flex"));
+        } else {
+          const query = input.value.toLowerCase();
           document.querySelectorAll(".friend").forEach((friend) => {
-            const nickname =
-              friend.querySelector(".nickname")?.innerText.toLowerCase() || "";
-            const shortId =
-              friend.querySelector(".friend-id")?.innerText.toLowerCase() || "";
-            friend.style.display =
-              nickname.includes(query) || shortId.includes(query)
-                ? "flex"
-                : "none";
+            const nickname = friend.querySelector(".nickname")?.innerText.toLowerCase() || "";
+            const shortId = friend.querySelector(".friend-id")?.innerText.toLowerCase() || "";
+            friend.style.display = nickname.includes(query) || shortId.includes(query) ? "flex" : "none";
           });
+        }
+      });
+
+      input.addEventListener("keydown", (e) => {
+        if (lookupMode && e.key === "Enter") lookup();
+      });
+
+      input.addEventListener("input", (e) => {
+        if (lookupMode) return;
+        const query = e.target.value.toLowerCase();
+        document.querySelectorAll(".friend").forEach((friend) => {
+          const nickname = friend.querySelector(".nickname")?.innerText.toLowerCase() || "";
+          const shortId = friend.querySelector(".friend-id")?.innerText.toLowerCase() || "";
+          friend.style.display = nickname.includes(query) || shortId.includes(query) ? "flex" : "none";
         });
+      });
     }
 
     function addSpectateButton(div) {
@@ -1758,7 +2307,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         document.querySelector(".join-btn")?.click();
 
         const observer = new MutationObserver(() => {
-          const input = document.querySelector(".input");
+          const input = document.querySelector("#join-modal-modal .input");
           if (input) {
             input.value = code;
             input.dispatchEvent(new Event("input", { bubbles: true }));
@@ -1780,88 +2329,106 @@ document.addEventListener("DOMContentLoaded", async () => {
       document.querySelectorAll(".online").forEach((div) => {
         if (div.textContent.trim().toLowerCase().includes("in game"))
           addSpectateButton(div);
+        else
+          div.querySelector(".spectate-eye")?.remove();
       });
 
       if (!addFriends.querySelector(".search-friends")) createSearch();
     }, 250);
 
-    if (settings.customizations) {
-      const customizations = JSON.parse(
-        localStorage.getItem("juice-customizations")
-      );
+    const applyCustomizations = () => {
+      if (settings.customizations) {
+        const customizations = JSON.parse(
+          localStorage.getItem("juice-customizations")
+        );
 
-      document.querySelectorAll(".friend").forEach((friend) => {
-        const shortId = friend.querySelector(".friend-id").innerText;
-        const customs = customizations?.find((c) => c.shortId === shortId);
-
-        if (customs) {
+        document.querySelectorAll(".friend").forEach((friend) => {
+          const shortId = friend.querySelector(".friend-id").innerText;
+          const customs = customizations?.find((c) => c.shortId === shortId);
           const nickname = friend.querySelector(".nickname");
-          nickname.style = `
+
+          const entry = nicknames[shortId];
+
+          if (entry?.nickname) {
+            const textNode = [...nickname.childNodes].find(n => n.nodeType === Node.TEXT_NODE);
+            if (textNode) textNode.textContent = entry.nickname;
+          }
+
+          if (customs) {
+            nickname.style = `
             display: flex !important;
             align-items: flex-end !important;
             gap: 0.25rem !important;
             overflow: unset !important;
           `;
 
-          if (customs.gradient) {
-            nickname.style.background = `linear-gradient(${customs.gradient.rot}, ${customs.gradient.stops.join(", ")})`;
-            nickname.style.backgroundClip = "text";
-            nickname.style.webkitBackgroundClip = "text";
-            nickname.style.color = "transparent";
-            nickname.style.fontWeight = "700";
-            nickname.style.textShadow = customs.gradient.shadow || "0 0 0 transparent";
-            nickname.style.maxWidth = "min-width";
-            nickname.style.overflow = "unset";
-            if (settings.animations && customs.animated) {
-              nickname.style.backgroundSize = "200% 200%";
-              nickname.style.animation = "animated-gradient 3s linear infinite";
+            if (customs.gradient) {
+              nickname.style.background = `linear-gradient(${customs.gradient.rot}, ${customs.gradient.stops.join(", ")})`;
+              nickname.style.backgroundClip = "text";
+              nickname.style.webkitBackgroundClip = "text";
+              nickname.style.color = "transparent";
+              nickname.style.fontWeight = "700";
+              nickname.style.textShadow = customs.gradient.shadow || "0 0 0 transparent";
+              nickname.style.maxWidth = "min-width";
+              nickname.style.overflow = "unset";
+              if (settings.animations && customs.animated) {
+                nickname.style.backgroundSize = "200% 200%";
+                nickname.style.animation = "animated-gradient 3s linear infinite";
+              }
+            }
+
+            let badgesElem = nickname.querySelector(".juice-badges");
+
+            if (!badgesElem || badgesElem.dataset.shortId !== shortId) {
+              if (badgesElem) badgesElem.remove();
+
+              badgesElem = document.createElement("div");
+              badgesElem.style = "display: flex; gap: 0.25rem; align-items: center; width: 0;";
+              badgesElem.className = "juice-badges";
+              badgesElem.dataset.shortId = shortId;
+              nickname.appendChild(badgesElem);
+            } else if (badgesElem.dataset.shortId === shortId) return;
+
+            const badgeStyle = "height: 18px; width: auto;";
+
+            if (customs.discord) {
+              const linkedBadge = document.createElement("img");
+              linkedBadge.src = "https://juice.irrvlo.xyz/linked.png";
+              linkedBadge.style.cssText = badgeStyle;
+              badgesElem.appendChild(linkedBadge);
+            }
+
+            if (customs.booster) {
+              const boosterBadge = document.createElement("img");
+              boosterBadge.src = "https://juice.irrvlo.xyz/booster.png";
+              boosterBadge.style.cssText = badgeStyle;
+              badgesElem.appendChild(boosterBadge);
+            }
+
+            if (customs.badges?.length) {
+              customs.badges.forEach((badge) => {
+                const img = document.createElement("img");
+                if (badge.startsWith("/") || badge.match(/^[A-Za-z]:\\/)) {
+                  const filePath = badge.replace(/\\/g, "/");
+                  img.src = `file://${filePath.startsWith("/") ? "" : "/"}${filePath}`;
+                } else {
+                  img.src = badge;
+                }
+                img.style.cssText = badgeStyle;
+                badgesElem.appendChild(img);
+              });
             }
           }
-
-          let badgesElem = nickname.querySelector(".juice-badges");
-
-          if (!badgesElem || badgesElem.dataset.shortId !== shortId) {
-            if (badgesElem) badgesElem.remove();
-
-            badgesElem = document.createElement("div");
-            badgesElem.style = "display: flex; gap: 0.25rem; align-items: center; width: 0;";
-            badgesElem.className = "juice-badges";
-            badgesElem.dataset.shortId = shortId;
-            nickname.appendChild(badgesElem);
-          } else if (badgesElem.dataset.shortId === shortId) return;
-
-          const badgeStyle = "height: 18px; width: auto;";
-
-          if (customs.discord) {
-            const linkedBadge = document.createElement("img");
-            linkedBadge.src = "https://juice.irrvlo.xyz/linked.png";
-            linkedBadge.style.cssText = badgeStyle;
-            badgesElem.appendChild(linkedBadge);
-          }
-
-          if (customs.booster) {
-            const boosterBadge = document.createElement("img");
-            boosterBadge.src = "https://juice.irrvlo.xyz/booster.png";
-            boosterBadge.style.cssText = badgeStyle;
-            badgesElem.appendChild(boosterBadge);
-          }
-
-          if (customs.badges?.length) {
-            customs.badges.forEach((badge) => {
-              const img = document.createElement("img");
-              if (badge.startsWith("/") || badge.match(/^[A-Za-z]:\\/)) {
-                const filePath = badge.replace(/\\/g, "/");
-                img.src = `file://${filePath.startsWith("/") ? "" : "/"}${filePath}`;
-              } else {
-                img.src = badge;
-              }
-              img.style.cssText = badgeStyle;
-              badgesElem.appendChild(img);
-            });
-          }
-        }
-      });
+        });
+      }
     }
+    applyCustomizations();
+
+    document.querySelectorAll(".friends .tab").forEach((tab) => {
+      tab.addEventListener("click", () => {
+        applyCustomizations();
+      });
+    });
   };
 
   const customNotification = (data) => {

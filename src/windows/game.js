@@ -333,7 +333,7 @@ const createWindow = () => {
 
   if (process.platform === "darwin" && settings.auto_fullscreen) {
     gameWindow.once("ready-to-show", () => {
-        gameWindow.setFullScreen(true);
+      gameWindow.setFullScreen(true);
     });
   }
 
@@ -387,7 +387,7 @@ const createWindow = () => {
 
       if (stateMap[url]) {
         state = stateMap[url];
-      } else if (url.startsWith(`${base_url}games/`)) {
+      } else if (url.startsWith(`${base_url}games/`) || (url.startsWith(`${base_url}hub/ranked`))) {
         state = "In a match";
       } else if (url.startsWith(`${base_url}profile/`)) {
         state = "Viewing a profile";

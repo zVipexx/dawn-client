@@ -103,8 +103,8 @@ const initGallery = () => {
       btnContainer.classList.add("category-buttons");
       btnContainer.style.display = "flex";
       btnContainer.style.alignItems = "center";
-      btnContainer.style.gap = "10px";
-      btnContainer.style.marginBottom = "10px";
+      btnContainer.style.gap = "1rem";
+      btnContainer.style.marginBottom = "1rem";
 
       const openFolderBtn = document.createElement("div");
       openFolderBtn.classList.add("juice-button");

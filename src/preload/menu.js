@@ -3,6 +3,7 @@ const fs = require("fs");
 const path = require("path");
 const { version } = require("../../package.json");
 const { addOpenerList } = require("../addons/opener");
+const { initBrowser } = require("../addons/browser");
 
 class Menu {
   constructor() {
@@ -21,6 +22,15 @@ class Menu {
     this.tabToContentMap = {
       ui: this.menu.querySelector("#ui-options"),
       game: this.menu.querySelector("#game-options"),
+      browse: this.menu.querySelector("#browse-options"),
+      community: this.menu.querySelector("#community-options"),
+      css: this.menu.querySelector("#css-options"),
+      commscripts: this.menu.querySelector("#commscripts-options"),
+      sounds: this.menu.querySelector("#sounds-options"),
+      textures: this.menu.querySelector("#textures-options"),
+      crosshairs: this.menu.querySelector("#crosshairs-options"),
+      skyboxes: this.menu.querySelector("#skyboxes-options"),
+      killicons: this.menu.querySelector("#killicons-options"),
       gallery: this.menu.querySelector("#gallery-options"),
       performance: this.menu.querySelector("#performance-options"),
       client: this.menu.querySelector("#client-options"),
@@ -56,9 +66,13 @@ class Menu {
     this.handleMenuInputChanges();
     this.handleMenuSelectChanges();
     this.handleTabChanges();
+    this.handleInnerTabChanges();
+    this.handleSelectorChanges();
     this.handleDropdowns();
     this.handleSearch();
     this.handleButtons();
+
+    initBrowser(this.menu);
 
     this.localStorage.getItem("juice-menu-tab")
       ? this.handleTabChange(
@@ -67,6 +81,22 @@ class Menu {
         )
       )
       : this.handleTabChange(this.menu.querySelector(".juice.tab"));
+
+    this.localStorage.getItem("juice-menu-inner-tab")
+      ? this.handleInnerTabChange(
+        this.menu.querySelector(
+          `[data-tab="${this.localStorage.getItem("juice-menu-inner-tab")}"]`
+        )
+      )
+      : this.handleInnerTabChange(this.menu.querySelector(".juice.inner-tab"));
+
+    this.localStorage.getItem("juice-menu-selector")
+      ? this.handleSelectorChange(
+        this.menu.querySelector(
+          `[data-selector="${this.localStorage.getItem("juice-menu-selector")}"]`
+        )
+      )
+      : this.handleSelectorChange(this.menu.querySelector(".juice.selector"));
   }
 
   setVersion() {
@@ -204,205 +234,308 @@ class Menu {
       const animatedCheckbox = document.getElementById('local_animated_gradient');
       const shadowSlider = document.getElementById('local_gradient_shadow');
       const shadowInput = document.querySelector('.shadow-value');
-      const shadowHexInput = document.querySelector('.option.shadow-color .hex');
-      const shadowColorPicker = document.querySelector('.option.shadow-color .color-picker');
+      const shadowHexInput = document.querySelector('.option.shadow-color .color-input .hex');
+      const shadowColorPicker = document.querySelector('.option.shadow-color .color-input .color-picker');
+      const shadowColorInputDiv = document.querySelector('.option.shadow-color .color-input');
+
+      function createSwatch(colorPicker, hex = "#ffffff") {
+        const wrapper = document.createElement("div");
+        wrapper.className = "color-swatch-wrapper";
+
+        const swatch = document.createElement("div");
+        swatch.className = "color-swatch";
+        swatch.style.background = hex;
+        swatch.onclick = () => colorPicker.click();
+
+        wrapper.append(colorPicker, swatch);
+        return wrapper;
+      }
+
+      if (shadowColorInputDiv && !shadowColorInputDiv.querySelector('.color-swatch')) {
+        const shadowSwatchWrapper = createSwatch(shadowColorPicker, shadowColorPicker.value || "#ffffff");
+        shadowColorInputDiv.insertBefore(shadowSwatchWrapper, shadowHexInput);
+        shadowColorPicker.addEventListener('input', () => {
+          shadowSwatchWrapper.querySelector('.color-swatch').style.background = shadowColorPicker.value;
+        });
+      }
 
       const previewDiv = document.createElement('div');
       previewDiv.className = 'gradient-preview';
-      previewDiv.innerHTML = `<span class="preview-text">${document.querySelector(".team-section .nickname").innerHTML}</span>`;
-      previewDiv.style.cssText = `margin: 16px 0; padding: 24px; border-radius: 8px; text-align: center;`;
+      previewDiv.innerHTML = `
+        <span class="preview-text">${document.querySelector(".team-section .nickname").innerHTML}</span>
+        <div class="preview-css-wrapper">
+          <textarea class="preview-css-label" rows="2" spellcheck="false"></textarea>
+        </div>
+      `;
 
       const previewText = previewDiv.querySelector('.preview-text');
-      previewText.style.cssText = `
-        background: white;
-        font-size: 48px;
-        font-weight: bold;
-        background-clip: text;
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        display: inline-block;
-      `;
+      const previewCssLabel = previewDiv.querySelector('.preview-css-label');
+
+      previewCssLabel.addEventListener('input', () => {
+        const val = previewCssLabel.value.trim();
+        const match = val.match(/linear-gradient\(([^)]+)\)/);
+        if (!match) return;
+        try {
+          previewText.style.backgroundImage = `linear-gradient(${match[1]})`;
+          const parts = match[1].split(',').map(s => s.trim());
+          const rotMatch = parts[0].match(/^(\d+)deg$/);
+          if (rotMatch) {
+            rotationSlider.value = rotMatch[1];
+            rotationInput.value = rotMatch[1];
+          }
+          const stops = parts.slice(rotMatch ? 1 : 0);
+          const inputs = [...colorsContainer.querySelectorAll(".color-input")];
+          stops.forEach((stop, i) => {
+            const m = stop.match(/(#[0-9a-fA-F]{6})\s*([\d.]+%)?/);
+            if (!m || !inputs[i]) return;
+            inputs[i].querySelector(".hex").value = m[1];
+            inputs[i].querySelector(".position").value = m[2] || "";
+            inputs[i].querySelector(".color-picker").value = m[1];
+            inputs[i].querySelector(".color-swatch").style.background = m[1];
+          });
+          saveToCustomizations();
+        } catch (e) { }
+      });
 
       if (self.settings.local_animated_gradient) {
         previewText.style.backgroundSize = "200% 200%";
         previewText.style.animation = 'animated-gradient 3s linear infinite';
       }
 
-      const rotationOption = document.querySelector('.option.rotation');
+      const toolbar = document.createElement('div');
+      toolbar.className = 'gradient-toolbar';
+
+      const infoWrapper = document.createElement('div');
+      infoWrapper.className = 'info-wrapper';
+      infoWrapper.innerHTML = `
+        <div class="info-btn">?</div>
+        <div class="info-tooltip">
+          <b style="color:#fff; display:block; margin-bottom:6px;">How to use</b>
+          - You will need 2 colors at minimum<br>
+          - The colors have to be ordered correctly according to their position from top (0%) to bottom (100%)<br>
+          - Leave positions blank to distribute them automatically
+        </div>
+      `;
+      infoWrapper.querySelector('.info-btn').onmouseenter = () => infoWrapper.querySelector('.info-tooltip').style.display = 'block';
+      infoWrapper.querySelector('.info-btn').onmouseleave = () => infoWrapper.querySelector('.info-tooltip').style.display = 'none';
+
+      const examples = [
+        { name: "Sunrise", stops: ["#ff512f", "#f09819", "#ff512f"], shadow: { intensity: 35, color: "#f07a19" } },
+        { name: "Aqua Marine", stops: ["#1a2980", "#26d0ce", "#1a2980"], shadow: { intensity: 30, color: "#1289A7" } },
+        { name: "Aurora", stops: ["#6c5ce7", "#a29bfe", "#fd79a8", "#fdcb6e", "#6c5ce7"], shadow: { intensity: 40, color: "#a29bfe" } },
+        { name: "Monte Carlo", stops: ["#cc95c0", "#dbd4b4", "#7aa1d2", "#cc95c0"], shadow: { intensity: 35, color: "#ffd200" } },
+        { name: "Hazel", stops: ["#77a1d3", "#79cbca", "#e684ae", "#77a1d3"], shadow: { intensity: 40, color: "#79cbca" } },
+      ];
+
+      const examplesWrapper = document.createElement('div');
+      examplesWrapper.className = 'examples-wrapper';
+
+      const examplesBtn = document.createElement('span');
+      examplesBtn.className = 'examples-btn';
+      examplesBtn.textContent = 'Presets';
+
+      const examplesMenu = document.createElement('div');
+      examplesMenu.className = 'examples-menu';
+
+      examples.forEach(ex => {
+        const item = document.createElement('div');
+        item.className = 'examples-menu-item';
+
+        const dot = document.createElement('span');
+        dot.className = 'preset-dot';
+        dot.style.background = `linear-gradient(90deg, ${ex.stops.join(", ")})`;
+
+        item.append(dot, document.createTextNode(ex.name));
+        item.onclick = () => {
+          colorsContainer.querySelectorAll(".color-input").forEach(el => el.remove());
+          ex.stops.forEach(hex => {
+            colorsContainer.insertBefore(createColorInput(hex, ""), addButton);
+          });
+          rotationSlider.value = 90;
+          rotationInput.value = 90;
+          if (ex.shadow) {
+            shadowSlider.value = ex.shadow.intensity;
+            shadowInput.value = ex.shadow.intensity;
+            shadowColorPicker.value = ex.shadow.color;
+            shadowHexInput.value = ex.shadow.color;
+            const swatch = shadowColorInputDiv.querySelector('.color-swatch');
+            if (swatch) swatch.style.background = ex.shadow.color;
+            updateTextShadow();
+          }
+          updateGradient();
+          examplesMenu.style.display = 'none';
+        };
+        examplesMenu.appendChild(item);
+      });
+
+      examplesBtn.onclick = () => {
+        examplesMenu.style.display = examplesMenu.style.display === 'none' ? 'block' : 'none';
+      };
+      document.addEventListener('click', (e) => {
+        if (!examplesWrapper.contains(e.target)) {
+          examplesMenu.style.display = 'none';
+        }
+      }, true);
+
+      examplesWrapper.append(examplesBtn, examplesMenu);
+
+      const distributeBtn = document.createElement('span');
+      distributeBtn.className = 'distribute-btn';
+      distributeBtn.textContent = 'Distribute Evenly';
+      distributeBtn.onclick = () => {
+        const inputs = colorsContainer.querySelectorAll(".color-input");
+        const count = inputs.length;
+        inputs.forEach((inp, i) => {
+          const pos = count === 1 ? 0 : Math.round((i / (count - 1)) * 100);
+          inp.querySelector(".position").value = pos + "%";
+        });
+        updateGradient();
+      };
+
+      toolbar.append(infoWrapper, examplesWrapper, distributeBtn);
+
+      const contentDiv = document.querySelector(".custom_gradient .content");
+      const rotationOption = contentDiv.querySelector('.option.rotation');
       rotationOption.parentElement.insertBefore(previewDiv, colorsContainer);
+      colorsContainer.parentElement.insertBefore(toolbar, colorsContainer);
 
-      let dragging = null;
-      let placeholder = null;
-
-      function createColorInput() {
+      function createColorInput(hex = "#ffffff", position = "") {
         const div = document.createElement("div");
         div.className = "color-input";
 
-        const reorder = document.createElement("i");
-        reorder.className = "fas fa-grip-vertical drag-handle";
+        const handle = document.createElement("i");
+        handle.className = "fas fa-grip-vertical drag-handle";
+        handle.draggable = true;
+
+        const colorPicker = document.createElement("input");
+        colorPicker.type = "color";
+        colorPicker.value = hex;
+        colorPicker.className = "color-picker";
+
+        const swatchWrapper = createSwatch(colorPicker, hex);
+        const swatch = swatchWrapper.querySelector(".color-swatch");
 
         const hexInput = document.createElement("input");
         hexInput.type = "text";
         hexInput.className = "hex";
-        hexInput.placeholder = "#FFFFFF";
+        hexInput.placeholder = "#ffffff";
         hexInput.maxLength = 7;
+        hexInput.value = hex;
 
         const posInput = document.createElement("input");
         posInput.type = "text";
         posInput.className = "position";
-        posInput.placeholder = "0%";
+        posInput.placeholder = "auto";
         posInput.maxLength = 4;
-
-        const colorPicker = document.createElement("input");
-        colorPicker.type = "color";
-        colorPicker.className = "color-picker";
-        colorPicker.value = "#ffffff";
+        posInput.value = position;
+        posInput.title = "Stop position (e.g. 50%). Leave blank to auto-distribute.";
 
         const trash = document.createElement("i");
         trash.className = "fas fa-trash remove-color";
-        trash.style.cssText = "cursor: pointer; margin-left: 0.5rem;";
 
-        trash.addEventListener("click", () => {
-          div.remove();
-          updateGradient();
-        });
+        trash.addEventListener("click", () => { div.remove(); updateGradient(); });
 
         hexInput.addEventListener("input", () => {
           if (/^#[0-9A-Fa-f]{6}$/.test(hexInput.value)) {
             colorPicker.value = hexInput.value;
+            swatch.style.background = hexInput.value;
             updateGradient();
           }
         });
 
         colorPicker.addEventListener("input", () => {
           hexInput.value = colorPicker.value;
+          swatch.style.background = colorPicker.value;
           updateGradient();
         });
 
         posInput.addEventListener("input", updateGradient);
 
-        div.append(reorder, hexInput, posInput, colorPicker, trash);
+        div.append(handle, swatchWrapper, hexInput, posInput, trash);
         return div;
       }
 
-      function setupDrag(container, itemSelector, addBtn) {
-        container.addEventListener("pointerdown", e => {
-          const handle = e.target.closest(".drag-handle");
-          if (!handle) return;
+      let dragSrcEl = null;
 
-          e.preventDefault();
-          dragging = handle.parentElement;
+      colorsContainer.addEventListener("dragstart", (e) => {
+        const item = e.target.closest(".color-input");
+        if (!item) return;
+        dragSrcEl = item;
+        e.dataTransfer.effectAllowed = "move";
+        const blank = document.createElement("canvas");
+        blank.width = 1;
+        blank.height = 1;
+        e.dataTransfer.setDragImage(blank, 0, 0);
+        setTimeout(() => item.classList.add("dragging"), 0);
+      });
 
-          placeholder = document.createElement("div");
-          placeholder.className = itemSelector.includes("color") ? "color-placeholder" : "badge-placeholder";
-          placeholder.style.height = dragging.getBoundingClientRect().height + "px";
+      colorsContainer.addEventListener("dragend", () => {
+        dragSrcEl?.classList.remove("dragging");
+        colorsContainer.querySelectorAll(".color-input").forEach(el => el.classList.remove("drag-over"));
+        dragSrcEl = null;
+      });
 
-          dragging.classList.add("dragging");
-          dragging.style.opacity = "0.5";
+      colorsContainer.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+        const target = e.target.closest(".color-input");
+        if (!target || target === dragSrcEl) return;
+        colorsContainer.querySelectorAll(".color-input").forEach(el => el.classList.remove("drag-over"));
+        target.classList.add("drag-over");
+      });
 
-          container.insertBefore(placeholder, dragging);
-          handle.setPointerCapture(e.pointerId);
-        });
+      colorsContainer.addEventListener("drop", (e) => {
+        e.preventDefault();
+        const target = e.target.closest(".color-input");
+        if (!target || !dragSrcEl || target === dragSrcEl) return;
+        const items = [...colorsContainer.querySelectorAll(".color-input")];
+        const srcIdx = items.indexOf(dragSrcEl);
+        const tgtIdx = items.indexOf(target);
+        colorsContainer.insertBefore(dragSrcEl, srcIdx < tgtIdx ? target.nextSibling : target);
+        colorsContainer.querySelectorAll(".color-input").forEach(el => el.classList.remove("drag-over"));
+        updateGradient();
+      });
 
-        container.addEventListener("pointermove", e => {
-          if (!dragging || !placeholder) return;
-          e.preventDefault();
-
-          const items = [...container.querySelectorAll(`${itemSelector}:not(.dragging)`)];
-          let inserted = false;
-
-          for (const item of items) {
-            const rect = item.getBoundingClientRect();
-            if (e.clientY < rect.top + rect.height / 2) {
-              if (placeholder.nextElementSibling !== item) {
-                container.insertBefore(placeholder, item);
-              }
-              inserted = true;
-              break;
-            }
-          }
-
-          if (!inserted && placeholder.nextElementSibling !== addBtn) {
-            container.insertBefore(placeholder, addBtn);
-          }
-        });
-
-        container.addEventListener("pointerup", e => {
-          if (!dragging) return;
-
-          const handle = e.target.closest(".drag-handle");
-          if (handle) handle.releasePointerCapture(e.pointerId);
-
-          dragging.classList.remove("dragging");
-          dragging.style.opacity = "";
-
-          if (placeholder?.parentElement) {
-            container.insertBefore(dragging, placeholder);
-            placeholder.remove();
-          }
-
-          placeholder = null;
-          dragging = null;
-
-          itemSelector.includes("color") ? updateGradient() : null;
-        });
-
-        container.addEventListener("pointercancel", () => {
-          if (!dragging) return;
-          dragging.classList.remove("dragging");
-          dragging.style.opacity = "";
-          placeholder?.parentElement && placeholder.remove();
-          placeholder = null;
-          dragging = null;
+      function getStops() {
+        const inputs = colorsContainer.querySelectorAll(".color-input");
+        const count = inputs.length;
+        return [...inputs].map((input, i) => {
+          const hex = input.querySelector(".hex").value || "#ffffff";
+          const rawPos = input.querySelector(".position").value.trim();
+          const pos = rawPos || `${count === 1 ? 0 : Math.round((i / (count - 1)) * 100)}%`;
+          return { hex, pos };
         });
       }
 
       function updateGradient() {
-        const inputs = colorsContainer.querySelectorAll(".color-input");
         const rotation = rotationSlider.value || 90;
-
-        const stops = [...inputs].map(input => {
-          const hex = input.querySelector(".hex").value || "#ffffff";
-          const pos = input.querySelector(".position").value || "0%";
-          return `${hex} ${pos}`;
-        });
-
-        previewText.style.backgroundImage = `linear-gradient(${rotation}deg, ${stops.join(", ")})`;
-
+        const stops = getStops();
+        const gradientCSS = `linear-gradient(${rotation}deg, ${stops.map(s => `${s.hex} ${s.pos}`).join(", ")})`;
+        previewText.style.backgroundImage = gradientCSS;
+        previewCssLabel.value = gradientCSS;
         localStorage.setItem('gradientSettings', JSON.stringify({
           rotation,
-          colors: stops.map((_, i) => ({
-            hex: inputs[i].querySelector(".hex").value || "#ffffff",
-            position: inputs[i].querySelector(".position").value || "0%"
-          }))
+          colors: stops.map(s => ({ hex: s.hex, position: s.pos }))
         }));
-
         saveToCustomizations();
       }
 
       function updateTextShadow() {
         const intensity = shadowSlider.value || 0;
         const color = shadowColorPicker.value || '#FFFFFF';
-
         previewText.style.textShadow = intensity > 0 ? `0 0 ${intensity}px ${color}` : 'none';
-
         localStorage.setItem('gradientShadowSettings', JSON.stringify({ intensity, color }));
         saveToCustomizations();
       }
 
       function saveToCustomizations() {
         if (!self.settings.local_customizations) return;
-
         const customizations = JSON.parse(localStorage.getItem("juice-customizations") || "[]");
         const shortId = localStorage.getItem("user-id");
-        const inputs = colorsContainer.querySelectorAll(".color-input");
-        const badgeInputs = document.querySelectorAll(".badge-input");
-
-        const stops = [...inputs].map(input => input.querySelector(".hex").value || "#ffffff");
-        const badges = [...badgeInputs].map(input => input.querySelector(".badge-url").value.trim()).filter(Boolean);
+        const stops = getStops().map(s => s.hex);
+        const badges = [...document.querySelectorAll(".badge-input")].map(input => input.querySelector(".badge-url")?.value.trim()).filter(Boolean);
         const intensity = shadowSlider.value || 0;
         const color = shadowColorPicker.value || '#FFFFFF';
-
         const userData = {
           shortId,
           gradient: {
@@ -413,41 +546,33 @@ class Menu {
           animated: self.settings.local_animated_gradient,
           badges
         };
-
         const existingIndex = customizations.findIndex(c => c.shortId === shortId);
         existingIndex >= 0 ? customizations[existingIndex] = userData : customizations.push(userData);
-
         localStorage.setItem("juice-customizations", JSON.stringify(customizations));
       }
 
       function loadGradient() {
         const saved = localStorage.getItem('gradientSettings');
         if (!saved) return;
-
         const data = JSON.parse(saved);
         rotationSlider.value = data.rotation;
         rotationInput.value = data.rotation;
-
         data.colors.forEach(color => {
-          const colorInput = createColorInput();
-          colorsContainer.insertBefore(colorInput, addButton);
-          colorInput.querySelector(".hex").value = color.hex;
-          colorInput.querySelector(".position").value = color.position;
-          colorInput.querySelector(".color-picker").value = color.hex;
+          colorsContainer.insertBefore(createColorInput(color.hex, color.position), addButton);
         });
-
         updateGradient();
       }
 
       function loadShadowSettings() {
         const saved = localStorage.getItem('gradientShadowSettings');
         if (!saved) return;
-
         const data = JSON.parse(saved);
         shadowSlider.value = data.intensity;
         shadowInput.value = data.intensity;
         shadowColorPicker.value = data.color;
         shadowHexInput.value = data.color;
+        const swatch = shadowColorInputDiv.querySelector('.color-swatch');
+        if (swatch) swatch.style.background = data.color;
         updateTextShadow();
       }
 
@@ -456,11 +581,7 @@ class Menu {
         updateGradient();
       });
 
-      rotationSlider.addEventListener('input', () => {
-        rotationInput.value = rotationSlider.value;
-        updateGradient();
-      });
-
+      rotationSlider.addEventListener('input', () => { rotationInput.value = rotationSlider.value; updateGradient(); });
       rotationInput.addEventListener('input', () => {
         const clamped = Math.max(0, Math.min(360, parseInt(rotationInput.value) || 0));
         rotationSlider.value = clamped;
@@ -472,35 +593,34 @@ class Menu {
           previewText.style.backgroundSize = "200% 200%";
           previewText.style.animation = "animated-gradient 3s linear infinite";
         } else {
-          previewText.style.backgroundSize = "100% 100%";
+          previewText.style.backgroundSize = "";
           previewText.style.animation = "";
         }
         saveToCustomizations();
       });
 
-      shadowSlider.addEventListener('input', () => {
-        shadowInput.value = shadowSlider.value;
-        updateTextShadow();
-      });
-
+      shadowSlider.addEventListener('input', () => { shadowInput.value = shadowSlider.value; updateTextShadow(); });
       shadowInput.addEventListener('input', () => {
-        shadowSlider.value = Math.max(0, Math.min(10, parseInt(shadowInput.value) || 0));
+        shadowSlider.value = Math.max(0, Math.min(100, parseInt(shadowInput.value) || 0));
         updateTextShadow();
       });
 
       shadowHexInput.addEventListener('input', () => {
         if (/^#[0-9A-Fa-f]{6}$/.test(shadowHexInput.value)) {
           shadowColorPicker.value = shadowHexInput.value;
+          const swatch = shadowColorInputDiv.querySelector('.color-swatch');
+          if (swatch) swatch.style.background = shadowHexInput.value;
           updateTextShadow();
         }
       });
 
       shadowColorPicker.addEventListener('input', () => {
         shadowHexInput.value = shadowColorPicker.value;
+        const swatch = shadowColorInputDiv.querySelector('.color-swatch');
+        if (swatch) swatch.style.background = shadowColorPicker.value;
         updateTextShadow();
       });
 
-      setupDrag(colorsContainer, ".color-input", addButton);
       loadGradient();
       loadShadowSettings();
     }, 250);
@@ -514,21 +634,19 @@ class Menu {
     function createBadgeInput(url = "") {
       const div = document.createElement("div");
       div.className = "badge-input";
-      div.style.cssText = "display: flex; align-items: center; gap: 8px; margin: 8px 0; padding: 8px; background: rgba(255,255,255,0.05); border-radius: 4px;";
 
-      const reorder = document.createElement("i");
-      reorder.className = "fas fa-grip-vertical drag-handle";
+      const handle = document.createElement("i");
+      handle.className = "fas fa-grip-vertical drag-handle";
+      handle.draggable = true;
 
       const urlInput = document.createElement("input");
       urlInput.type = "text";
       urlInput.className = "badge-url";
       urlInput.placeholder = "https://.../.png";
       urlInput.value = url;
-      urlInput.style.cssText = "flex: 1; padding: 6px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; color: white;";
 
       const preview = document.createElement("img");
       preview.className = "badge-preview";
-      preview.style.cssText = "width: 32px; height: 32px; object-fit: contain; background: rgba(0,0,0,0.2); border-radius: 4px;";
       if (url) {
         if (url.startsWith('/') || url.match(/^[A-Za-z]:\\/)) {
           const filePath = url.replace(/\\/g, '/');
@@ -540,12 +658,8 @@ class Menu {
 
       const trash = document.createElement("i");
       trash.className = "fas fa-trash remove-badge";
-      trash.style.cursor = "pointer";
 
-      trash.addEventListener("click", () => {
-        div.remove();
-        saveBadges();
-      });
+      trash.addEventListener("click", () => { div.remove(); saveBadges(); });
 
       urlInput.addEventListener("input", () => {
         const newUrl = urlInput.value.trim();
@@ -554,7 +668,7 @@ class Menu {
         saveBadges();
       });
 
-      div.append(reorder, urlInput, preview, trash);
+      div.append(handle, urlInput, preview, trash);
       return div;
     }
 
@@ -588,79 +702,53 @@ class Menu {
     function loadBadges() {
       const saved = localStorage.getItem('badgeSettings');
       if (!saved) return;
-
       JSON.parse(saved).forEach(url => {
         badgesContent.insertBefore(createBadgeInput(url), addButton);
       });
     }
+
+    let dragSrcEl = null;
+
+    badgesContent.addEventListener("dragstart", (e) => {
+      const item = e.target.closest(".badge-input");
+      if (!item) return;
+      dragSrcEl = item;
+      e.dataTransfer.effectAllowed = "move";
+      setTimeout(() => item.classList.add("dragging"), 0);
+    });
+
+    badgesContent.addEventListener("dragend", () => {
+      dragSrcEl?.classList.remove("dragging");
+      badgesContent.querySelectorAll(".badge-input").forEach(el => el.classList.remove("drag-over"));
+      dragSrcEl = null;
+    });
+
+    badgesContent.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      const target = e.target.closest(".badge-input");
+      if (!target || target === dragSrcEl) return;
+      badgesContent.querySelectorAll(".badge-input").forEach(el => el.classList.remove("drag-over"));
+      target.classList.add("drag-over");
+    });
+
+    badgesContent.addEventListener("drop", (e) => {
+      e.preventDefault();
+      const target = e.target.closest(".badge-input");
+      if (!target || !dragSrcEl || target === dragSrcEl) return;
+      const items = [...badgesContent.querySelectorAll(".badge-input")];
+      const srcIdx = items.indexOf(dragSrcEl);
+      const tgtIdx = items.indexOf(target);
+      badgesContent.insertBefore(dragSrcEl, srcIdx < tgtIdx ? target.nextSibling : target);
+      badgesContent.querySelectorAll(".badge-input").forEach(el => el.classList.remove("drag-over"));
+      saveBadges();
+    });
 
     addButton.addEventListener("click", () => {
       badgesContent.insertBefore(createBadgeInput(), addButton);
       saveBadges();
     });
 
-    const setupDrag = (container, selector, btn) => {
-      let dragging = null, placeholder = null;
-
-      container.addEventListener("pointerdown", e => {
-        const handle = e.target.closest(".drag-handle");
-        if (!handle) return;
-        e.preventDefault();
-
-        dragging = handle.parentElement;
-        placeholder = document.createElement("div");
-        placeholder.className = "badge-placeholder";
-        placeholder.style.cssText = `height: ${dragging.getBoundingClientRect().height}px; background: rgba(0,0,0,0.1); border: 2px dashed #999; border-radius: 4px; margin: 8px 0;`;
-
-        dragging.style.opacity = "0.5";
-        container.insertBefore(placeholder, dragging);
-        handle.setPointerCapture(e.pointerId);
-      });
-
-      container.addEventListener("pointermove", e => {
-        if (!dragging) return;
-        e.preventDefault();
-
-        const items = [...container.querySelectorAll(`${selector}:not([style*="opacity: 0.5"])`)];
-        let inserted = false;
-
-        for (const item of items) {
-          const rect = item.getBoundingClientRect();
-          if (e.clientY < rect.top + rect.height / 2) {
-            if (placeholder.nextElementSibling !== item) container.insertBefore(placeholder, item);
-            inserted = true;
-            break;
-          }
-        }
-
-        if (!inserted && placeholder.nextElementSibling !== btn) container.insertBefore(placeholder, btn);
-      });
-
-      container.addEventListener("pointerup", e => {
-        if (!dragging) return;
-
-        const handle = e.target.closest(".drag-handle");
-        if (handle) handle.releasePointerCapture(e.pointerId);
-
-        dragging.style.opacity = "";
-        if (placeholder?.parentElement) {
-          container.insertBefore(dragging, placeholder);
-          placeholder.remove();
-        }
-
-        dragging = placeholder = null;
-        saveBadges();
-      });
-
-      container.addEventListener("pointercancel", () => {
-        if (!dragging) return;
-        dragging.style.opacity = "";
-        placeholder?.remove();
-        dragging = placeholder = null;
-      });
-    };
-
-    setupDrag(badgesContent, ".badge-input", addButton);
     loadBadges();
   }
 
@@ -802,7 +890,7 @@ class Menu {
 
     this.localStorage.setItem("juice-menu-tab", tabName);
 
-    const contents = this.menu.querySelectorAll(".juice.options");
+    const contents = [...this.menu.querySelectorAll(".juice.options")].filter(el => !el.classList.contains("inner"));
     tabs.forEach((tab) => {
       tab.classList.remove("active");
     });
@@ -814,6 +902,65 @@ class Menu {
     if (tabName === "scripts") {
       addOpenerList();
     }
+
+    const content = this.menu.querySelector(".content");
+    if (tabName === "browse") {
+      content.classList.add("browse-community");
+    } else {
+      content.classList.remove("browse-community");
+    }
+  }
+
+  handleInnerTabChanges() {
+    const tabs = this.menu.querySelectorAll(".juice.inner-tab");
+    tabs.forEach((tab) => {
+      tab.addEventListener("click", () => this.handleInnerTabChange(tab));
+    });
+  }
+
+  handleInnerTabChange(tab) {
+    const tabs = this.menu.querySelectorAll(".juice.inner-tab");
+    const tabName = tab.dataset.tab;
+
+    this.localStorage.setItem("juice-menu-inner-tab", tabName);
+
+    const contents = this.menu.querySelectorAll(".juice.options.inner");
+    tabs.forEach((tab) => {
+      tab.classList.remove("active");
+    });
+    contents.forEach((content) => {
+      content.classList.remove("active");
+    });
+    tab.classList.add("active");
+    this.tabToContentMap[tab.dataset.tab].classList.add("active");
+
+    const content = this.menu.querySelector(".content");
+    const currentTab = this.localStorage.getItem("juice-menu-tab");
+    content.classList.toggle("browse-community", currentTab === "browse" && tabName === "community");
+  }
+
+  handleSelectorChanges() {
+    const selectors = this.menu.querySelectorAll(".juice.selector");
+    selectors.forEach((selector) => {
+      selector.addEventListener("click", () => this.handleSelectorChange(selector));
+    });
+  }
+
+  handleSelectorChange(selector) {
+    const selectors = this.menu.querySelectorAll(".juice.selector");
+    const selectorName = selector.dataset.selector;
+
+    this.localStorage.setItem("juice-menu-selector", selectorName);
+
+    const contents = this.menu.querySelectorAll(".juice.options");
+    selectors.forEach((selector) => {
+      selector.classList.remove("active");
+    });
+    contents.forEach((content) => {
+      content.classList.remove("selected");
+    });
+    selector.classList.add("active");
+    this.tabToContentMap[selector.dataset.selector].classList.add("selected");
   }
 
   handleDropdowns() {
@@ -829,21 +976,19 @@ class Menu {
   handleSearch() {
     const searchInput = this.menu.querySelector(".juice.search");
     const settings = this.menu.querySelectorAll(".option:not(.custom)");
+
+    const resetSettings = () => {
+      settings.forEach((s) => (s.style.display = "flex"));
+      this.menu.querySelectorAll(".option-group").forEach((g) => (g.style.display = "flex"));
+    };
+
     searchInput.addEventListener("input", () => {
       const searchValue = searchInput.value.toLowerCase();
       settings.forEach((setting) => {
-        setting.style.display = setting.textContent
-          .toLowerCase()
-          .includes(searchValue)
-          ? "flex"
-          : "none";
-
+        setting.style.display = setting.textContent.toLowerCase().includes(searchValue) ? "flex" : "none";
         const parent = setting.parentElement;
         if (parent.classList.contains("option-group")) {
-          const children = parent.children;
-          const visibleChildren = Array.from(children).filter(
-            (child) => child.style.display === "flex"
-          );
+          const visibleChildren = Array.from(parent.children).filter((c) => c.style.display === "flex");
           parent.style.display = visibleChildren.length ? "flex" : "none";
         }
       });

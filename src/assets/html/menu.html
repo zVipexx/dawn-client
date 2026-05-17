@@ -17,9 +17,9 @@
         <i class="fas fa-gamepad"></i>
         Game
       </div>
-      <div data-tab="gallery" class="juice tab">
-        <i class="fas fa-image"></i>
-        Gallery
+      <div data-tab="browse" class="juice tab">
+        <i class="fas fa-earth"></i>
+        Browse
       </div>
     </div>
     <div class="sep"></div>
@@ -137,8 +137,8 @@
       <div class="option-group">
         <div class="option">
           <div class="left">
-            <span>Badges and Gradient Names</span>
-            <div class="description">Display user customizations</div>
+            <span>Badges, Gradient Names and Nicknames</span>
+            <div class="description">Display user customizations and nicknames</div>
           </div>
           <div class="checkbox">
             <input type="checkbox" id="customizations" data-setting="customizations" />
@@ -158,7 +158,7 @@
         <div class="option">
           <div class="left">
             <span>Gradient Animations</span>
-            <div class="description">This WILL impact your fps while visible</div>
+            <div class="description">This might impact fps on low-end devices</div>
           </div>
           <div class="checkbox">
             <input type="checkbox" id="animations" data-setting="animations" />
@@ -190,6 +190,18 @@
         <div class="option">
           <span>Kill Icon Link</span>
           <input type="text" placeholder="https://.../.png" data-setting="killicon_link" />
+        </div>
+      </div>
+      <div class="option-group">
+        <div class="option">
+          <div class="left">
+            <span>Stop Overlap</span>
+            <span class="description">Hide the Team State while the info overlay is visible</span>
+          </div>
+          <div class="checkbox">
+            <input type="checkbox" id="hide_teamstate_overlay" data-setting="hide_teamstate_overlay" />
+            <label for="hide_teamstate_overlay"></label>
+          </div>
         </div>
       </div>
       <div class="option-group">
@@ -246,9 +258,84 @@
         </div>
       </div>
     </div>
-    <div id="gallery-options" class="juice options">
-      <div class="juice-button" id="open-gallery-folder">
-        <span>Open Gallery Folder</span>
+    <div id="browse-options" class="juice options">
+      <div id="inner-tabs" class="juice tabs">
+        <div data-tab="community" class="juice inner-tab">
+          <i class="fas fa-users"></i>
+          Community
+          <a href="https://kirkacommunityhub.pages.dev/" target="_blank" class="about-kcl"
+            style="height: 32px; width: 32px; margin-left: auto;" title="Kirka Community Hub">
+            <img src="https://kirkacommunityhub.pages.dev/assets/icon.png"
+              style="width: 100%; height: 100%; object-fit: cover;" />
+          </a>
+        </div>
+        <div data-tab="gallery" class="juice inner-tab">
+          <i class="fas fa-image"></i>
+          Local Gallery
+        </div>
+      </div>
+      <div class="sep"></div>
+      <div id="content">
+        <div id="community-options" class="juice options inner">
+          <div class="community-sidebar">
+            <div class="selector-group">
+              <span style="font-size: 12px; text-align: center; color: rgba(var(--red))">Require Restart</span>
+              <div data-selector="css" class="juice selector active">CSS</div>
+              <div data-selector="commscripts" class="juice selector">Scripts</div>
+              <div data-selector="sounds" class="juice selector">Sounds</div>
+            </div>
+            <div class="selector-group">
+              <span style="font-size: 12px; text-align: center; color: rgba(var(--blue))">Require Refresh</span>
+              <div data-selector="textures" class="juice selector">Map Textures</div>
+              <div data-selector="crosshairs" class="juice selector">Crosshairs</div>
+              <div data-selector="skyboxes" class="juice selector">Skyboxes</div>
+              <div data-selector="killicons" class="juice selector">Kill Icons</div>
+            </div>
+            <div class="sep"></div>
+            <div class="contribute" style="font-size: 14px; color: rgba(var(--opacity-half)); text-align: center;">
+              <span>Not finding what you're looking for?</span>
+              <a href="https://kirkacommunityhub.pages.dev/submit-content" target="_blank"
+                style="color: rgba(var(--green))">Submit your
+                own!</a>
+            </div>
+          </div>
+          <div class="content">
+            <div id="css-options" class="juice options inner selected">
+              <div class="option-group" id="toggle-installable">
+                <div class="option">
+                  <span>Only show Installable</span>
+                  <div class="checkbox">
+                    <input type="checkbox" id="toggle_installable" data-setting="toggle_installable"></input>
+                    <label for="toggle_installable"></label>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div id="commscripts-options" class="juice options">
+
+            </div>
+            <div id="sounds-options" class="juice options">
+
+            </div>
+            <div id="textures-options" class="juice options">
+
+            </div>
+            <div id="crosshairs-options" class="juice options">
+
+            </div>
+            <div id="skyboxes-options" class="juice options">
+
+            </div>
+            <div id="killicons-options" class="juice options">
+
+            </div>
+          </div>
+        </div>
+        <div id="gallery-options" class="juice options inner">
+          <div class="juice-button" id="open-gallery-folder">
+            <span>Open Gallery Folder</span>
+          </div>
+        </div>
       </div>
     </div>
     <div id="performance-options" class="juice options">
@@ -332,7 +419,6 @@
               <div class="left">
                 <span>Animated Gradient</span>
                 <div class="description">For a smooth animation put your starting color at the end as well</div>
-                <div class="description">This WILL impact your fps while visible</div>
               </div>
               <div class="checkbox">
                 <input type="checkbox" id="local_animated_gradient" data-setting="local_animated_gradient" />
@@ -573,7 +659,7 @@
           </div>
           <div class="option" id="load-from-url">
             <div class="left">
-              <span>Load from URL</span>
+              <span>OR Load from URL</span>
             </div>
             <input type="text" id="file-url" placeholder="https://..." />
           </div>
@@ -659,9 +745,9 @@
                 <span class="author">forked by Vipex</span>
               </div>
               <div class="about-buttons">
-                <a href="https://kirka.io/profile/1110KH" class="about-kirka">
-                  <img src="https://kirka.io/favicon.ico" />
-                  <div class="custom-border"></div>
+                <a href="https://kirkacommunityhub.pages.dev/" target="_blank" class="about-kcl">
+                  <img src="https://kirkacommunityhub.pages.dev/assets/icon.png"
+                    style="height: 100%; width: 100%; object-fit: cover;" />
                 </a>
                 <a href="https://discord.gg/VsMEQ3HWs2" target="_blank" class="about-discord">
                   <i class="fab fa-discord"></i>
@@ -669,6 +755,24 @@
                 </a>
                 <a href="https://github.com/zVipexx/dawn-client" target="_blank" class="about-github">
                   <i class="fab fa-github"></i>
+                  <div class="custom-border"></div>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="option-group">
+        <div class="about-top compact">
+          <img src="https://i.imgur.com/kkykpLk.png" />
+          <div class="about-info compact">
+            <span class="title">KTiers</span>
+            <div class="about-more">
+              <div></div>
+              <div class="about-buttons">
+                <a href="https://ktiers.com" target="_blank" class="about-ktiers alt">
+                  <i class="fas fa-arrow-up-right-from-square"></i>
+                  <p>Check it out!</p>
                   <div class="custom-border"></div>
                 </a>
               </div>
