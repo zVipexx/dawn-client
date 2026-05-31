@@ -1,0 +1,94 @@
+name: Build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+
+    permissions:
+      contents: write
+
+    strategy:
+      matrix:
+        os: [macos-15, windows-latest, ubuntu-latest]
+        include:
+          - os: windows-latest
+            arch: x64
+          - os: macos-15
+            arch: x64
+          - os: ubuntu-latest
+            arch: x64
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Get version and name from package.json
+        id: get_version_name
+        run: |
+          echo "::set-output name=version::$(node -p "require('./package.json').version")"
+          echo "::set-output name=name::$(node -p "require('./package.json').name")"
+
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v2.0.6
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.get_version_name.outputs.version }}
+          name: Release ${{ steps.get_version_name.outputs.version }}
+          draft: true
+          prerelease: false
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Electron App
+        run: npm run build
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Windows build
+        if: matrix.os == 'windows-latest'
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: dawn-setup-win-x64.exe
+          path: build/dawn-setup-win-x64-*.exe
+          if-no-files-found: warn
+          compression-level: 6
+          overwrite: false
+          include-hidden-files: false
+
+      - name: Upload macOS build
+        if: matrix.os == 'macos-15'
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: dawn-setup-mac.dmg
+          path: |
+            build/dawn-setup-mac-*.dmg
+            build/dawn-setup-mac-*.dmg.blockmap
+          if-no-files-found: warn
+          compression-level: 6
+          overwrite: false
+          include-hidden-files: false
+
+      - name: Upload Linux build
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: dawn-linux-builds
+          path: |
+            build/dawn-*-linux-x86_64.AppImage
+            build/dawn-*-linux-x64.tar.gz
+          if-no-files-found: warn
+          compression-level: 6
+          overwrite: false
+          include-hidden-files: false
