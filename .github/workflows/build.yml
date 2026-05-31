@@ -66,7 +66,7 @@ jobs:
         uses: actions/upload-artifact@v4.6.2
         with:
           name: dawn-setup-win-x64.exe
-          path: build/dawn-setup-win-x64-*.exe
+          path: build/*.exe
           if-no-files-found: warn
           compression-level: 6
           overwrite: false
@@ -78,8 +78,8 @@ jobs:
         with:
           name: dawn-setup-mac.dmg
           path: |
-            build/dawn-setup-mac-*.dmg
-            build/dawn-setup-mac-*.dmg.blockmap
+            build/*.dmg
+            build/*.blockmap
           if-no-files-found: warn
           compression-level: 6
           overwrite: false
@@ -91,8 +91,8 @@ jobs:
         with:
           name: dawn-linux-builds
           path: |
-            build/dawn-*-linux-x86_64.AppImage
-            build/dawn-*-linux-x64.tar.gz
+            build/*.AppImage
+            build/*.tar.gz
           if-no-files-found: warn
           compression-level: 6
           overwrite: false
