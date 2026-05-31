@@ -19,7 +19,7 @@ jobs:
             build_command: npm run build
           - os: macos-14
             arch: x64
-            build_command: npx electron-builder --x64
+            build_command: npx electron-builder --mac dmg --x64
           - os: ubuntu-latest
             arch: x64
             build_command: npm run build
