@@ -54,7 +54,12 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build Electron App
-        run: npm run build
+        run: |
+          if [ "${{ matrix.os }}" = "macos-14" ]; then
+            npx electron-builder --x64
+          else
+            npm run build
+          fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
