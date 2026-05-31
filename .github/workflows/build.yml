@@ -16,13 +16,13 @@ jobs:
         include:
           - os: windows-latest
             arch: x64
-            build_command: npx electron-builder --windows --x64 --publish always -c.publish.repo=dawn-testing
+            build_command: npx electron-builder --windows --x64 --publish always "-c.publish.repo=dawn-testing"
           - os: macos-15-intel
             arch: x64
-            build_command: npx electron-builder --mac dmg --x64 --publish always -c.publish.repo=dawn-testing
+            build_command: npx electron-builder --mac dmg --x64 --publish always "-c.publish.repo=dawn-testing"
           - os: ubuntu-latest
             arch: x64
-            build_command: npx electron-builder --linux --x64 --publish always -c.publish.repo=dawn-testing
+            build_command: npx electron-builder --linux --x64 --publish always "-c.publish.repo=dawn-testing"
 
     steps:
       - name: Checkout Repository
@@ -38,7 +38,6 @@ jobs:
         env:
           npm_config_arch: x64
 
-      # This step handles compilation AND securely drops installers into a hidden Draft Release
       - name: Build and Publish Electron App
         run: ${{ matrix.build_command }}
         env:
