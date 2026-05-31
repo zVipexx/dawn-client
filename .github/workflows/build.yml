@@ -55,6 +55,7 @@ jobs:
         run: npm run build
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TARGET_ARCH: x64
 
       - name: Upload Windows build
         if: matrix.os == 'windows-latest'
