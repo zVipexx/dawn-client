@@ -16,10 +16,13 @@ jobs:
         include:
           - os: windows-latest
             arch: x64
+            build_command: npm run build
           - os: macos-14
             arch: x64
+            build_command: npx electron-builder --x64
           - os: ubuntu-latest
             arch: x64
+            build_command: npm run build
 
     steps:
       - name: Checkout Repository
@@ -54,12 +57,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build Electron App
-        run: |
-          if [ "${{ matrix.os }}" = "macos-14" ]; then
-            npx electron-builder --x64
-          else
-            npm run build
-          fi
+        run: ${{ matrix.build_command }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
