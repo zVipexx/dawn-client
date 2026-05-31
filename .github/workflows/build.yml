@@ -16,13 +16,13 @@ jobs:
         include:
           - os: windows-latest
             arch: x64
-            build_command: npx electron-builder --windows --x64 --publish always
+            build_command: npx electron-builder --windows --x64 --publish always -c.publish.repo=dawn-testing
           - os: macos-14
             arch: x64
-            build_command: npx electron-builder --mac dmg --x64 --publish always
+            build_command: npx electron-builder --mac dmg --x64 --publish always -c.publish.repo=dawn-testing
           - os: ubuntu-latest
             arch: x64
-            build_command: npx electron-builder --linux --x64 --publish always
+            build_command: npx electron-builder --linux --x64 --publish always -c.publish.repo=dawn-testing
 
     steps:
       - name: Checkout Repository
@@ -61,3 +61,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EP_PREPROD_CHANNEL: "alpha"
+          NONE_CMS_PUBLISH: "true
