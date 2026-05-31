@@ -9,6 +9,7 @@ jobs:
 
     permissions:
       contents: write
+      releases: write
 
     strategy:
       matrix:
