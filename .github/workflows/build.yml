@@ -16,13 +16,13 @@ jobs:
         include:
           - os: windows-latest
             arch: x64
-            build_command: npm run build
+            build_command: npx electron-builder --windows --x64 --publish always
           - os: macos-14
             arch: x64
-            build_command: npx electron-builder --mac dmg --x64
+            build_command: npx electron-builder --mac dmg --x64 --publish always
           - os: ubuntu-latest
             arch: x64
-            build_command: npm run build
+            build_command: npx electron-builder --linux --x64 --publish always
 
     steps:
       - name: Checkout Repository
@@ -56,44 +56,8 @@ jobs:
           prerelease: false
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build Electron App
+      - name: Build and Publish Electron App
         run: ${{ matrix.build_command }}
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload Windows build
-        if: matrix.os == 'windows-latest'
-        uses: actions/upload-artifact@v4.6.2
-        with:
-          name: dawn-setup-win-x64.exe
-          path: build/*.exe
-          if-no-files-found: warn
-          compression-level: 6
-          overwrite: false
-          include-hidden-files: false
-
-      - name: Upload macOS build
-        if: matrix.os == 'macos-15'
-        uses: actions/upload-artifact@v4.6.2
-        with:
-          name: dawn-setup-mac.dmg
-          path: |
-            build/*.dmg
-            build/*.blockmap
-          if-no-files-found: warn
-          compression-level: 6
-          overwrite: false
-          include-hidden-files: false
-
-      - name: Upload Linux build
-        if: matrix.os == 'ubuntu-latest'
-        uses: actions/upload-artifact@v4.6.2
-        with:
-          name: dawn-linux-builds
-          path: |
-            build/*.AppImage
-            build/*.tar.gz
-          if-no-files-found: warn
-          compression-level: 6
-          overwrite: false
-          include-hidden-files: false
