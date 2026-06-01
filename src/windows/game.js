@@ -1,4 +1,4 @@
-const { BrowserWindow, ipcMain, app, shell, clipboard, dialog, net } = require("electron");
+const { BrowserWindow, ipcMain, app, shell, clipboard, dialog, net, session, protocol } = require("electron");
 const { default_settings, allowed_urls } = require("../util/defaults.json");
 const { registerShortcuts } = require("../util/shortcuts");
 const { applySwitches } = require("../util/switches");
@@ -8,8 +8,23 @@ const path = require("path");
 const Store = require("electron-store");
 const fs = require("fs-extra");
 const ffmpeg = require("fluent-ffmpeg");
+const http = require('http');
 const https = require("https");
 let ffmpegPath = require("ffmpeg-static");
+
+const fetchText = (url) => new Promise((resolve, reject) => {
+  https.get(url, (res) => {
+    let data = '';
+    res.on('data', chunk => data += chunk);
+    res.on('end', () => resolve(data));
+    res.on('error', reject);
+  }).on('error', reject);
+});
+
+protocol.registerSchemesAsPrivileged([
+  { scheme: 'https', privileges: { bypassCSP: true, secure: true, supportFetchAPI: true } },
+  { scheme: 'dawn-patch', privileges: { bypassCSP: true, secure: true, supportFetchAPI: true } }
+]);
 
 const store = new Store();
 if (!store.has("settings")) {
@@ -332,6 +347,8 @@ ipcMain.on("save-sound", (event, soundname, filePath, volume) => {
 
 applySwitches(settings);
 
+let gameWindow = null;
+
 const createWindow = () => {
   gameWindow = new BrowserWindow({
     fullscreen: process.platform !== "darwin" && settings.auto_fullscreen,
@@ -439,6 +456,28 @@ const createWindow = () => {
 };
 
 const initGame = () => {
+  protocol.registerBufferProtocol('dawn-patch', (request, callback) => {
+    const urlParams = new URL(request.url);
+    const targetScriptUrl = urlParams.searchParams.get('url');
+
+    fetchText(targetScriptUrl)
+      .then((code) => {
+        const target = "f5['a'][hF]";
+        if (code.includes(target)) {
+          code = code.replace(target, "(window.__f5=f5,window.__zoomInstance=this,f5['a'][hF])");
+        }
+        code += `\n//# sourceURL=${targetScriptUrl}`;
+        callback({ mimeType: 'text/javascript', data: Buffer.from(code) });
+      })
+  });
+
+  session.defaultSession.webRequest.onBeforeRequest(
+    { urls: ['*://kirka.io/assets/js/app.*.js'] },
+    (details, callback) => {
+      callback({ redirectURL: 'dawn-patch://bundle/app.js?url=' + encodeURIComponent(details.url) });
+    }
+  );
+
   createWindow();
   if (settings.discord_rpc) {
     gameWindow.DiscordRPC = new DiscordRPC();

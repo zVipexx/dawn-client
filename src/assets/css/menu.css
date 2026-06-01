@@ -1440,6 +1440,7 @@
     transform: rotate(180deg) !important;
 }
 
+
 .menu .color-input {
     height: 2.5rem;
     justify-content: center;
@@ -1472,13 +1473,13 @@
     max-width: 20% !important;
 }
 
-.menu .shadow-color .color-swatch {
-    margin-left: -10px;
-}
-
 .menu input[type="color"] {
     border: none;
     background: none;
+    outline: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 5px;
 }
 
 .menu input[type="color"]:focus {

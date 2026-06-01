@@ -204,19 +204,76 @@
       </div>
       <div class="option-group">
         <div class="option">
-          <span>Weapon size</span>
-          <div class="slider">
-            <input type="range" id="weapon_size" data-setting="weapon_size" min="0.15" step="0.15" max="1.8" />
-            <label for="weapon_size"></label>
+          <div class="left">
+            <span>ADS Power</span>
+            <span class="description">Adjust the zoom strength, default 1</span>
+          </div>
+          <div class="right"
+            style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
+            <input type="text" class="ads-power-value" placeholder="0" style="width: 21.5%" maxlength="3" />
+            <div class="slider">
+              <input type="range" id="ads_power" data-setting="ads_power" min="0" step="0.1" max="2" />
+              <label for="ads_power"></label>
+            </div>
           </div>
         </div>
         <div class="option">
-          <span>Rainbow Weapon</span>
-          <div class="checkbox">
-            <input type="checkbox" id="weapon_rgb" data-setting="weapon_rgb" />
-            <label for="weapon_rgb"></label>
+          <span>Weapon size</span>
+          <div class="right"
+            style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
+            <input type="text" class="weapon-size-value" placeholder="0" style="width: 21.5%" maxlength="3" />
+            <div class="slider">
+              <input type="range" id="weapon_size" data-setting="weapon_size" min="0.15" step="0.05" max="1.8" />
+              <label for="weapon_size"></label>
+            </div>
           </div>
         </div>
+        <div class="option dropdown">
+          <div class="top">
+            <i class="fas fa-angle-down"></i>
+            <span>Weapon Offset</span>
+          </div>
+          <div class="content">
+            <div class="option">
+              X
+              <div class="right"
+                style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
+                <input type="text" class="weapon-offset-x-value" placeholder="0" style="width: 21.5%" maxlength="5" />
+                <div class="slider">
+                  <input type="range" id="weapon_offset_x" data-setting="weapon_offset_x" min="-0.5" step="0.01"
+                    max="0.5" />
+                  <label for="weapon_offset_x"></label>
+                </div>
+              </div>
+            </div>
+            <div class="option">
+              Y
+              <div class="right"
+                style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
+                <input type="text" class="weapon-offset-y-value" placeholder="0" style="width: 21.5%" maxlength="5" />
+                <div class="slider">
+                  <input type="range" id="weapon_offset_y" data-setting="weapon_offset_y" min="-0.5" step="0.01"
+                    max="0.5" />
+                  <label for="weapon_offset_y"></label>
+                </div>
+              </div>
+            </div>
+            <div class="option">
+              Z
+              <div class="right"
+                style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
+                <input type="text" class="weapon-offset-z-value" placeholder="0" style="width: 21.5%" maxlength="5" />
+                <div class="slider">
+                  <input type="range" id="weapon_offset_z" data-setting="weapon_offset_z" min="-0.5" step="0.01"
+                    max="0.5" />
+                  <label for="weapon_offset_z"></label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="option-group">
         <div class="option">
           <span>Wireframe Weapon</span>
           <div class="checkbox">
@@ -229,6 +286,31 @@
           <div class="checkbox">
             <input type="checkbox" id="include_arms" data-setting="include_arms" />
             <label for="include_arms"></label>
+          </div>
+        </div>
+        <div class="option dropdown">
+          <div class="option top" style="width:100%">
+            <i class=" fas fa-angle-down"></i>
+            <span style="margin-right:auto">Weapon Color</span>
+            <div class="checkbox">
+              <input type="checkbox" id="weapon_color" data-setting="weapon_color" />
+              <label for="weapon_color"></label>
+            </div>
+          </div>
+          <div class="content">
+            <div class="option weapon-color" style="justify-content: flex-end">
+              <div class="color-input" style="display: flex; width: 38.4%; margin-top: 0.5rem; margin-bottom: 1.5rem;">
+                <input type="text" class="hex" placeholder="#FFFFFF" maxlength="7" />
+                <input type="color" class="color-picker" value="#FFFFFF" />
+              </div>
+            </div>
+            <div class="option">
+              <span>Rainbow</span>
+              <div class="checkbox">
+                <input type="checkbox" id="weapon_rgb" data-setting="weapon_rgb" />
+                <label for="weapon_rgb"></label>
+              </div>
+            </div>
           </div>
         </div>
       </div>

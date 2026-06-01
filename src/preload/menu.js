@@ -63,6 +63,8 @@ class Menu {
     this.setTheme();
     this.handleKeyEvents();
     this.initMenu();
+    this.handleSliderInputs();
+    this.handleColorInputs();
     this.handleMenuKeybindChange();
     this.handleMenuInputChanges();
     this.handleMenuSelectChanges();
@@ -398,22 +400,28 @@ class Menu {
         return wrapper;
       }
 
-      if (shadowColorInputDiv && !shadowColorInputDiv.querySelector('.color-swatch')) {
-        const shadowSwatchWrapper = createSwatch(shadowColorPicker, shadowColorPicker.value || "#ffffff");
-        shadowColorInputDiv.insertBefore(shadowSwatchWrapper, shadowHexInput);
-        shadowColorPicker.addEventListener('input', () => {
-          shadowSwatchWrapper.querySelector('.color-swatch').style.background = shadowColorPicker.value;
-        });
-      }
-
       const previewDiv = document.createElement('div');
       previewDiv.className = 'gradient-preview';
+
+      const nicknameElem = document.querySelector(".team-section .nickname");
+      const nicknameText = nicknameElem ? nicknameElem.innerHTML : "";
+
       previewDiv.innerHTML = `
-        <span class="preview-text">${document.querySelector(".team-section .nickname").innerHTML}</span>
+        <span class="preview-text">${nicknameText}</span>
         <div class="preview-css-wrapper">
           <textarea class="preview-css-label" rows="2" spellcheck="false"></textarea>
         </div>
       `;
+
+      if (!nicknameElem) {
+        window.addEventListener('DOMContentLoaded', () => {
+          const delayedNickname = document.querySelector(".team-section .nickname");
+          const textSpan = previewDiv.querySelector(".preview-text");
+          if (delayedNickname && textSpan) {
+            textSpan.innerHTML = delayedNickname.innerHTML;
+          }
+        });
+      }
 
       const previewText = previewDiv.querySelector('.preview-text');
       const previewCssLabel = previewDiv.querySelector('.preview-css-label');
@@ -591,7 +599,7 @@ class Menu {
         });
 
         colorPicker.addEventListener("input", () => {
-          hexInput.value = colorPicker.value;
+          hexInput.value = colorPicker.value.toUpperCase();
           swatch.style.background = colorPicker.value;
           updateGradient();
         });
@@ -754,17 +762,11 @@ class Menu {
 
       shadowHexInput.addEventListener('input', () => {
         if (/^#[0-9A-Fa-f]{6}$/.test(shadowHexInput.value)) {
-          shadowColorPicker.value = shadowHexInput.value;
-          const swatch = shadowColorInputDiv.querySelector('.color-swatch');
-          if (swatch) swatch.style.background = shadowHexInput.value;
           updateTextShadow();
         }
       });
 
       shadowColorPicker.addEventListener('input', () => {
-        shadowHexInput.value = shadowColorPicker.value;
-        const swatch = shadowColorInputDiv.querySelector('.color-swatch');
-        if (swatch) swatch.style.background = shadowColorPicker.value;
         updateTextShadow();
       });
 
@@ -943,6 +945,88 @@ class Menu {
       const setting = textarea.dataset.setting;
       const value = this.settings[setting];
       textarea.value = value;
+    });
+  }
+
+  handleSliderInputs() {
+    const sliderMap = [
+      {
+        slider: document.getElementById('ads_power'),
+        input: document.querySelector('.ads-power-value'),
+      },
+      {
+        slider: document.getElementById('weapon_size'),
+        input: document.querySelector('.weapon-size-value'),
+      },
+      {
+        slider: document.getElementById('weapon_offset_x'),
+        input: document.querySelector('.weapon-offset-x-value'),
+      },
+      {
+        slider: document.getElementById('weapon_offset_y'),
+        input: document.querySelector('.weapon-offset-y-value'),
+      },
+      {
+        slider: document.getElementById('weapon_offset_z'),
+        input: document.querySelector('.weapon-offset-z-value'),
+      },
+    ];
+
+    sliderMap.forEach(({ slider, input }) => {
+      if (!slider || !input) return;
+
+      input.value = slider.value;
+
+      slider.addEventListener('input', () => {
+        input.value = slider.value;
+      });
+
+      input.addEventListener('input', () => {
+        const min = parseFloat(slider.min);
+        const max = parseFloat(slider.max);
+        const val = parseFloat(input.value);
+        if (!isNaN(val) && val >= min && val <= max) {
+          slider.value = val;
+          slider.dispatchEvent(new Event('change'));
+        }
+      });
+    });
+  }
+
+  handleColorInputs() {
+    const colorMap = [
+      {
+        picker: document.querySelector('.shadow-color.color-picker'),
+        hex: document.querySelector('.shadow-color.hex'),
+        storageKey: null,
+      },
+      {
+        picker: document.querySelector('.weapon-color .color-picker'),
+        hex: document.querySelector('.weapon-color .hex'),
+        storageKey: 'weapon_color_hex',
+      },
+    ];
+
+    colorMap.forEach(({ picker, hex, storageKey }) => {
+      if (!picker || !hex) return;
+
+      if (storageKey) {
+        const saved = localStorage.getItem(storageKey) || '#FFFFFF';
+        hex.value = saved;
+        picker.value = saved;
+      }
+
+      picker.addEventListener('input', () => {
+        hex.value = picker.value.toUpperCase();
+        if (storageKey) localStorage.setItem(storageKey, picker.value);
+      });
+
+      hex.addEventListener('input', () => {
+        if (/^#[0-9A-Fa-f]{6}$/.test(hex.value)) {
+          picker.value = hex.value;
+          if (storageKey) localStorage.setItem(storageKey, hex.value);
+        }
+      });
     });
   }
 

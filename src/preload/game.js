@@ -7,6 +7,86 @@ const { initGallery } = require("../addons/gallery");
 const fs = require("fs");
 const path = require("path");
 
+
+//here u go smudgy, just copy and paste like the rest of ur code:
+window.adsPower = 1;
+
+function findCamera(instance) {
+  for (const key of Object.getOwnPropertyNames(instance)) {
+    try {
+      const val = instance[key];
+      if (!val || typeof val !== 'object') continue;
+      const names = Object.getOwnPropertyNames(val);
+      const hasFov = names.some(k => {
+        const desc = Object.getOwnPropertyDescriptor(val, k);
+        if (!desc?.get) return false;
+        try {
+          const v = desc.get.call(val);
+          return typeof v === 'number' && v >= 40 && v <= 150;
+        } catch (e) { return false; }
+      });
+      const hasZoom = names.includes('zoom');
+      if (hasFov && hasZoom) return val;
+    } catch (e) { }
+  }
+  return null;
+}
+
+const setAdsPower = (multiplier) => {
+  window.adsPower = multiplier;
+
+  const interval = setInterval(() => {
+    if (!window.__zoomInstance) return;
+    const cam = findCamera(window.__zoomInstance);
+    if (!cam) return;
+    clearInterval(interval);
+
+    const fovKey = Object.getOwnPropertyNames(cam).find(key => {
+      const desc = Object.getOwnPropertyDescriptor(cam, key);
+      if (!desc?.get) return false;
+      try {
+        const val = desc.get.call(cam);
+        return typeof val === 'number' && val >= 40 && val <= 150;
+      } catch (e) { return false; }
+    });
+
+    if (!fovKey) return;
+
+    const desc = Object.getOwnPropertyDescriptor(cam, fovKey);
+    const origGet = desc.get;
+    const origSet = desc.set;
+
+    const defaultFov = parseFloat(localStorage.getItem('SETTINGS___SETTING/CAMERA___SETTING/MAIN_FOV___SETTING')?.replace(/"/g, '')) || 100;
+
+    let ads = false;
+
+    Object.defineProperty(cam, fovKey, {
+      get() { return origGet.call(this); },
+      set(v) {
+        if (v === defaultFov) {
+          ads = false;
+          origSet.call(this, v);
+          return;
+        }
+
+        if (v < defaultFov) {
+          ads = true;
+        }
+
+        if (ads) {
+          const zoomDelta = Math.abs(defaultFov - v);
+          const newFov = defaultFov - zoomDelta * window.adsPower;
+          origSet.call(this, Math.max(1, Math.min(179, newFov)));
+        } else {
+          origSet.call(this, v);
+        }
+      },
+      configurable: true,
+      enumerable: true
+    });
+  }, 100);
+};
+
 const scriptsPath = ipcRenderer.sendSync("get-scripts-path");
 const scripts = fs.readdirSync(scriptsPath);
 
@@ -143,11 +223,21 @@ HTMLCanvasElement.prototype.getContext = function (type, attrs) {
       if (kind === 'weapon' || (kind === 'arms' && settings.include_arms)) {
         activeThisFrame = true;
 
-        if (settings.weapon_rgb && lastBoundTexture !== null) {
+        if (settings.weapon_color && settings.weapon_rgb && lastBoundTexture !== null) {
           const [r, g, b] = hsvToRgb((performance.now() / 3000) * 360);
-          rgbPixel[0] = r; rgbPixel[1] = g; rgbPixel[2] = b;
+          rgbPixel[0] = r; rgbPixel[1] = g; rgbPixel[2] = b; rgbPixel[3] = 255;
           origBindTexture(gl.TEXTURE_2D, rgbTexture);
           gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, rgbPixel);
+        } else if (settings.weapon_color && lastBoundTexture !== null) {
+          const hex = document.querySelector('.weapon-color .hex').value.replace('#', '');
+          rgbPixel[0] = parseInt(hex.substring(0, 2), 16);
+          rgbPixel[1] = parseInt(hex.substring(2, 4), 16);
+          rgbPixel[2] = parseInt(hex.substring(4, 6), 16);
+          rgbPixel[3] = 255;
+          origBindTexture(gl.TEXTURE_2D, rgbTexture);
+          gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, rgbPixel);
+        } else if (lastBoundTexture !== null) {
+          origBindTexture(gl.TEXTURE_2D, lastBoundTexture);
         }
 
         if (kind === 'weapon') {
@@ -156,6 +246,9 @@ HTMLCanvasElement.prototype.getContext = function (type, attrs) {
           matBuf[0] *= scale; matBuf[1] *= scale; matBuf[2] *= scale;
           matBuf[4] *= scale; matBuf[5] *= scale; matBuf[6] *= scale;
           matBuf[8] *= scale; matBuf[9] *= scale; matBuf[10] *= scale;
+          matBuf[12] += settings.weapon_offset_x ?? 0;
+          matBuf[13] += settings.weapon_offset_y ?? 0;
+          matBuf[14] += settings.weapon_offset_z ?? 0;
           return origUniformMatrix4fv(location, transpose, matBuf, 0, 16);
         }
       }
@@ -183,10 +276,14 @@ HTMLCanvasElement.prototype.getContext = function (type, attrs) {
 };
 
 document.addEventListener("juice-settings-changed", ({ detail }) => {
-  if (detail.setting === "weapon_size") settings.weapon_size = detail.value;
+  if (detail.setting === "weapon_offset_x") settings.weapon_offset_x = detail.value;
+  else if (detail.setting === "weapon_offset_y") settings.weapon_offset_y = detail.value;
+  else if (detail.setting === "weapon_offset_z") settings.weapon_offset_z = detail.value;
+  else if (detail.setting === "weapon_size") settings.weapon_size = detail.value;
   else if (detail.setting === "weapon_wireframe") settings.weapon_wireframe = detail.value;
   else if (detail.setting === "weapon_rgb") settings.weapon_rgb = detail.value;
   else if (detail.setting === "include_arms") settings.include_arms = detail.value;
+  else if (detail.setting === "weapon_color") settings.weapon_color = detail.value;
 });
 
 const originalConsole = {
@@ -1103,6 +1200,50 @@ document.addEventListener("DOMContentLoaded", async () => {
   const handleServers = async () => {
     const settings = ipcRenderer.sendSync("get-settings");
 
+    const mapImages = await fetch(
+      "https://raw.githubusercontent.com/Cheeseybowrger/KirkaSkins/refs/heads/main/maps/full_mapimages.json"
+    ).then((res) => res.json());
+    const mapImageKeys = Object.keys(mapImages);
+    for (let i = 0; i < mapImageKeys.length; i++) {
+      const item = mapImageKeys[i];
+      if (!mapImages[item].includes("https")) {
+        mapImages[item] =
+          "https://raw.githubusercontent.com/Cheeseybowrger/KirkaSkins/main" +
+          mapImages[item];
+      }
+    }
+
+    const processedServers = new Set();
+    const replaceMapImages = () => {
+      const servers = document.querySelectorAll(".server");
+      for (let i = 0; i < servers.length; i++) {
+        const server = servers[i];
+        if (processedServers.has(server)) continue;
+        const mapEl = server.querySelector(".map");
+        if (!mapEl) continue;
+        let mapName = mapEl.textContent?.split("_").pop() || "";
+        if (mapImages[mapName]) {
+          server.style.backgroundImage = `url(${mapImages[mapName]})`;
+          server.style.backgroundSize = "cover";
+          server.style.backgroundPosition = "center";
+        } else server.style.backgroundImage = "none";
+        processedServers.add(server);
+      }
+    };
+
+    replaceMapImages();
+
+    const observer = new MutationObserver(() => {
+      if (!window.location.href.startsWith(base_url + "servers/")) {
+        observer.disconnect();
+        return;
+      }
+      replaceMapImages();
+    });
+
+    const serverList = document.querySelector(".servers-list") || document.body;
+    observer.observe(serverList, { childList: true, subtree: true });
+
     if (!window.servers) {
       window.servers = true;
 
@@ -1552,6 +1693,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     let settings = ipcRenderer.sendSync("get-settings");
     const nicknames = JSON.parse(localStorage.getItem("nicknames") || "{}");
 
+    setAdsPower(settings.ads_power);
+
     let red_players = [];
     let blue_players = [];
     let dm_players = []
@@ -1876,6 +2019,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.addEventListener("juice-settings-changed", ({ detail }) => {
       if (detail.setting === "kd_indicator") settings.kd_indicator = detail.value;
       else if (detail.setting === "customizations") settings.customizations = detail.value;
+      else if (detail.setting === "ads_power") {
+        settings.ads_power = detail.value;
+        setAdsPower(settings.ads_power);
+      }
     });
 
     const customizations = JSON.parse(localStorage.getItem("juice-customizations"));
