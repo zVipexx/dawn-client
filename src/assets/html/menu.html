@@ -224,7 +224,7 @@
           </div>
           <div class="right"
             style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
-            <input type="text" class="ads-power-value" placeholder="1" style="width: 21.5%" maxlength="3" />
+            <input type="text" class="ads-power-value" placeholder="1" style="flex-basis: 21.5%;" maxlength="3" />
             <div class="slider">
               <input type="range" id="ads_power" class="slider-value" data-setting="ads_power" min="0" step="0.05"
                 max="1.5" />
@@ -236,7 +236,7 @@
           <span>Weapon size</span>
           <div class="right"
             style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
-            <input type="text" class="weapon-size-value" placeholder="1" style="width: 21.5%" maxlength="3" />
+            <input type="text" class="weapon-size-value" placeholder="1" style="flex-basis: 21.5%" maxlength="3" />
             <div class="slider">
               <input type="range" id="weapon_size" class="slider-value" data-setting="weapon_size" min="0.15"
                 step="0.05" max="2" />
@@ -598,7 +598,7 @@
                 <input type="text" class="background-url" placeholder="https://.../.png" />
                 <i class="fas fa-trash remove-background"></i>
               </div>
-              <img class="background-preview" style="display:none;" />
+              <img class="background-preview" style="display:none; max-width: 100%; object-fit: contain;" />
             </div>
           </div>
         </div>

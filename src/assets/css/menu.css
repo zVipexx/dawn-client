@@ -173,6 +173,7 @@
     display: inline-block;
     width: 3rem;
     height: 1.5rem;
+    flex-shrink: 0;
 }
 
 .menu .checkbox input {
@@ -229,6 +230,7 @@
 
 .menu .content input[type="text"] {
     width: 40%;
+    min-width: 70px;
     box-sizing: border-box;
     height: 2.5rem;
     padding: 0 1rem;
@@ -238,6 +240,7 @@
     color: rgb(var(--light));
     font-family: "Satoshi", sans-serif;
     outline: none;
+    flex-shrink: 0;
 }
 
 .menu input[type="text"]::placeholder {
@@ -335,7 +338,7 @@
 
 .menu #community-options.active {
     display: grid;
-    grid-template-columns: 1fr 3fr;
+    grid-template-columns: 10rem 1fr;
     grid-template-areas: "sidebar content";
     height: 100%;
     min-height: 0;
@@ -526,6 +529,12 @@
     flex-direction: column;
 }
 
+.menu .option>.right {
+    display: flex;
+    flex-direction: row;
+    max-width: 30rem;
+}
+
 .menu .option .description {
     font-size: 0.8rem;
     color: rgba(var(--opacity-half));
@@ -597,6 +606,7 @@
     font-size: 0.75rem;
 }
 
+.end-modal .team-list-players .juice-nickname-overlay,
 .kill-bar-item .juice-nickname-overlay {
     font-size: 1rem !important;
 }
@@ -1298,18 +1308,6 @@
     color: rgba(255, 255, 255, 0.9);
 }
 
-.color-input {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 8px;
-    border-radius: 6px;
-    background: rgba(255, 255, 255, 0.04);
-    margin-bottom: 6px;
-    cursor: default;
-    transition: background 0.15s;
-}
-
 .color-input .drag-handle {
     opacity: 0.35;
     cursor: grab;
@@ -1320,6 +1318,7 @@
     flex: 1;
     min-width: 0;
     font-size: 0.85rem;
+    flex-shrink: 0;
 }
 
 .color-input .position {
@@ -1465,6 +1464,7 @@
 
 .menu .color-input {
     height: 2.5rem;
+    min-width: 240px;
     justify-content: center;
     align-items: center;
     flex-direction: row;
@@ -1476,6 +1476,10 @@
     transition: 0.2s;
     font-family: "Satoshi", sans-serif;
     outline: none;
+    margin-bottom: 6px;
+    cursor: default;
+    max-width: 15rem;
+    flex-shrink: 0;
 }
 
 .menu .color-input input[type="text"] {
