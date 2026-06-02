@@ -260,6 +260,7 @@ const removeKillIcon = () => {
 
 const soundsDir = ipcRenderer.sendSync("get-sounds-path");
 
+
 const installSounds = async (audioFiles) => {
   fs.mkdirSync(soundsDir, { recursive: true });
   for (const file of audioFiles) {
