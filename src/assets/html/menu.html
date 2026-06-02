@@ -106,14 +106,16 @@
       <div class="option-group">
         <div class="option">
           <div class="left">
-            <span>Permanent Crosshair</span>
-            <span class="description">Disable the fading animation when scoping</span>
+            <span>Stop Overlap</span>
+            <span class="description">Hide the Team State while the info overlay is visible</span>
           </div>
           <div class="checkbox">
-            <input type="checkbox" id="permanent_crosshair" data-setting="permanent_crosshair" />
-            <label for="permanent_crosshair"></label>
+            <input type="checkbox" id="hide_teamstate_overlay" data-setting="hide_teamstate_overlay" />
+            <label for="hide_teamstate_overlay"></label>
           </div>
         </div>
+      </div>
+      <div class="option-group">
         <div class="option">
           <span>UI Animations</span>
           <div class="checkbox">
@@ -180,7 +182,10 @@
     <div id="game-options" class="juice options">
       <div class="option-group">
         <div class="option">
-          <span>Permanent Crosshair</span>
+          <div class="left">
+            <span>Permanent Crosshair</span>
+            <span class="description">Disable the fading animation when scoping</span>
+          </div>
           <div class="checkbox">
             <input type="checkbox" id="perm_crosshair" data-setting="perm_crosshair" />
             <label for="perm_crosshair"></label>
@@ -204,15 +209,25 @@
       </div>
       <div class="option-group">
         <div class="option">
+          <span>K/D Indicator</span>
+          <div class="checkbox">
+            <input type="checkbox" id="kd_indicator" data-setting="kd_indicator" />
+            <label for="kd_indicator"></label>
+          </div>
+        </div>
+      </div>
+      <div class="option-group">
+        <div class="option">
           <div class="left">
             <span>ADS Power</span>
-            <span class="description">Adjust the zoom strength, default 1</span>
+            <span class="description">Adjust the zoom strength</span>
           </div>
           <div class="right"
             style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
-            <input type="text" class="ads-power-value" placeholder="0" style="width: 21.5%" maxlength="3" />
+            <input type="text" class="ads-power-value" placeholder="1" style="width: 21.5%" maxlength="3" />
             <div class="slider">
-              <input type="range" id="ads_power" data-setting="ads_power" min="0" step="0.1" max="2" />
+              <input type="range" id="ads_power" class="slider-value" data-setting="ads_power" min="0" step="0.05"
+                max="1.5" />
               <label for="ads_power"></label>
             </div>
           </div>
@@ -221,9 +236,10 @@
           <span>Weapon size</span>
           <div class="right"
             style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
-            <input type="text" class="weapon-size-value" placeholder="0" style="width: 21.5%" maxlength="3" />
+            <input type="text" class="weapon-size-value" placeholder="1" style="width: 21.5%" maxlength="3" />
             <div class="slider">
-              <input type="range" id="weapon_size" data-setting="weapon_size" min="0.15" step="0.05" max="1.8" />
+              <input type="range" id="weapon_size" class="slider-value" data-setting="weapon_size" min="0.15"
+                step="0.05" max="2" />
               <label for="weapon_size"></label>
             </div>
           </div>
@@ -240,8 +256,8 @@
                 style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
                 <input type="text" class="weapon-offset-x-value" placeholder="0" style="width: 21.5%" maxlength="5" />
                 <div class="slider">
-                  <input type="range" id="weapon_offset_x" data-setting="weapon_offset_x" min="-0.5" step="0.01"
-                    max="0.5" />
+                  <input type="range" id="weapon_offset_x" class="slider-value" data-setting="weapon_offset_x"
+                    min="-0.5" step="0.01" max="0.5" />
                   <label for="weapon_offset_x"></label>
                 </div>
               </div>
@@ -252,8 +268,8 @@
                 style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
                 <input type="text" class="weapon-offset-y-value" placeholder="0" style="width: 21.5%" maxlength="5" />
                 <div class="slider">
-                  <input type="range" id="weapon_offset_y" data-setting="weapon_offset_y" min="-0.5" step="0.01"
-                    max="0.5" />
+                  <input type="range" id="weapon_offset_y" class="slider-value" data-setting="weapon_offset_y"
+                    min="-0.5" step="0.01" max="0.5" />
                   <label for="weapon_offset_y"></label>
                 </div>
               </div>
@@ -264,8 +280,8 @@
                 style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
                 <input type="text" class="weapon-offset-z-value" placeholder="0" style="width: 21.5%" maxlength="5" />
                 <div class="slider">
-                  <input type="range" id="weapon_offset_z" data-setting="weapon_offset_z" min="-0.5" step="0.01"
-                    max="0.5" />
+                  <input type="range" id="weapon_offset_z" class="slider-value" data-setting="weapon_offset_z"
+                    min="-0.5" step="0.01" max="0.5" />
                   <label for="weapon_offset_z"></label>
                 </div>
               </div>
@@ -311,18 +327,6 @@
                 <label for="weapon_rgb"></label>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
-      <div class="option-group">
-        <div class="option">
-          <div class="left">
-            <span>Stop Overlap</span>
-            <span class="description">Hide the Team State while the info overlay is visible</span>
-          </div>
-          <div class="checkbox">
-            <input type="checkbox" id="hide_teamstate_overlay" data-setting="hide_teamstate_overlay" />
-            <label for="hide_teamstate_overlay"></label>
           </div>
         </div>
       </div>
@@ -535,8 +539,8 @@
                 style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
                 <input type="text" class="shadow-value" placeholder="0" style="width: 21.5%" maxlength="2" />
                 <div class="slider">
-                  <input type="range" id="local_gradient_shadow" data-setting="local_gradient_shadow" min="0"
-                    max="100" />
+                  <input type="range" id="local_gradient_shadow" class="slider-value"
+                    data-setting="local_gradient_shadow" min="0" max="100" />
                   <label for="local_gradient_shadow"></label>
                 </div>
               </div>
@@ -555,8 +559,8 @@
                 style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
                 <input type="text" class="rotation-value" placeholder="90" style="width: 21.5%" maxlength="3" />
                 <div class="slider">
-                  <input type="range" id="local_gradient_rotation" data-setting="local_gradient_rotation" min="0"
-                    max="360" />
+                  <input type="range" id="local_gradient_rotation" class="slider-value"
+                    data-setting="local_gradient_rotation" min="0" max="360" />
                   <label for="local_gradient_rotation"></label>
                 </div>
               </div>
@@ -580,6 +584,21 @@
                 <i class="fas fa-plus"></i>
                 <span>Add Badge</span>
               </div>
+            </div>
+          </div>
+        </div>
+        <div class="option dropdown custom_profile_background">
+          <div class="top requires-refresh">
+            <i class="fas fa-angle-down"></i>
+            <span>Profile Background</span>
+          </div>
+          <div class="content">
+            <div class="profile_background">
+              <div class="background-input">
+                <input type="text" class="background-url" placeholder="https://.../.png" />
+                <i class="fas fa-trash remove-background"></i>
+              </div>
+              <img class="background-preview" style="display:none;" />
             </div>
           </div>
         </div>

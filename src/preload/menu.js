@@ -60,6 +60,7 @@ class Menu {
     this.resizeMenu();
     this.setLocalGradient();
     this.setLocalBadges();
+    this.setLocalProfileBackground();
     this.setTheme();
     this.handleKeyEvents();
     this.initMenu();
@@ -691,7 +692,12 @@ class Menu {
         const badges = [...document.querySelectorAll(".badge-input")].map(input => input.querySelector(".badge-url")?.value.trim()).filter(Boolean);
         const intensity = shadowSlider.value || 0;
         const color = shadowColorPicker.value || '#FFFFFF';
+
+        const existingIndex = customizations.findIndex(c => c.shortId === shortId);
+        const existing = existingIndex >= 0 ? customizations[existingIndex] : {};
+
         const userData = {
+          ...existing,
           shortId,
           gradient: {
             rot: `${rotationSlider.value || 90}deg`,
@@ -701,8 +707,13 @@ class Menu {
           animated: self.settings.local_animated_gradient,
           badges
         };
-        const existingIndex = customizations.findIndex(c => c.shortId === shortId);
-        existingIndex >= 0 ? customizations[existingIndex] = userData : customizations.push(userData);
+
+        if (existingIndex >= 0) {
+          customizations[existingIndex] = userData;
+        } else {
+          customizations.push(userData);
+        }
+
         localStorage.setItem("juice-customizations", JSON.stringify(customizations));
       }
 
@@ -772,6 +783,7 @@ class Menu {
 
       loadGradient();
       loadShadowSettings();
+      if (self.applyCustomizations) self.applyCustomizations();
     }, 250);
   }
 
@@ -833,16 +845,14 @@ class Menu {
       const customizations = JSON.parse(localStorage.getItem("juice-customizations") || "[]");
       const shortId = localStorage.getItem("user-id");
       const existingIndex = customizations.findIndex(c => c.shortId === shortId);
+      const existing = existingIndex >= 0 ? customizations[existingIndex] : {};
+
+      const userData = { ...existing, shortId, badges };
 
       if (existingIndex >= 0) {
-        customizations[existingIndex].badges = badges;
+        customizations[existingIndex] = userData;
       } else {
-        customizations.push({
-          shortId,
-          gradient: { rot: "90deg", stops: ["#ffffff"], shadow: "none" },
-          animated: false,
-          badges
-        });
+        customizations.push(userData);
       }
 
       localStorage.setItem("juice-customizations", JSON.stringify(customizations));
@@ -899,6 +909,62 @@ class Menu {
     });
 
     loadBadges();
+    if (self.applyCustomizations) self.applyCustomizations();
+  }
+
+  setLocalProfileBackground() {
+    const self = this;
+    const urlInput = document.querySelector(".custom_profile_background .background-url");
+    const trash = document.querySelector(".custom_profile_background .remove-background");
+    const preview = document.querySelector(".custom_profile_background .background-preview");
+
+    function saveBackground() {
+      const url = urlInput.value.trim();
+
+      localStorage.setItem('backgroundSettings', url || "");
+
+      if (!self.settings.local_customizations) return;
+
+      const customizations = JSON.parse(localStorage.getItem("juice-customizations") || "[]");
+      const shortId = localStorage.getItem("user-id");
+      const idx = customizations.findIndex(c => c.shortId === shortId);
+
+      if (idx >= 0) {
+        customizations[idx]["profile-background"] = url || null;
+      } else {
+        customizations.push({ shortId, "profile-background": url || null });
+      }
+
+      localStorage.setItem("juice-customizations", JSON.stringify(customizations));
+    }
+
+    function setUrl(url) {
+      urlInput.value = url || "";
+      if (url) {
+        preview.src = url;
+        preview.style.display = "block";
+      } else {
+        preview.src = "";
+        preview.style.display = "none";
+      }
+    }
+
+    urlInput.addEventListener("input", () => {
+      setUrl(urlInput.value.trim());
+      preview.onerror = () => { preview.src = ""; preview.style.display = "none"; };
+      saveBackground();
+    });
+
+    trash.addEventListener("click", () => {
+      setUrl("");
+      saveBackground();
+    });
+
+    const saved = localStorage.getItem('backgroundSettings');
+    if (saved) {
+      setUrl(saved);
+      saveBackground();
+    }
   }
 
   setTheme() {

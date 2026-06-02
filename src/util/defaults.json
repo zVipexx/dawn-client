@@ -8,7 +8,6 @@
     "hide_chat": false,
     "hide_kill_text": false,
     "hide_interface": false,
-    "permanent_crosshair": true,
     "ui_animations": true,
     "colored_killfeed": true,
     "lobby_keybind_reminder": true,

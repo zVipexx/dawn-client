@@ -21,10 +21,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
   versionElement.textContent = `v${version}`;
 
+  let progressLine = null;
+
   const updateStatus = (status) => {
     const newLine = document.createElement("div");
     newLine.textContent = status;
     statusElement.appendChild(newLine);
+  };
+
+  const updateProgress = (status) => {
+    if (!progressLine) {
+      progressLine = document.createElement("div");
+      statusElement.appendChild(progressLine);
+    }
+    progressLine.textContent = status;
   };
 
   ipcRenderer.send("check-for-updates");
@@ -43,7 +53,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   ipcRenderer.on("download-progress", (_, progress) =>
-    updateStatus(`Downloading update: ${Math.round(progress.percent)}%`)
+    updateProgress(`Downloading update: ${Math.round(progress.percent)}%`)
   );
 
   ipcRenderer.on("update-error", (event, err) => {

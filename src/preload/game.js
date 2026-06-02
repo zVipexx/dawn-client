@@ -9,8 +9,6 @@ const path = require("path");
 
 
 //here u go smudgy, just copy and paste like the rest of ur code:
-window.adsPower = 1;
-
 function findCamera(instance) {
   for (const key of Object.getOwnPropertyNames(instance)) {
     try {
@@ -32,8 +30,9 @@ function findCamera(instance) {
   return null;
 }
 
+window.ads_power = 1;
 const setAdsPower = (multiplier) => {
-  window.adsPower = multiplier;
+  window.ads_power = multiplier;
 
   const interval = setInterval(() => {
     if (!window.__zoomInstance) return;
@@ -75,7 +74,8 @@ const setAdsPower = (multiplier) => {
 
         if (ads) {
           const zoomDelta = Math.abs(defaultFov - v);
-          const newFov = defaultFov - zoomDelta * window.adsPower;
+          const curved = Math.pow(window.ads_power, 0.4);
+          const newFov = defaultFov - zoomDelta * curved;
           origSet.call(this, Math.max(1, Math.min(179, newFov)));
         } else {
           origSet.call(this, v);
@@ -275,17 +275,6 @@ HTMLCanvasElement.prototype.getContext = function (type, attrs) {
   return ctx;
 };
 
-document.addEventListener("juice-settings-changed", ({ detail }) => {
-  if (detail.setting === "weapon_offset_x") settings.weapon_offset_x = detail.value;
-  else if (detail.setting === "weapon_offset_y") settings.weapon_offset_y = detail.value;
-  else if (detail.setting === "weapon_offset_z") settings.weapon_offset_z = detail.value;
-  else if (detail.setting === "weapon_size") settings.weapon_size = detail.value;
-  else if (detail.setting === "weapon_wireframe") settings.weapon_wireframe = detail.value;
-  else if (detail.setting === "weapon_rgb") settings.weapon_rgb = detail.value;
-  else if (detail.setting === "include_arms") settings.include_arms = detail.value;
-  else if (detail.setting === "weapon_color") settings.weapon_color = detail.value;
-});
-
 const originalConsole = {
   log: console.log.bind(console),
   warn: console.warn.bind(console),
@@ -340,15 +329,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
 
     document.querySelector("#app #left-icons").appendChild(keybindReminder);
-    document.addEventListener("juice-settings-changed", ({ detail }) => {
-      if (detail.setting === "menu_keybind") {
-        const keybindReminder = document.querySelector(
-          "#juice-keybind-reminder"
-        );
-        if (keybindReminder)
-          keybindReminder.innerText = `Press ${detail.value} to open the client menu.`;
-      }
-    });
   };
 
   const lobbyNews = async (settings) => {
@@ -825,16 +805,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       customStyles.innerHTML = advancedCSS;
     };
 
-    document.addEventListener("juice-settings-changed", (e) => {
-      if (
-        e.detail.setting === "css_link" ||
-        e.detail.setting === "css_enabled" ||
-        e.detail.setting === "advanced_css"
-      ) {
-        updateTheme();
-      }
-    });
-
     updateTheme();
   };
 
@@ -916,7 +886,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           settings.killicon_link
         )}); width: 10rem; height: 10rem; margin-bottom: 2rem; display: inline-block; background-position: center; background-size: contain; background-repeat: no-repeat; }
       .animate-cont svg { display: none; }`);
-      if (settings.permanent_crosshair)
+      if (settings.perm_crosshair)
         styles.push(".crosshair-static { opacity: 1 !important }")
       if (!settings.ui_animations)
         styles.push(
@@ -1097,11 +1067,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       };
 
       if (settings.customizations) applyCustomizations();
-
-      document.addEventListener("juice-settings-changed", ({ detail }) => {
-        if (detail.setting === "customizations")
-          detail.value ? applyCustomizations() : removeCustomizations();
-      });
 
       const formatMoney = (money) => {
         if (!money.dataset.formatted) {
@@ -1574,51 +1539,67 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         if (!badgesElem) {
           badgesElem = document.createElement("div");
-          badgesElem.style =
-            "display: flex; gap: 0.25rem; align-items: center;";
+          badgesElem.style = "display: flex; gap: 0.25rem; align-items: center;";
           badgesElem.className = "juice-badges";
           nickname.appendChild(badgesElem);
         } else {
-          badgesElem.innterHTML = "";
+          badgesElem.innerHTML = "";
         }
 
-        const customizations = JSON.parse(
-          localStorage.getItem("juice-customizations")
-        );
+        const customizations = JSON.parse(localStorage.getItem("juice-customizations") || "[]");
+        const clancustomizations = JSON.parse(localStorage.getItem("juice-clans") || "[]");
 
-        const clancustomizations = JSON.parse(
-          localStorage.getItem("juice-clans")
-        );
+        const customs = customizations.find((c) => c.shortId === shortId);
 
-        if (customizations?.find((c) => c.shortId === shortId)) {
-          const customs = customizations.find((c) => c.shortId === shortId);
+        const savedGradient = JSON.parse(localStorage.getItem('gradientSettings') || 'null');
+        const savedBadges = JSON.parse(localStorage.getItem('badgeSettings') || 'null');
+        const savedShadow = JSON.parse(localStorage.getItem('gradientShadowSettings') || 'null');
 
-          let badgeStyle = "height: 32px; width: auto;";
+        const gradientData = customs?.gradient || (settings.local_customizations && savedGradient ? {
+          rot: `${savedGradient.rotation}deg`,
+          stops: savedGradient.colors.map(c => c.hex),
+          shadow: savedShadow ? (savedShadow.intensity > 0 ? `0px 0px ${savedShadow.intensity}px ${savedShadow.color}` : "none") : "none"
+        } : null);
 
+        const badgesData = customs?.badges || (settings.local_customizations ? savedBadges : null) || [];
+        const isAnimated = customs?.animated ?? false;
+        const bgUrl = customs?.['profile-background'] || (settings.local_customizations ? localStorage.getItem('backgroundSettings') : null);
+
+        if (customs || savedGradient || savedBadges || bgUrl) {
           const span = nickname.querySelector(".nickname-span");
 
-          if (customs.gradient) {
+          if (gradientData && span) {
             span.style.display = "inline-block";
-            span.style.background = `linear-gradient(${customs.gradient.rot}, ${customs.gradient.stops.join(", ")})`;
+            span.style.background = `linear-gradient(${gradientData.rot}, ${gradientData.stops.join(", ")})`;
             span.style.backgroundClip = "text";
             span.style.webkitBackgroundClip = "text";
             span.style.color = "transparent";
             span.style.fontWeight = "700";
-            span.style.textShadow = customs.gradient.shadow || "0 0 0 transparent";
+            span.style.textShadow = gradientData.shadow || "0 0 0 transparent";
 
-            if (settings.animations && customs.animated) {
+            if (settings.animations && isAnimated) {
               span.style.backgroundSize = "200% 200%";
               span.style.animation = "animated-gradient 3s linear infinite";
             }
           }
 
-          if (customs['profile-background']) {
-            document.querySelector(".profile-cont .profile").style.cssText = `background: url("${customs['profile-background']}") no-repeat center / cover !important`;
-            document.querySelectorAll(".profile-cont .card").forEach(card => { card.style.cssText = "background: rgba(255, 255, 255, .1) !important; backdrop-filter: blur(10px);" });
+          if (bgUrl) {
+            document.querySelector(".profile-cont .profile").style.cssText = `
+              background: url("${bgUrl}") no-repeat center / cover;
+              box-shadow: inset 0 0 0px 5px rgba(0, 0, 0, 0.5);
+            `;
+            document.querySelectorAll(".profile-cont .card").forEach(card => {
+              card.style.cssText = `
+                background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1));
+                backdrop-filter: blur(5px);
+                border: 1px solid rgba(255, 255, 255, 0.18);
+                box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6);
+              `;
+            });
           }
 
-          if (customs.badges && customs.badges.length) {
-            customs.badges.forEach((badge) => {
+          if (badgesData.length) {
+            badgesData.forEach((badge) => {
               const img = document.createElement("img");
 
               if (badge.startsWith('/') || badge.match(/^[A-Za-z]:\\/)) {
@@ -1628,7 +1609,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 img.src = badge;
               }
 
-              img.style = badgeStyle;
+              img.style = "height: 32px; width: auto;";
               badgesElem.appendChild(img);
             });
           }
@@ -1654,6 +1635,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
       }
     };
+    self.applyCustomizations = applyCustomizations;
 
     let loading = null;
     let polling = null;
@@ -1697,9 +1679,16 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     let red_players = [];
     let blue_players = [];
-    let dm_players = []
+    let dm_players = [];
 
     const playerCache = new Map();
+
+    const nicknameByOriginal = new Map();
+    const nicknameByNickname = new Map();
+    Object.entries(nicknames).forEach(([shortId, entry]) => {
+      if (entry.original) nicknameByOriginal.set(entry.original, { ...entry, shortId });
+      if (entry.nickname) nicknameByNickname.set(entry.nickname, { ...entry, shortId });
+    });
 
     const updatePlayerLists = () => {
       red_players = [];
@@ -1708,17 +1697,24 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       const process = (conts, list) => {
         conts.forEach((player) => {
-          const nickname = player.querySelector(".nickname")?.innerText;
+          const nicknameEl = player.querySelector(".nickname");
           const shortId = player.querySelector(".short-id")?.innerText.replace("#", "");
+          if (!nicknameEl || !shortId) return;
+
           const entry = nicknames[shortId];
-          if (nickname) {
-            const p = { display: nickname.trim(), original: entry?.original, shortId, nickname: entry?.nickname };
-            list.push(p);
-            playerCache.set(nickname.trim(), p);
-            if (entry?.original) playerCache.set(entry.original, p);
-            if (entry?.nickname) playerCache.set(entry.nickname, p);
-            playerCache.set(shortId, p);
-          }
+          const rawName = entry?.original || nicknameEl.innerText.trim();
+          if (!rawName) return;
+
+          const p = {
+            display: rawName,
+            original: rawName,
+            shortId,
+            nickname: entry?.nickname
+          };
+          list.push(p);
+          playerCache.set(rawName, p);
+          playerCache.set(shortId, p);
+          if (entry?.nickname) playerCache.set(entry.nickname, p);
         });
       };
 
@@ -1728,34 +1724,37 @@ document.addEventListener("DOMContentLoaded", async () => {
     };
 
     const findPlayer = (name) => {
+      if (!name) return undefined;
       const all = [...red_players, ...blue_players, ...dm_players];
-      return all.find(p => p.display === name || p.original === name || p.nickname === name)
+      const fromList = all.find(p => p.display === name || p.original === name || p.nickname === name)
         ?? playerCache.get(name);
+      if (fromList) return fromList;
+      const entry = nicknameByOriginal.get(name) ?? nicknameByNickname.get(name);
+      if (entry) return { display: name, original: entry.original, shortId: entry.shortId, nickname: entry.nickname };
+      return undefined;
     };
 
+    const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
     const setDisplay = (el, text) => {
-      if (el.closest(".message")?.querySelector(".text.SERVER")) {
-        console.trace("setDisplay called on SERVER message with:", text);
-      }
       let overlay = el.querySelector(".juice-nickname-overlay");
-      if (!overlay) {
+      if (overlay) {
+        if (overlay.innerText === text) return;
+        overlay.innerText = text;
+      } else {
         overlay = document.createElement("span");
         overlay.className = "juice-nickname-overlay";
-        overlay.style.cssText = "white-space:nowrap;line-height:inherit;font-family:inherit;font-weight:inherit;";
+        overlay.style.cssText = "white-space:nowrap;line-height:inherit;font-family:inherit;font-weight:inherit;font-size:1.2rem;display:inline;";
+        overlay.innerText = text;
         el.appendChild(overlay);
       }
-      if (overlay.innerText !== text) {
-        overlay.innerText = text;
-      }
-      overlay.style.display = "inline";
-      overlay.style.fontSize = "1.2rem";
-      el.style.fontSize = "0";
+      if (el.style.fontSize !== "0px") el.style.fontSize = "0";
     };
 
     const clearDisplay = (el) => {
       const overlay = el.querySelector(".juice-nickname-overlay");
       if (overlay) overlay.remove();
-      el.style.fontSize = "";
+      if (el.style.fontSize) el.style.fontSize = "";
     };
 
     const updateKillFeed = () => {
@@ -1788,8 +1787,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
     };
 
-    let updatingMessages = false;
-
     const processMessage = (message) => {
       const body = message.querySelector(".text");
       if (!body) return;
@@ -1799,22 +1796,22 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (!typeClass) return;
 
       const author = message.querySelector(".author-name");
-      const players = [...red_players, ...blue_players, ...dm_players];
 
       if (typeClass === "SERVER" || typeClass === "ERROR") {
         if (author) clearDisplay(author);
         if (typeClass === "SERVER") {
           const textNode = [...body.childNodes].find(n => n.nodeType === Node.TEXT_NODE);
           if (!textNode) return;
+
           let text = textNode.textContent;
-          players.forEach((player) => {
-            if (!player.nickname || !player.original) return;
-            text = text.replace(new RegExp(`${player.nickname}#${player.shortId}`, "g"), `${player.original}#${player.shortId}`);
+          Object.entries(nicknames).forEach(([shortId, entry]) => {
+            if (!entry.nickname || !entry.original) return;
+            const originalPattern = new RegExp(escapeRegex(entry.original) + '#' + shortId, "g");
+            const nicknamePattern = new RegExp(escapeRegex(entry.nickname) + '#' + shortId, "g");
+            text = text.replace(nicknamePattern, `${entry.original}#${shortId}`);
+            text = text.replace(originalPattern, `${entry.nickname}#${shortId}`);
           });
-          players.forEach((player) => {
-            if (!player.nickname || !player.original) return;
-            text = text.replace(new RegExp(`${player.original}#${player.shortId}`, "g"), `${player.nickname}#${player.shortId}`);
-          });
+
           if (text !== textNode.textContent) textNode.textContent = text;
         }
         return;
@@ -1835,20 +1832,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (!message.querySelector(".lvl")) return;
       if (!author) return;
 
-      const authorName = typeClass;
-      const match = findPlayer(authorName);
+      const match = findPlayer(typeClass);
       if (match?.nickname) setDisplay(author, match.nickname + ":\u00A0\u00A0");
       else clearDisplay(author);
     };
 
     const updateMessages = () => {
-      if (updatingMessages) return;
-      updatingMessages = true;
-      try {
-        document.querySelectorAll(".desktop-game-interface .messages-cont .message").forEach(processMessage);
-      } finally {
-        updatingMessages = false;
-      }
+      document.querySelectorAll(".desktop-game-interface .messages-cont .message").forEach(processMessage);
     };
 
     let updatingEndModal = false;
@@ -1874,31 +1864,49 @@ document.addEventListener("DOMContentLoaded", async () => {
           else clearDisplay(el);
         });
 
-        updateMessages();
-
         const chatCont = document.querySelector(".end-modal .messages-cont");
         if (chatCont) {
-          const observedNodes = new WeakSet();
+          const observedEndMessages = new WeakSet();
 
-          const observeMessages = () => {
-            document.querySelectorAll(".end-modal .messages-cont .message").forEach((message) => {
-              const body = message.querySelector(".text");
-              if (!body) return;
-              const textNode = [...body.childNodes].find(n => n.nodeType === Node.TEXT_NODE);
-              if (!textNode || observedNodes.has(textNode)) return;
+          const observeEndMessage = (message) => {
+            if (observedEndMessages.has(message)) {
+              processMessage(message);
+              return;
+            }
+            observedEndMessages.add(message);
 
-              observedNodes.add(textNode);
+            new MutationObserver(() => {
+              if (!settings.customizations) return;
+              processMessage(message);
+            }).observe(message, { childList: true });
+
+            const body = message.querySelector(".text");
+            if (body) {
               new MutationObserver(() => {
-                if (settings.customizations && !updatingMessages) updateMessages();
-              }).observe(textNode, { characterData: true });
-            });
+                if (!settings.customizations) return;
+                processMessage(message);
+              }).observe(body, {
+                attributes: true,
+                attributeFilter: ['class'],
+                childList: true,
+                characterData: true,
+                subtree: true
+              });
+            }
+
+            processMessage(message);
           };
 
-          observeMessages();
+          chatCont.querySelectorAll(".message").forEach(observeEndMessage);
 
-          new MutationObserver(() => {
-            observeMessages();
-            if (settings.customizations && !updatingMessages) updateMessages();
+          new MutationObserver((mutations) => {
+            if (!settings.customizations) return;
+            for (const mutation of mutations) {
+              mutation.addedNodes.forEach(node => {
+                if (node.nodeType !== Node.ELEMENT_NODE || !node.classList.contains("message")) return;
+                observeEndMessage(node);
+              });
+            }
           }).observe(chatCont, { childList: true });
         }
       } finally {
@@ -1917,7 +1925,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           textNode.textContent = entry.nickname;
         }
       }
-    }
+    };
 
     const spectatingObservers = [];
     let updatingSpectating = false;
@@ -1977,8 +1985,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             textNode.textContent = entry.nickname;
           }
         }
-      })
-    }
+      });
+    };
 
     const updateKD = () => {
       const kills = document.querySelector(".kill-death .kill");
@@ -1989,7 +1997,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       const killCount = parseFloat(kills.innerText);
       const deathCount = parseFloat(deaths.innerText) || 1;
-      let kdRatio = (killCount / deathCount).toFixed(2);
+      const kdRatio = (killCount / deathCount).toFixed(2);
 
       const nextHtml = `<span class="kd-ratio">${kdRatio}</span> <span class="text-kd" style="font-size: 0.75rem;">K/D</span>`;
       if (kd.innerHTML !== nextHtml) {
@@ -2015,15 +2023,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       kills.addEventListener("DOMSubtreeModified", updateKD);
       deaths.addEventListener("DOMSubtreeModified", updateKD);
     };
-
-    document.addEventListener("juice-settings-changed", ({ detail }) => {
-      if (detail.setting === "kd_indicator") settings.kd_indicator = detail.value;
-      else if (detail.setting === "customizations") settings.customizations = detail.value;
-      else if (detail.setting === "ads_power") {
-        settings.ads_power = detail.value;
-        setAdsPower(settings.ads_power);
-      }
-    });
 
     const customizations = JSON.parse(localStorage.getItem("juice-customizations"));
     const clancustomizations = JSON.parse(localStorage.getItem("juice-clans"));
@@ -2286,11 +2285,19 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     };
 
-    if (!document.querySelector(".kill-death .kd") && settings.kd_indicator) {
-      createKD();
-    } else if (document.querySelector(".kill-death .kd") && !settings.kd_indicator) {
-      document.querySelector(".kill-death .kd").remove();
-    }
+    const kdVisibility = () => {
+      if (!document.querySelector(".kill-death .kd") && settings.kd_indicator) {
+        createKD();
+      } else if (document.querySelector(".kill-death .kd") && !settings.kd_indicator) {
+        document.querySelector(".kill-death .kd").remove();
+      }
+    };
+
+    document.addEventListener("juice-settings-changed", ({ detail }) => {
+      if (detail.setting === "kd_indicator") {
+        kdVisibility();
+      }
+    });
 
     const observers = new Map();
     let observingShortIds = false;
@@ -2339,6 +2346,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     observeShortIds();
     applyCustomizationsEsc();
+
     if (document.querySelector(".infos")) {
       const infosElems = document.querySelectorAll(".infos");
       infosElems.forEach((infosElem) => {
@@ -2367,7 +2375,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         updatePlayerLists();
       });
       observerTab.observe(playerListContainer, { childList: true, subtree: false });
-    })
+    });
 
     observeForElement(".esc-interface", applyCustomizationsEsc);
     observeForElement(".death-cont .user-card", updateDeathCont);
@@ -2390,35 +2398,32 @@ document.addEventListener("DOMContentLoaded", async () => {
       const observedMessages = new WeakSet();
 
       const observeMessage = (message) => {
-        if (observedMessages.has(message)) return;
+        if (observedMessages.has(message)) {
+          processMessage(message);
+          return;
+        }
         observedMessages.add(message);
-        processMessage(message);
-
-        const body = message.querySelector(".text");
-        if (!body) return;
-
-        const getTextNode = () => [...body.childNodes].find(n => n.nodeType === Node.TEXT_NODE);
-        let textNodeObserver = null;
-
-        const attachTextNodeObserver = () => {
-          if (textNodeObserver) textNodeObserver.disconnect();
-          const textNode = getTextNode();
-          if (!textNode) return;
-          textNodeObserver = new MutationObserver(() => {
-            if (!settings.customizations) return;
-            processMessage(message);
-            attachTextNodeObserver();
-          });
-          textNodeObserver.observe(textNode, { characterData: true });
-        };
-
-        attachTextNodeObserver();
 
         new MutationObserver(() => {
           if (!settings.customizations) return;
-          attachTextNodeObserver();
           processMessage(message);
-        }).observe(body, { childList: true });
+        }).observe(message, { childList: true });
+
+        const body = message.querySelector(".text");
+        if (body) {
+          new MutationObserver(() => {
+            if (!settings.customizations) return;
+            processMessage(message);
+          }).observe(body, {
+            attributes: true,
+            attributeFilter: ['class'],
+            childList: true,
+            characterData: true,
+            subtree: true
+          });
+        }
+
+        processMessage(message);
       };
 
       chatCont.querySelectorAll(".message").forEach(observeMessage);
@@ -2800,6 +2805,44 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (url === `${base_url}hub/market`) handleMarket();
     if (url === `${base_url}hub/clans`) handleClans();
     if (url === `${base_url}friends`) handleFriends();
+  });
+
+  document.addEventListener("juice-settings-changed", ({ detail }) => {
+    const { setting, value } = detail;
+
+    const directSettings = [
+      "weapon_offset_x", "weapon_offset_y", "weapon_offset_z",
+      "weapon_size", "weapon_wireframe", "weapon_rgb", "weapon_color",
+      "include_arms", "kd_indicator", "customizations",
+      "local_customizations"
+    ];
+
+    if (directSettings.includes(setting)) {
+      settings[setting] = value;
+    }
+
+    switch (setting) {
+      case "ads_power":
+        settings.ads_power = value;
+        setAdsPower(value);
+        break;
+
+      case "menu_keybind":
+        const keybindReminder = document.querySelector("#juice-keybind-reminder");
+        if (keybindReminder)
+          keybindReminder.innerText = `Press ${value} to open the client menu.`;
+        break;
+
+      case "css_link":
+      case "css_enabled":
+      case "advanced_css":
+        updateTheme();
+        break;
+
+      case "customizations":
+        value ? applyCustomizations() : removeCustomizations();
+        break;
+    }
   });
 
   const handleInitialLoad = () => {
