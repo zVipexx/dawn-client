@@ -8,7 +8,7 @@ const fs = require("fs");
 const path = require("path");
 
 
-//here u go smudgy, just copy and paste like the rest of ur code:
+//here u go smudgy, just copy and paste like the rest of ur code ure somehow proud of:
 function findCamera(instance) {
   for (const key of Object.getOwnPropertyNames(instance)) {
     try {
