@@ -1052,27 +1052,27 @@ document.addEventListener("DOMContentLoaded", async () => {
       };
 
       window.removeUserCustomizations = () => {
-        const lobbyNickname = document.querySelector(".team-section .heads .nickname");
-        lobbyNickname.style = "display: flex; align-items: flex-end; gap: 0.25rem;";
-        lobbyNickname.querySelector(".juice-badges")?.remove();
+        const nickname = document.querySelectorAll(".nickname").forEach((nick) => {
+          nick.style = "display: flex; align-items: flex-end; gap: 0.25rem;";
+          nick.querySelector(".juice-badges")?.remove();
+        });
       };
 
       window.removeClanCustomizations = () => {
-        const lobbyClan = document.querySelector(".team-section .heads .clan-tag");
-        lobbyClan.style = "display: flex; align-items: flex-end; gap: 0.25rem;";
+        const clan = document.querySelectorAll(".clan-tag").forEach((cl) => {
+          cl.style = "display: flex; align-items: flex-end; gap: 0.25rem;";
+        });
       };
 
       window.removeGradientAnimations = () => {
-        const lobbyNickname = document.querySelector(".team-section .heads .nickname");
-        const lobbyClan = document.querySelector(".team-section .heads .clan-tag");
-        if (lobbyNickname) {
-          lobbyNickname.style.animation = "none";
-          lobbyNickname.style.backgroundSize = "100% 100%";
-        }
-        if (lobbyClan) {
-          lobbyClan.style.animation = "none";
-          lobbyClan.style.backgroundSize = "100% 100%";
-        }
+        const nickname = document.querySelectorAll(".nickname").forEach((nick) => {
+          nick.style.animation = "none";
+          nick.style.backgroundSize = "100% 100%";
+        });
+        const clan = document.querySelectorAll(".clan-tag").forEach((cl) => {
+          cl.style.animation = "none";
+          cn.style.backgroundSize = "100% 100%";
+        });
       }
 
       if (settings.customizations) applyUserCustomizations();
@@ -1595,8 +1595,21 @@ document.addEventListener("DOMContentLoaded", async () => {
 
           if (bgUrl) {
             document.querySelector(".profile-cont .profile").style.cssText = `
+              width: unset;
+              min-width: 60rem;
               background: url("${bgUrl}") no-repeat center / cover;
-              box-shadow: inset 0 0 0px 5px rgba(0, 0, 0, 0.5);
+              box-shadow: inset 0 1px 0 5px rgba(0, 0, 0, 0.5),
+                          inset 0 6px 0 -5px rgba(0, 0, 0, 0.5);
+            `;
+            document.querySelector(".profile-cont .head-right .nickname").style.cssText = `
+              backdrop-filter: blur(5px);
+              padding: 0 5px 5px 5px;
+              border-radius: 5px;
+              border: 1px solid rgba(255, 255, 255, .3);
+            `
+            document.querySelector(".profile-cont .clan-tag").style.cssText = `
+              z-index: 1;
+              transform: translateX(15px)
             `;
             document.querySelectorAll(".profile-cont .card").forEach(card => {
               card.style.cssText = `
@@ -2607,6 +2620,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     function addSpectateButton(div) {
+      if (!settings.spectate_button) return;
       if (div.nextElementSibling?.classList.contains("spectate-eye")) return;
 
       const match = div.textContent.match(/\[(.*?)\]/);

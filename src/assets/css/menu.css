@@ -1179,7 +1179,7 @@
 .gradient-preview .preview-css-label {
     width: 100%;
     box-sizing: border-box;
-    font-size: 10px;
+    font-size: 1rem;
     background: rgba(0, 0, 0, 0.3);
     color: rgba(255, 255, 255, 0.5);
     border: 1px solid rgba(255, 255, 255, 0.1);

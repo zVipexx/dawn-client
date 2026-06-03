@@ -428,29 +428,68 @@ class Menu {
       const previewCssLabel = previewDiv.querySelector('.preview-css-label');
 
       previewCssLabel.addEventListener('input', () => {
-        const val = previewCssLabel.value.trim();
-        const match = val.match(/linear-gradient\(([^)]+)\)/);
-        if (!match) return;
-        try {
-          previewText.style.backgroundImage = `linear-gradient(${match[1]})`;
-          const parts = match[1].split(',').map(s => s.trim());
-          const rotMatch = parts[0].match(/^(\d+)deg$/);
-          if (rotMatch) {
-            rotationSlider.value = rotMatch[1];
-            rotationInput.value = rotMatch[1];
+        const lines = previewCssLabel.value.split('\n').map(l => l.trim());
+        const gradientLine = lines.find(l => l.startsWith('linear-gradient'));
+        const shadowLine = lines.find(l => l.startsWith('text-shadow:'));
+        const animatedLine = lines.find(l => l.startsWith('animated:'));
+
+        if (gradientLine) {
+          const match = gradientLine.match(/linear-gradient\(([^)]+)\)/);
+          if (match) {
+            try {
+              previewText.style.backgroundImage = `linear-gradient(${match[1]})`;
+              const parts = match[1].split(',').map(s => s.trim());
+              const rotMatch = parts[0].match(/^(\d+)deg$/);
+              if (rotMatch) {
+                rotationSlider.value = rotMatch[1];
+                rotationInput.value = rotMatch[1];
+              }
+              const stops = parts.slice(rotMatch ? 1 : 0);
+              const inputs = [...colorsContainer.querySelectorAll(".color-input")];
+              stops.forEach((stop, i) => {
+                const m = stop.match(/(#[0-9a-fA-F]{6})\s*([\d.]+%)?/);
+                if (!m || !inputs[i]) return;
+                inputs[i].querySelector(".hex").value = m[1];
+                inputs[i].querySelector(".position").value = m[2] || "";
+                inputs[i].querySelector(".color-picker").value = m[1];
+                inputs[i].querySelector(".color-swatch").style.background = m[1];
+              });
+            } catch (e) { }
           }
-          const stops = parts.slice(rotMatch ? 1 : 0);
-          const inputs = [...colorsContainer.querySelectorAll(".color-input")];
-          stops.forEach((stop, i) => {
-            const m = stop.match(/(#[0-9a-fA-F]{6})\s*([\d.]+%)?/);
-            if (!m || !inputs[i]) return;
-            inputs[i].querySelector(".hex").value = m[1];
-            inputs[i].querySelector(".position").value = m[2] || "";
-            inputs[i].querySelector(".color-picker").value = m[1];
-            inputs[i].querySelector(".color-swatch").style.background = m[1];
-          });
-          saveToCustomizations();
-        } catch (e) { }
+        }
+
+        if (shadowLine) {
+          const val = shadowLine.replace('text-shadow:', '').trim();
+          if (val === 'none') {
+            shadowSlider.value = 0;
+            shadowInput.value = 0;
+          } else {
+            const m = val.match(/0 0 (\d+)px\s+(#[0-9a-fA-F]{6})/);
+            if (m) {
+              shadowSlider.value = m[1];
+              shadowInput.value = m[1];
+              shadowColorPicker.value = m[2];
+              shadowHexInput.value = m[2];
+              const swatch = shadowColorInputDiv.querySelector('.color-swatch');
+              if (swatch) swatch.style.background = m[2];
+            }
+          }
+          updateTextShadow();
+        }
+
+        if (animatedLine) {
+          const isAnimated = animatedLine.replace('animated:', '').trim() === 'true';
+          animatedCheckbox.checked = isAnimated;
+          if (isAnimated) {
+            previewText.style.backgroundSize = "200% 200%";
+            previewText.style.animation = "animated-gradient 3s linear infinite";
+          } else {
+            previewText.style.backgroundSize = "";
+            previewText.style.animation = "";
+          }
+        }
+
+        saveToCustomizations();
       });
 
       if (self.settings.local_animated_gradient) {
@@ -605,6 +644,8 @@ class Menu {
           updateGradient();
         });
 
+        animatedCheckbox.addEventListener("click", updateGradient)
+
         posInput.addEventListener("input", updateGradient);
 
         div.append(handle, swatchWrapper, hexInput, posInput, trash);
@@ -668,7 +709,11 @@ class Menu {
         const stops = getStops();
         const gradientCSS = `linear-gradient(${rotation}deg, ${stops.map(s => `${s.hex} ${s.pos}`).join(", ")})`;
         previewText.style.backgroundImage = gradientCSS;
-        previewCssLabel.value = gradientCSS;
+        const intensity = shadowSlider.value || 0;
+        const shadowColor = shadowColorPicker.value || '#FFFFFF';
+        const shadowCSS = intensity > 0 ? `0 0 ${intensity}px ${shadowColor}` : 'none';
+        const animatedVal = animatedCheckbox.checked;
+        previewCssLabel.value = `${gradientCSS}\ntext-shadow: ${shadowCSS}\nanimated: ${animatedVal}`;
         localStorage.setItem('gradientSettings', JSON.stringify({
           rotation,
           colors: stops.map(s => ({ hex: s.hex, position: s.pos }))
@@ -681,6 +726,10 @@ class Menu {
         const color = shadowColorPicker.value || '#FFFFFF';
         previewText.style.textShadow = intensity > 0 ? `0 0 ${intensity}px ${color}` : 'none';
         localStorage.setItem('gradientShadowSettings', JSON.stringify({ intensity, color }));
+        const current = previewCssLabel.value.split('\n')[0];
+        const animatedVal = animatedCheckbox.checked;
+        const shadowCSS = intensity > 0 ? `0 0 ${intensity}px ${color}` : 'none';
+        previewCssLabel.value = `${current}\ntext-shadow: ${shadowCSS}\nanimated: ${animatedVal}`;
         saveToCustomizations();
       }
 
