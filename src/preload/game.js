@@ -2734,7 +2734,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             if (clan) {
               [
                 ".my-clan .stat",
-                ".my-clan .champions-values:last-child",
+                ".my-clan .champions-values div",
                 ".my-clan .all-scores-value"
               ].forEach(selector => {
                 document.querySelectorAll(selector).forEach(el => {

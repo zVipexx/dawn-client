@@ -1097,10 +1097,8 @@ class Menu {
       });
 
       input.addEventListener('input', () => {
-        const min = parseFloat(slider.min);
-        const max = parseFloat(slider.max);
         const val = parseFloat(input.value);
-        if (!isNaN(val) && val >= min && val <= max) {
+        if (!isNaN(val)) {
           slider.value = val;
           slider.dispatchEvent(new Event('change'));
         }
