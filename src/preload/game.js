@@ -8,85 +8,6 @@ const fs = require("fs");
 const path = require("path");
 
 
-//here u go smudgy, just copy and paste like the rest of ur code ure somehow proud of:
-function findCamera(instance) {
-  for (const key of Object.getOwnPropertyNames(instance)) {
-    try {
-      const val = instance[key];
-      if (!val || typeof val !== 'object') continue;
-      const names = Object.getOwnPropertyNames(val);
-      const hasFov = names.some(k => {
-        const desc = Object.getOwnPropertyDescriptor(val, k);
-        if (!desc?.get) return false;
-        try {
-          const v = desc.get.call(val);
-          return typeof v === 'number' && v >= 40 && v <= 150;
-        } catch (e) { return false; }
-      });
-      const hasZoom = names.includes('zoom');
-      if (hasFov && hasZoom) return val;
-    } catch (e) { }
-  }
-  return null;
-}
-
-window.ads_power = 1;
-const setAdsPower = (multiplier) => {
-  window.ads_power = multiplier;
-
-  const interval = setInterval(() => {
-    if (!window.__zoomInstance) return;
-    const cam = findCamera(window.__zoomInstance);
-    if (!cam) return;
-    clearInterval(interval);
-
-    const fovKey = Object.getOwnPropertyNames(cam).find(key => {
-      const desc = Object.getOwnPropertyDescriptor(cam, key);
-      if (!desc?.get) return false;
-      try {
-        const val = desc.get.call(cam);
-        return typeof val === 'number' && val >= 40 && val <= 150;
-      } catch (e) { return false; }
-    });
-
-    if (!fovKey) return;
-
-    const desc = Object.getOwnPropertyDescriptor(cam, fovKey);
-    const origGet = desc.get;
-    const origSet = desc.set;
-
-    const defaultFov = parseFloat(localStorage.getItem('SETTINGS___SETTING/CAMERA___SETTING/MAIN_FOV___SETTING')?.replace(/"/g, '')) || 100;
-
-    let ads = false;
-
-    Object.defineProperty(cam, fovKey, {
-      get() { return origGet.call(this); },
-      set(v) {
-        if (v === defaultFov) {
-          ads = false;
-          origSet.call(this, v);
-          return;
-        }
-
-        if (v < defaultFov) {
-          ads = true;
-        }
-
-        if (ads) {
-          const zoomDelta = Math.abs(defaultFov - v);
-          const curved = Math.pow(window.ads_power, 0.4);
-          const newFov = defaultFov - zoomDelta * curved;
-          origSet.call(this, Math.max(1, Math.min(179, newFov)));
-        } else {
-          origSet.call(this, v);
-        }
-      },
-      configurable: true,
-      enumerable: true
-    });
-  }, 100);
-};
-
 const scriptsPath = ipcRenderer.sendSync("get-scripts-path");
 const scripts = fs.readdirSync(scriptsPath);
 
@@ -130,6 +51,7 @@ const observeForElement = (selector, functionToRun, target = document.body) => {
   return observer;
 };
 
+//here u go smudgy, just copy and paste like the rest of ur code ure somehow proud of:
 const hsvToRgb = (hue) => {
   hue = ((hue % 360) + 360) % 360;
   const sector = Math.floor(hue / 60);
@@ -932,6 +854,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   };
 
   const handleLobby = () => {
+    const warmupAPI = () => {
+      fetch("https://kirka.onrender.com")
+    }
+    warmupAPI();
+
     initRoomPresets();
     const applyLobbyChanges = () => {
       const settings = ipcRenderer.sendSync("get-settings");
@@ -1458,8 +1385,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       const progressExp = profile.querySelector(".progress-exp");
 
       const formatRate = (val) => {
-        const fixed = val.toFixed(2);
-        return (parseFloat(fixed) % 1 === 0 ? Math.round(val) : parseFloat(fixed)) + "%";
+        return val.toLocaleString(undefined, { maximumFractionDigits: 2 }) + "%";
       };
 
       if (progressExp) {
@@ -1698,8 +1624,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     let settings = ipcRenderer.sendSync("get-settings");
     const nicknames = JSON.parse(localStorage.getItem("nicknames") || "{}");
 
-    setAdsPower(settings.ads_power);
-
     let red_players = [];
     let blue_players = [];
     let dm_players = [];
@@ -1721,23 +1645,28 @@ document.addEventListener("DOMContentLoaded", async () => {
       const process = (conts, list) => {
         conts.forEach((player) => {
           const nicknameEl = player.querySelector(".nickname");
-          const shortId = player.querySelector(".short-id")?.innerText.replace("#", "");
-          if (!nicknameEl || !shortId) return;
+          const shortIdEl = player.querySelector(".short-id");
+          const shortId = shortIdEl?.innerText.replace("#", "");
+          const rawName = nicknameEl?.innerText.trim();
+          if (!nicknameEl || !rawName) return;
 
-          const entry = nicknames[shortId];
-          const rawName = entry?.original || nicknameEl.innerText.trim();
-          if (!rawName) return;
+          const entry = shortId ? nicknames[shortId] : undefined;
+          const displayName = entry?.original || rawName;
 
           const p = {
-            display: rawName,
-            original: rawName,
-            shortId,
-            nickname: entry?.nickname
+            display: displayName,
+            original: displayName,
+            shortId: shortId || null,
+            nickname: entry?.nickname,
+            isBot: !shortId
           };
+
           list.push(p);
           playerCache.set(rawName, p);
-          playerCache.set(shortId, p);
-          if (entry?.nickname) playerCache.set(entry.nickname, p);
+          if (shortId) {
+            playerCache.set(shortId, p);
+            if (entry?.nickname) playerCache.set(entry.nickname, p);
+          }
         });
       };
 
@@ -2632,9 +2561,22 @@ document.addEventListener("DOMContentLoaded", async () => {
       loading.className = "clan-loading"
       loading.textContent = "LOADING..."
 
+      let clanNotFound = false;
+      setTimeout(() => {
+        if (clanNotFound) return;
+        if (loading) {
+          loading.innerHTML = "LOADING...<span style='font-size: 50%; color: rgba(230, 224, 245, 0.5);'>This might take a second</span>"
+        }
+      }, 2000);
+
       clanTab._page = clanPage;
 
       fetchClan(clanName).then(data => {
+        if (!data || data.error) {
+          clanNotFound = true;
+          loading.innerHTML = "CLAN NOT FOUND<span style='font-size: 50%; color: rgba(230, 224, 245, 0.5); display: block;'>Double-check the clan name and try again</span>"
+          return;
+        }
         buildClanPage(data, clanPage)
         clanPage.querySelector(".loading")?.remove()
       });
@@ -2775,7 +2717,40 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
     }
 
-    observeForElement(".clans .list-container", (el) => addSorting(el));
+    observeForElement(".clans .my-clan .list-container", (el) => {
+      addSorting(el)
+
+      let loading = null;
+      let polling = null;
+
+      const run = () => {
+        clearTimeout(loading);
+        clearTimeout(polling);
+
+        loading = setTimeout(() => {
+          const tryApply = () => {
+            const clan = document.querySelector(".my-clan .clan-name");
+            console.log("running")
+            if (clan) {
+              [
+                ".my-clan .stat",
+                ".my-clan .champions-values:last-child",
+                ".my-clan .all-scores-value"
+              ].forEach(selector => {
+                document.querySelectorAll(selector).forEach(el => {
+                  const raw = parseInt(el.textContent.replace(/\D/g, ''));
+                  if (Number.isFinite(raw) && !isNaN(raw)) el.textContent = raw.toLocaleString();
+                });
+              });
+            } else {
+              polling = setTimeout(tryApply, 10);
+            }
+          };
+          tryApply();
+        }, 0);
+      };
+      run();
+    });
   }
 
   const handleMarket = () => {
@@ -3085,11 +3060,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     switch (setting) {
-      case "ads_power":
-        settings.ads_power = value;
-        setAdsPower(value);
-        break;
-
       case "menu_keybind":
         const keybindReminder = document.querySelector("#juice-keybind-reminder");
         if (keybindReminder)
