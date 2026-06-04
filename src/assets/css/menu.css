@@ -2304,14 +2304,18 @@ button:focus,
     padding-bottom: 10rem;
 }
 
+.role-select:hover {
+    cursor: default;
+}
+
 .role-select.NEWBIE,
 .rank.newbie {
-    color: #0dc683
+    color: #0dc683;
 }
 
 .role-select.OFFICER,
 .rank.officer {
-    color: #4f94f1
+    color: #4f94f1;
 }
 
 .role-select.LEADER,

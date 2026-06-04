@@ -2558,14 +2558,14 @@ document.addEventListener("DOMContentLoaded", async () => {
       clanPage.className = `other-clan-page ${clanName}`;
 
       const loading = document.createElement("div");
-      loading.className = "clan-loading"
-      loading.textContent = "LOADING..."
+      loading.className = "clan-loading";
+      loading.textContent = "LOADING...";
 
       let clanNotFound = false;
       setTimeout(() => {
         if (clanNotFound) return;
         if (loading) {
-          loading.innerHTML = "LOADING...<span style='font-size: 50%; color: rgba(230, 224, 245, 0.5);'>This might take a second</span>"
+          loading.innerHTML = "LOADING...<span style='font-size: 50%; color: rgba(230, 224, 245, 0.5);'>This might take a second</span>";
         }
       }, 2000);
 
@@ -2574,11 +2574,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       fetchClan(clanName).then(data => {
         if (!data || data.error) {
           clanNotFound = true;
-          loading.innerHTML = "CLAN NOT FOUND<span style='font-size: 50%; color: rgba(230, 224, 245, 0.5); display: block;'>Double-check the clan name and try again</span>"
+          loading.innerHTML = "CLAN NOT FOUND<span style='font-size: 50%; color: rgba(230, 224, 245, 0.5); display: block;'>Double-check the clan name and try again</span>";
           return;
         }
-        buildClanPage(data, clanPage)
-        clanPage.querySelector(".loading")?.remove()
+        buildClanPage(data, clanPage);
+        clanPage.querySelector(".loading")?.remove();
       });
 
       clanPage.appendChild(loading);
@@ -2594,7 +2594,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.querySelectorAll(".champions-list .item").forEach((clan) => {
       clan.addEventListener("click", () => {
         const clanName = clan.childNodes[0].textContent.trim();
-        addClanPage(clanName)
+        addClanPage(clanName);
       });
     });
 
@@ -2603,7 +2603,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (!awardsCont) return;
 
       const clanLookup = document.createElement("div");
-      clanLookup.classList.add("clan-lookup")
+      clanLookup.classList.add("clan-lookup");
       clanLookup.style = `display: flex; flex-direction: column; align-items: flex-start; margin-top: 1.5rem; margin-bottom: 30%; padding: 0 1rem;`;
       clanLookup.innerHTML = `
         <div style="display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: .5rem; width: 100%; font-size: 0.85rem;">
@@ -2622,7 +2622,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
       });
 
-      awardsCont.prepend(clanLookup)
+      awardsCont.prepend(clanLookup);
     }
 
     addClanLookup();
