@@ -345,6 +345,10 @@ ipcMain.on("save-sound", (event, soundname, filePath, volume) => {
   }
 });
 
+ipcMain.on("navigate", (_, url) => {
+  gameWindow.loadURL(url);
+});
+
 applySwitches(settings);
 
 let gameWindow = null;

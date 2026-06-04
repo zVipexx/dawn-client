@@ -2519,6 +2519,265 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   };
 
+  const handleClans = () => {
+    async function fetchClan(clan) {
+      const clanData = await fetch(`https://kirka.onrender.com/api/clan/${clan}`).then((res) => res.json())
+      return clanData;
+    }
+
+    function buildClanPage(data, container) {
+      const sorted = [...data.members].sort((a, b) => b.monthScores - a.monthScores);
+
+      const memberRows = sorted.map((m, i) => `
+        <div data-v-45a6a849="" class="item">
+          <div data-v-45a6a849="" class="number">${i + 1}</div>
+          <div data-v-45a6a849="" class="item-content">
+            <div data-v-45a6a849="" class="name-rang">
+              <div data-v-34c14d58="" data-v-45a6a849="" class="role-select ${m.role}">
+                ${m.role}
+              </div>
+              <div data-v-45a6a849="" class="name ${m.role === "LEADER" ? "bolder" : ""}" data-shortid="${m.user.shortId}">
+                ${m.user.name}
+              </div>
+            </div>
+            <div data-v-45a6a849="" class="stats">
+              <div data-v-45a6a849="" class="stat">${m.monthScores.toLocaleString()}</div>
+              <div data-v-45a6a849="" class="stat">${m.allScores.toLocaleString()}</div>
+            </div>
+          </div>
+        </div>
+      `).join("");
+
+      container.innerHTML = `
+        <div data-v-1c9e870c="" data-v-392a0664="" class="card-cont">
+          <div data-v-1c9e870c="" class="clan-name text-1">${data.name}</div>
+          <div data-v-1c9e870c="" class="info">
+            <div data-v-1c9e870c="" class="left-info">
+              <div data-v-1c9e870c="" class="champions-stat background">
+                <div data-v-1c9e870c="" class="champions-labels">
+                  <span data-v-1c9e870c="" class="champions-league">clan war #</span>
+                  <div data-v-1c9e870c="" class="champions-scores">scores</div>
+                </div>
+                <div data-v-1c9e870c="" class="champions-values">
+                  <div data-v-1c9e870c="">${data.currentClanWarPosition ?? "—"}</div>
+                  <div data-v-1c9e870c="" class="">${(data.monthScores ?? 0).toLocaleString()}</div>
+                </div>
+              </div>
+              <div data-v-1c9e870c="" class="all-scores background">
+                <div data-v-1c9e870c="" class="all-scores-label">all scores</div>
+                <div data-v-1c9e870c="" class="all-scores-value">${data.allScores.toLocaleString()}</div>
+              </div>
+              <div data-v-1c9e870c="" class="ranks-cont">
+                <div data-v-1c9e870c="" class="ranks-label text-2">ranks:</div>
+                <div data-v-1c9e870c="" class="ranks">
+                  <div data-v-1c9e870c="" class="rank leader"> LEADER </div>
+                  <div data-v-1c9e870c="" class="rank officer"> OFFICER </div>
+                  <div data-v-1c9e870c="" class="rank newbie"> NEWBIE </div>
+                </div>
+              </div>
+            </div>
+            <div data-v-1c9e870c="" class="right-info">
+              <div data-v-1c9e870c="" class="description background">${data.description ?? ""}</div>
+              ${data.discordLink ? `
+                <div data-v-1c9e870c="" class="discord-cont">
+                  <svg data-v-2b44d870="" data-v-1c9e870c="" xmlns="http://www.w3.org/2000/svg" class="discord-icon svg-icon svg-icon--__discord-classic__">
+                    <use data-v-2b44d870="" xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="/img/icons.8d8d28b5.svg#__discord-classic__"></use>
+                  </svg>
+                  DISCORD
+                </div>
+              ` : "<!---->"}
+            </div>
+          </div>
+        </div>
+        <div data-v-45a6a849="" data-v-392a0664="" class="list-container">
+          <div data-v-45a6a849="" class="head">
+            Players
+            <div data-v-45a6a849="" class="labels">
+              <div data-v-45a6a849="" class="label"> scores per month </div>
+              <div data-v-45a6a849="" class="label"> scores </div>
+            </div>
+          </div>
+          <div data-v-45a6a849="" class="list">${memberRows}</div>
+        </div>
+      `;
+
+      container.querySelectorAll(".name[data-shortid]").forEach((el) => {
+        el.style.cursor = "pointer";
+        el.addEventListener("click", () => {
+          window.location.href = `https://kirka.io/profile/${el.dataset.shortid}`;
+        });
+      });
+
+      const listContainer = container.querySelector('.list-container');
+      if (listContainer) addSorting(listContainer);
+    }
+
+    function addClanPage(clanName) {
+      const pagesNav = document.querySelector(".pages-nav");
+      const clansContainer = document.querySelector(".clans");
+
+      if (pagesNav.querySelector(`.nav.${clanName}`)) {
+        pagesNav.querySelector(`.nav.${clanName}`).click();
+        return;
+      }
+
+      const clanTab = document.createElement("div");
+      clanTab.className = `nav other-clan ${clanName}`;
+      clanTab.textContent = clanName.toUpperCase();
+
+      const clanPage = document.createElement("div");
+      clanPage.className = `other-clan-page ${clanName}`;
+
+      const loading = document.createElement("div");
+      loading.className = "clan-loading"
+      loading.textContent = "LOADING..."
+
+      clanTab._page = clanPage;
+
+      fetchClan(clanName).then(data => {
+        buildClanPage(data, clanPage)
+        clanPage.querySelector(".loading")?.remove()
+      });
+
+      clanPage.appendChild(loading);
+      pagesNav.appendChild(clanTab);
+      clansContainer.appendChild(clanPage);
+
+      function clickClanTab() { clanTab.click() }
+
+      pagesNav.childNodes[1].click();
+      observeForElement(".my-clan", clickClanTab);
+    }
+
+    document.querySelectorAll(".champions-list .item").forEach((clan) => {
+      clan.addEventListener("click", () => {
+        const clanName = clan.childNodes[0].textContent.trim();
+        addClanPage(clanName)
+      });
+    });
+
+    function addClanLookup() {
+      const awardsCont = document.querySelector(".awards-cont");
+      if (!awardsCont) return;
+
+      const clanLookup = document.createElement("div");
+      clanLookup.classList.add("clan-lookup")
+      clanLookup.style = `display: flex; flex-direction: column; align-items: flex-start; margin-top: 1.5rem; margin-bottom: 30%; padding: 0 1rem;`;
+      clanLookup.innerHTML = `
+        <div style="display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: .5rem; width: 100%; font-size: 0.85rem;">
+          <span class="lookup-text">Lookup</span>
+          <span>Press Enter to lookup</span>
+        </div>
+        <input type="text" placeholder="ENTER CLAN NAME" class="lookup-input" style="border: .125rem solid #202639; outline: none; background: #2f3957; width: 100%; height: 2.875rem; padding-left: .5rem; box-sizing: border-box; font-weight: 600; font-size: 1rem; color: #f2f2f2; box-shadow: 0 1px 2px rgba(0,0,0,.4), inset 0 0 8px rgba(0,0,0,.4); border-radius: .25rem; transition: border-color 0.2s;"/>
+      `;
+
+      const input = clanLookup.querySelector(".lookup-input");
+
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          const clanName = input.value.trim();
+          if (clanName) addClanPage(clanName);
+        }
+      });
+
+      awardsCont.prepend(clanLookup)
+    }
+
+    addClanLookup();
+
+    document.querySelector(".pages-nav").addEventListener("click", (e) => {
+      const tab = e.target.closest(".nav");
+      if (!tab) return;
+
+      const pagesNav = document.querySelector(".pages-nav");
+      const clansContainer = document.querySelector(".clans");
+      const championsContainer = document.querySelector(".champions-container");
+      const myClanContainer = document.querySelector(".my-clan");
+
+      pagesNav.querySelectorAll(".nav").forEach(t => t.classList.remove("active"));
+      tab.classList.add("active");
+
+      clansContainer.querySelectorAll(".other-clan-page").forEach(p => p.style.display = "none");
+      if (championsContainer) championsContainer.style.display = "none";
+      if (myClanContainer) myClanContainer.style.display = "none";
+
+      if (tab._page) {
+        tab._page.style.display = "flex";
+      } else if (tab.textContent.includes("CLAN WAR")) {
+        if (championsContainer) championsContainer.style.display = "flex";
+      } else if (tab.textContent.includes("MY CLAN")) {
+        if (myClanContainer) myClanContainer.style.display = "flex";
+      }
+    });
+
+    function addSorting(container) {
+      const labels = container.querySelectorAll('.labels .label');
+      const list = container.querySelector('.list');
+
+      if (!labels.length || !list) return;
+
+      const state = [0, 0];
+      const icons = ['', ' <i class="fa-solid fa-caret-up"></i>', ' <i class="fa-solid fa-caret-down"></i>'];
+      const baseText = ['scores per month', 'scores'];
+
+      function getItems() {
+        return Array.from(list.querySelectorAll('.item'));
+      }
+
+      function getStatValue(item, colIndex) {
+        const stats = item.querySelectorAll('.stat');
+        if (!stats[colIndex]) return 0;
+        return parseInt(stats[colIndex].textContent.replace(/\D/g, '')) || 0;
+      }
+
+      function applySort(colIndex) {
+        const items = getItems();
+        items.forEach((item, i) => {
+          if (item.dataset.origIndex === undefined) item.dataset.origIndex = i;
+        });
+
+        const dir = state[colIndex];
+
+        if (dir === 0) {
+          items.sort((a, b) => parseInt(a.dataset.origIndex) - parseInt(b.dataset.origIndex));
+        } else {
+          items.sort((a, b) => {
+            const diff = getStatValue(a, colIndex) - getStatValue(b, colIndex);
+            return dir === 1 ? diff : -diff;
+          });
+        }
+
+        items.forEach((item, i) => {
+          item.querySelector('.number').textContent = dir === 0 ? parseInt(item.dataset.origIndex) + 1 : i + 1;
+          list.appendChild(item);
+        });
+      }
+
+      function updateLabels() {
+        labels.forEach((label, i) => {
+          label.innerHTML = baseText[i] + (icons[state[i]] || '');
+        });
+      }
+
+      getItems().forEach((item, i) => item.dataset.origIndex = i);
+
+      labels.forEach((label, colIndex) => {
+        label.style.cursor = 'pointer';
+        label.style.userSelect = 'none';
+
+        label.addEventListener('click', () => {
+          const other = colIndex === 0 ? 1 : 0;
+          state[other] = 0;
+          state[colIndex] = (state[colIndex] + 1) % 3;
+          updateLabels();
+          applySort(colIndex);
+        });
+      });
+    }
+
+    observeForElement(".clans .list-container", (el) => addSorting(el));
+  }
+
   const handleMarket = () => {
     const interval = setInterval(() => {
       if (!window.location.href === `${base_url}hub/market`) {
@@ -2811,26 +3070,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   ipcRenderer.on("notification", (_, data) => customNotification(data));
 
-  ipcRenderer.on("url-change", (_, url) => {
-    console.log = originalConsole.log;
-    console.warn = originalConsole.warn;
-    console.error = originalConsole.error;
-    console.info = originalConsole.info;
-    console.trace = originalConsole.trace;
-
-    if (url === `${base_url}`) {
-      handleLobby();
-      handleInGame();
-    }
-    if (url.startsWith(`${base_url}games`)) handleInGame();
-    if (url.startsWith(`${base_url}hub/ranked`)) handleInGame();
-    if (url.startsWith(`${base_url}servers/`)) handleServers();
-    if (url.startsWith(`${base_url}profile/`)) handleProfile();
-    if (url === `${base_url}hub/market`) handleMarket();
-    if (url === `${base_url}hub/clans`) handleClans();
-    if (url === `${base_url}friends`) handleFriends();
-  });
-
   document.addEventListener("juice-settings-changed", ({ detail }) => {
     const { setting, value } = detail;
 
@@ -2882,6 +3121,29 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
+  ipcRenderer.on("url-change", (_, url) => {
+    console.log = originalConsole.log;
+    console.warn = originalConsole.warn;
+    console.error = originalConsole.error;
+    console.info = originalConsole.info;
+    console.trace = originalConsole.trace;
+
+    const previousUrl = window._currentUrl;
+    window._currentUrl = url;
+
+    if (url === `${base_url}`) {
+      handleLobby();
+      handleInGame();
+    }
+    if (url.startsWith(`${base_url}games`)) handleInGame();
+    if (url.startsWith(`${base_url}hub/ranked`)) handleInGame();
+    if (url.startsWith(`${base_url}servers/`)) handleServers();
+    if (url.startsWith(`${base_url}profile/`)) handleProfile();
+    if (url === `${base_url}hub/clans/champions-league`) handleClans();
+    if (url === `${base_url}hub/market`) handleMarket();
+    if (url === `${base_url}friends`) handleFriends();
+  });
+
   const handleInitialLoad = () => {
     const url = window.location.href;
     if (url === `${base_url}`) {
@@ -2892,8 +3154,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (url.startsWith(`${base_url}hub/ranked`)) handleInGame();
     if (url.startsWith(`${base_url}servers/`)) handleServers();
     if (url.startsWith(`${base_url}profile/`)) handleProfile();
+    if (url === `${base_url}hub/clans/champions-league`) handleClans();
     if (url === `${base_url}hub/market`) handleMarket();
-    if (url === `${base_url}hub/clans`) handleClans();
     if (url === `${base_url}friends`) handleFriends();
 
     loadTheme();
