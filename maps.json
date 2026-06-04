@@ -1,0 +1,92 @@
+[
+  {
+    "map": "Clash",
+    "modes": ["1v1"],
+    "file": "https://ktiers.com/maps/files/Clash.txt",
+    "image": "https://ktiers.com/imgs/maps/Clash.png"
+  },
+  {
+    "map": "Arena",
+    "modes": ["1v1"],
+    "file": "https://ktiers.com/maps/files/Arena.txt",
+    "image": "https://ktiers.com/imgs/maps/Arena.png"
+  },
+  {
+    "map": "Lodge",
+    "modes": ["Point 2v2"],
+    "file": "https://ktiers.com/maps/files/Lodge.txt",
+    "image": "https://ktiers.com/imgs/maps/Lodge.png"
+  },
+  {
+    "map": "Cove",
+    "modes": ["Point 2v2"],
+    "code": "https://ktiers.com/maps/files/Cove.txt",
+    "preview": "https://ktiers.com/imgs/maps/Cove.png"
+  },
+  {
+    "map": "Hearth",
+    "modes": ["Point 2v2", "Point 3v3"],
+    "code": "https://ktiers.com/maps/files/Hearth.txt",
+    "preview": "https://ktiers.com/imgs/maps/Hearth.png"
+  },
+  {
+    "map": "Dust",
+    "modes": ["Point 2v2"],
+    "code": "https://ktiers.com/maps/files/Dust.txt",
+    "preview": "https://ktiers.com/imgs/maps/Dust.png"
+  },
+  {
+    "map": "Frontier",
+    "modes": ["Point 2v2", "Point 3v3"],
+    "code": "https://ktiers.com/maps/files/Frontier.txt",
+    "preview": "https://ktiers.com/imgs/maps/Frontier.png"
+  },
+  {
+    "map": "Workshop",
+    "modes": ["Point 2v2", "Point 3v3"],
+    "code": "https://ktiers.com/maps/files/Workshop.txt",
+    "preview": "https://ktiers.com/imgs/maps/Workshop.png"
+  },
+  {
+    "map": "Ruins",
+    "modes": ["Point 2v2", "Point 3v3"],
+    "code": "https://ktiers.com/maps/files/Ruins.txt",
+    "preview": "https://ktiers.com/imgs/maps/Ruins.png"
+  },
+  {
+    "map": "Sandstorm",
+    "modes": ["Point 2v2", "Point 3v3"],
+    "code": "https://ktiers.com/maps/files/Sandstorm.txt",
+    "preview": "https://ktiers.com/imgs/maps/Sandstorm.png"
+  },
+  {
+    "map": "Shipment",
+    "modes": ["TDM 2v2"],
+    "code": "https://ktiers.com/maps/files/Shipment.txt",
+    "preview": "https://ktiers.com/imgs/maps/Shipment.webp"
+  },
+  {
+    "map": "Mefitis",
+    "modes": ["TDM 2v2"],
+    "code": "https://ktiers.com/maps/files/Mefitis.txt",
+    "preview": "https://ktiers.com/imgs/maps/Mefitis.webp"
+  },
+  {
+    "map": "Station",
+    "modes": ["TDM 2v2"],
+    "code": "https://ktiers.com/maps/files/Station.txt",
+    "preview": "https://ktiers.com/imgs/maps/Station.png"
+  },
+  {
+    "map": "Nuke",
+    "modes": ["TDM 2v2"],
+    "code": "https://ktiers.com/maps/files/Nuke.txt",
+    "preview": "https://ktiers.com/imgs/maps/Nuke.png"
+  },
+  {
+    "map": "Windmill",
+    "modes": ["TDM 2v2"],
+    "code": "https://ktiers.com/maps/files/Windmill.txt",
+    "preview": "https://ktiers.com/imgs/maps/Windmill.webp"
+  }
+]
