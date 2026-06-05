@@ -1292,8 +1292,8 @@ class Menu {
 
   handleSelectorChange(selector) {
     const selectors = this.menu.querySelectorAll(".juice.selector");
+    if (!selector.dataset.selector || !this.tabToContentMap[selector.dataset.selector]) return
     const selectorName = selector.dataset.selector;
-    if (!selectorName || !this.tabToContentMap[selectorName]) return;
 
     this.localStorage.setItem("juice-menu-selector", selectorName);
 
