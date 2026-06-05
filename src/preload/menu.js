@@ -1293,12 +1293,13 @@ class Menu {
   handleSelectorChange(selector) {
     const selectors = this.menu.querySelectorAll(".juice.selector");
     const selectorName = selector.dataset.selector;
+    if (!selectorName || !this.tabToContentMap[selectorName]) return;
 
     this.localStorage.setItem("juice-menu-selector", selectorName);
 
     const contents = this.menu.querySelectorAll(".juice.options");
-    selectors.forEach((selector) => {
-      selector.classList.remove("active");
+    selectors.forEach((sel) => {
+      sel.classList.remove("active");
     });
     contents.forEach((content) => {
       content.classList.remove("selected");
