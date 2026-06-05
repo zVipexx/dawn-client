@@ -1,110 +1,27 @@
 [
   {
-    "version": "1.0.0",
-    "date": "18/6/2025",
+    "version": "1.0.13",
+    "date": "5/6/2026",
     "changelogs": [
-      "Forked Juice Client"
+      "HOTFIX",
+      "third times the charm, initialization fixed"
     ]
   },
   {
-    "version": "1.0.1",
-    "date": "18/6/2025",
+    "version": "1.0.12",
+    "date": "5/6/2026",
     "changelogs": [
-      "Fixed Discord RPC",
-      "Fixed Open Swapper Folder button"
+      "HOTFIX",
+      "second attempt at fixing the initialization (edit: not working)"
     ]
   },
   {
-    "version": "1.0.2",
-    "date": "19/6/2025",
+    "version": "1.0.11",
+    "date": "5/6/2026",
     "changelogs": [
-      "Added DawnClient folder",
-      "Added badge management",
-      "Added Resource Swapper",
-      "Minor UI fixes"
-    ]
-  },
-  {
-    "version": "1.0.3",
-    "date": "24/6/2025",
-    "changelogs": [
-      "Migrated from local to online badge management",
-      "Added macOS support"
-    ]
-  },
-  {
-    "version": "1.0.4",
-    "date": "2/7/2025",
-    "changelogs": [
-      "Added Permanent Tablist",
-      "Added a new Theme",
-      "Fixed Discord Rich Presence"
-    ]
-  },
-  {
-    "version": "1.0.5",
-    "date": "7/9/2025",
-    "changelogs": [
-      "Fixed Auto Updater (from this update on)",
-      "Revamped the splash screen",
-      "Added a spectate button to the games in your friendlist",
-      "Added skin changer",
-      "Added sound swapper",
-      "Made the menu draggable by using the titlebar",
-      "Adjusted the Discord Button colors"
-    ]
-  },
-  {
-    "version": "1.0.6",
-    "date": "22/11/2025",
-    "changelogs": [
-      "Fixed the auto Chest/Pack opener (thanks to cheeseburger's script)",
-      "Fixed user gradients display in lobby aswell as in profile",
-      "Added market utility buttons",
-      "Added clan gradients",
-      "Added animated gradients for both clan and username",
-      "Reduced the starting time to almost none when no update is available"
-    ]
-  },
-  {
-    "version": "1.0.7",
-    "date": "30/11/2025",
-    "changelogs": [
-      "Fixed the market issue where the wrong prices would be displayed",
-      "Fixed a small z-index bug involving the market buttons",
-      "Gradients and badges will now appear ingame in the escape menu",
-      "Added local gradients/badges",
-      "Added a Hokey list under the About tab",
-      "Added Headshot and Winrate percentage in profile"
-    ]
-  },
-  {
-    "version": "1.0.8",
-    "date": "12/4/2026",
-    "changelogs": [
-      "Added Room Creation Presets",
-      "Added Colored killfeed (easily customizable by css)",
-      "Added customizable chat height cuz why not",
-      "Fixed Accept trades on Click and added a highlight",
-      "Fixed a bug where gradients would not appear in ranked games",
-      "Fixed gallery not able to display .webp images",
-      "Source Code is now available on Github"
-    ]
-  },
-  {
-    "version": "1.0.9",
-    "date": "17/5/2026",
-    "changelogs": [
-      "Added Browser Tab featuring Kirka Community Hub assets",
-      "Added nicknames (applicable in the profile)",
-      "Added Player Lookup to Friends list",
-      "Added KTiers button",
-      "Added Stop Overlap (hides the team hp while info overlay is active)",
-      "Added room presets reordering & overriding",
-      "Made the local gradient way more user-friendly",
-      "Added gradient presets that are totally not ai",
-      "Fixed corrupted player statistics",
-      "Fixed spectate button"
+      "HOTFIX",
+      "attempt to fix the client not initiating for some users (edit: not working)",
+      "Custom Skin Link will now be baked into the client, you can remove your script"
     ]
   },
   {
@@ -135,28 +52,111 @@
     ]
   },
   {
-    "version": "1.0.11",
-    "date": "5/6/2026",
+    "version": "1.0.9",
+    "date": "17/5/2026",
     "changelogs": [
-      "HOTFIX",
-      "attempt to fix the client not initiating for some users (edit: not working)",
-      "Custom Skin Link will now be baked into the client, you can remove your script"
+      "Added Browser Tab featuring Kirka Community Hub assets",
+      "Added nicknames (applicable in the profile)",
+      "Added Player Lookup to Friends list",
+      "Added KTiers button",
+      "Added Stop Overlap (hides the team hp while info overlay is active)",
+      "Added room presets reordering & overriding",
+      "Made the local gradient way more user-friendly",
+      "Added gradient presets that are totally not ai",
+      "Fixed corrupted player statistics",
+      "Fixed spectate button"
     ]
   },
   {
-    "version": "1.0.12",
-    "date": "5/6/2026",
+    "version": "1.0.8",
+    "date": "12/4/2026",
     "changelogs": [
-      "HOTFIX",
-      "second attempt at fixing the initialization (edit: not working)"
+      "Added Room Creation Presets",
+      "Added Colored killfeed (easily customizable by css)",
+      "Added customizable chat height cuz why not",
+      "Fixed Accept trades on Click and added a highlight",
+      "Fixed a bug where gradients would not appear in ranked games",
+      "Fixed gallery not able to display .webp images",
+      "Source Code is now available on Github"
     ]
   },
   {
-    "version": "1.0.13",
-    "date": "5/6/2026",
+    "version": "1.0.7",
+    "date": "30/11/2025",
     "changelogs": [
-      "HOTFIX",
-      "third times the charm, initialization fixed"
+      "Fixed the market issue where the wrong prices would be displayed",
+      "Fixed a small z-index bug involving the market buttons",
+      "Gradients and badges will now appear ingame in the escape menu",
+      "Added local gradients/badges",
+      "Added a Hokey list under the About tab",
+      "Added Headshot and Winrate percentage in profile"
+    ]
+  },
+  {
+    "version": "1.0.6",
+    "date": "22/11/2025",
+    "changelogs": [
+      "Fixed the auto Chest/Pack opener (thanks to cheeseburger's script)",
+      "Fixed user gradients display in lobby aswell as in profile",
+      "Added market utility buttons",
+      "Added clan gradients",
+      "Added animated gradients for both clan and username",
+      "Reduced the starting time to almost none when no update is available"
+    ]
+  },
+  {
+    "version": "1.0.5",
+    "date": "7/9/2025",
+    "changelogs": [
+      "Fixed Auto Updater (from this update on)",
+      "Revamped the splash screen",
+      "Added a spectate button to the games in your friendlist",
+      "Added skin changer",
+      "Added sound swapper",
+      "Made the menu draggable by using the titlebar",
+      "Adjusted the Discord Button colors"
+    ]
+  },
+  {
+    "version": "1.0.4",
+    "date": "2/7/2025",
+    "changelogs": [
+      "Added Permanent Tablist",
+      "Added a new Theme",
+      "Fixed Discord Rich Presence"
+    ]
+  },
+  {
+    "version": "1.0.3",
+    "date": "24/6/2025",
+    "changelogs": [
+      "Migrated from local to online badge management",
+      "Added macOS support"
+    ]
+  },
+  {
+    "version": "1.0.2",
+    "date": "19/6/2025",
+    "changelogs": [
+      "Added DawnClient folder",
+      "Added badge management",
+      "Added Resource Swapper",
+      "Minor UI fixes"
+    ]
+  },
+  {
+    "version": "1.0.1",
+    "date": "18/6/2025",
+    "changelogs": [
+      "Fixed Discord RPC",
+      "Fixed Open Swapper Folder button"
+    ]
+  },
+  {
+    "version": "1.0.0",
+    "date": "18/6/2025",
+    "changelogs": [
+      "Forked Juice Client"
     ]
   }
 ]
