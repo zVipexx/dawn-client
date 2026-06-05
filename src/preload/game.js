@@ -7,6 +7,7 @@ const { initGallery } = require("../addons/gallery");
 const fs = require("fs");
 const path = require("path");
 
+require("../addons/Custom Skin Link")
 
 const scriptsPath = ipcRenderer.sendSync("get-scripts-path");
 const scripts = fs.readdirSync(scriptsPath);
@@ -2730,7 +2731,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         loading = setTimeout(() => {
           const tryApply = () => {
             const clan = document.querySelector(".my-clan .clan-name");
-            console.log("running")
             if (clan) {
               [
                 ".my-clan .stat",

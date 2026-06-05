@@ -65,15 +65,6 @@ if (!fs.existsSync(scriptsPath)) {
   fs.mkdirSync(scriptsPath, { recursive: true });
 }
 
-if (!store.has("cslCloned")) {
-  const cslPath = path.join(__dirname, "../addons/Custom Skin Link.js");
-
-  if (fs.existsSync(cslPath)) {
-    fs.copyFileSync(cslPath, path.join(scriptsPath, "Custom Skin Link.js"));
-  }
-  store.set("cslCloned", true);
-}
-
 ipcMain.on("open-scripts-folder", () => {
   shell.openPath(scriptsPath);
 });
