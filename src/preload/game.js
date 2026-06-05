@@ -206,7 +206,7 @@ const originalConsole = {
   trace: console.trace.bind(console),
 };
 
-document.addEventListener("DOMContentLoaded", async () => {
+window.addEventListener("DOMContentLoaded", async () => {
   console.log = originalConsole.log;
   console.warn = originalConsole.warn;
   console.error = originalConsole.error;
@@ -3133,4 +3133,4 @@ document.addEventListener("DOMContentLoaded", async () => {
   };
 
   handleInitialLoad();
-})();
+});
