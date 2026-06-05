@@ -615,6 +615,7 @@
   },
   {
     "shortId": "XMNVRX",
+    "animated": true,
     "gradient": {
       "rot": "90deg",
       "stops": [
