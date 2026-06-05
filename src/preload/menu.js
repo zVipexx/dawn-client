@@ -78,29 +78,17 @@ class Menu {
 
     initBrowser(this.menu);
 
-    this.localStorage.getItem("juice-menu-tab")
-      ? this.handleTabChange(
-        this.menu.querySelector(
-          `[data-tab="${this.localStorage.getItem("juice-menu-tab")}"]`
-        )
-      )
-      : this.handleTabChange(this.menu.querySelector(".juice.tab"));
+    const savedTab = this.localStorage.getItem("juice-menu-tab");
+    const tabEl = savedTab ? this.menu.querySelector(`[data-tab="${savedTab}"]`) : null;
+    this.handleTabChange(tabEl ?? this.menu.querySelector(".juice.tab"));
 
-    this.localStorage.getItem("juice-menu-inner-tab")
-      ? this.handleInnerTabChange(
-        this.menu.querySelector(
-          `[data-tab="${this.localStorage.getItem("juice-menu-inner-tab")}"]`
-        )
-      )
-      : this.handleInnerTabChange(this.menu.querySelector(".juice.inner-tab"));
+    const savedInnerTab = this.localStorage.getItem("juice-menu-inner-tab");
+    const innerTabEl = savedInnerTab ? this.menu.querySelector(`[data-tab="${savedInnerTab}"]`) : null;
+    this.handleInnerTabChange(innerTabEl ?? this.menu.querySelector(".juice.inner-tab"));
 
-    this.localStorage.getItem("juice-menu-selector")
-      ? this.handleSelectorChange(
-        this.menu.querySelector(
-          `[data-selector="${this.localStorage.getItem("juice-menu-selector")}"]`
-        )
-      )
-      : this.handleSelectorChange(this.menu.querySelector(".juice.selector"));
+    const savedSelector = this.localStorage.getItem("juice-menu-selector");
+    const selectorEl = savedSelector ? this.menu.querySelector(`[data-selector="${savedSelector}"]`) : null;
+    this.handleSelectorChange(selectorEl ?? this.menu.querySelector(".juice.selector"));
   }
 
   setVersion() {
@@ -1291,8 +1279,8 @@ class Menu {
   }
 
   handleSelectorChange(selector) {
+    if (!selector || !selector.dataset.selector || !this.tabToContentMap[selector.dataset.selector]) return;
     const selectors = this.menu.querySelectorAll(".juice.selector");
-    if (!selector.dataset.selector || !this.tabToContentMap[selector.dataset.selector]) return
     const selectorName = selector.dataset.selector;
 
     this.localStorage.setItem("juice-menu-selector", selectorName);
