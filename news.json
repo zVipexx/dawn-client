@@ -1,6 +1,6 @@
 [
   {
-    "category": "promotional",
+    "category": "event",
     "title": "KIRKA x KCL $50 + 10,000 GEMS KICKOFF TOURNAMENT",
     "content": "2v2, TEAM DEATHMATCH, First to 50 kills\nDate: Saturday, 13th of June 2026 7pm\n(Date might differ depending on your timezone)",
     "img": "https://i.imgur.com/kkykpLk.png",
@@ -8,5 +8,5 @@
     "link": "https://discord.gg/QM9aXsAnFQ",
     "updatedAt": 1780664059884,
     "live": false
-  },
+  }
 ]
