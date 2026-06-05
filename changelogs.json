@@ -28,7 +28,7 @@
     "version": "1.0.10",
     "date": "4/6/2026",
     "changelogs": [
-      "Added Maps into the Browser",
+      "Added Maps from [KTiers](https://ktiers.com/maps) into the Browser",
       "Added new CSS from [Daymian's CSS Website](https://css.daymian.xyz/)",
       "Added Resizable Menu",
       "Added Weapon Size modifier",
@@ -55,7 +55,7 @@
     "version": "1.0.9",
     "date": "17/5/2026",
     "changelogs": [
-      "Added Browser Tab featuring Kirka Community Hub assets",
+      "Added Browser Tab featuring [Kirka Community Hub](https://kirkacommunityhub.pages.dev/) assets",
       "Added nicknames (applicable in the profile)",
       "Added Player Lookup to Friends list",
       "Added KTiers button",
