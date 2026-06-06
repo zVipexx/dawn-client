@@ -11,36 +11,44 @@
     <div class="tab-group">
       <div data-tab="ui" class="juice tab active">
         <i class="fas fa-tv"></i>
-        UI
+        <span>UI</span>
       </div>
       <div data-tab="game" class="juice tab">
         <i class="fas fa-gamepad"></i>
-        Game
+        <span>Game</span>
       </div>
       <div data-tab="browse" class="juice tab">
         <i class="fas fa-earth"></i>
-        Browse
+        <span>Browse</span>
       </div>
     </div>
     <div class="sep"></div>
     <div class="tab-group">
       <div data-tab="performance" class="juice tab">
         <i class="fas fa-tachometer-alt"></i>
-        Performance
+        <span>Performance</span>
       </div>
       <div data-tab="client" class="juice tab">
         <i class="fas fa-cog"></i>
-        Client
+        <span>Client</span>
       </div>
       <div data-tab="scripts" class="juice tab">
         <i class="fas fa-file-code"></i>
-        Scripts
+        <span>Scripts</span>
       </div>
       <div data-tab="about" class="juice tab">
         <i class="fas fa-circle-info"></i>
-        About
+        <span>About</span>
       </div>
     </div>
+    <div class="sep"></div>
+    <div class="tab-group">
+      <div data-tab="changelogs" class="juice tab">
+        <i class="fas fa-clipboard-list"></i>
+        <span>Changelogs</span>
+      </div>
+    </div>
+    <div class="sep" style="background: none"></div>
     <div class="footer">
       <span class="keybind"></span>
       <span class="sep"></span>
@@ -218,6 +226,33 @@
       </div>
       <div class="option-group">
         <div class="option">
+          <div class="left">
+            <span>Custom Inspect Duration</span>
+            <span class="description">in milliseconds</span>
+          </div>
+          <div class="right"
+            style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
+            <input type="text" class="inspect-duration-value" placeholder="700" style="flex-basis: 21.5%"
+              maxlength="4" />
+            <div class="slider">
+              <input type="range" id="inspect_duration" class="slider-value" data-setting="inspect_duration" min="100"
+                step="50" max="5000" />
+              <label for="inspect_duration"></label>
+            </div>
+          </div>
+        </div>
+        <div class="option custom">
+          <div class="left">
+            <span>Custom Inspect Keybind</span>
+            <span class="description">
+              EXPERIMENTAL, more to come soon
+            </span>
+          </div>
+          <button class="juice change-keybind inspect"></button>
+        </div>
+      </div>
+      <div class="option-group">
+        <div class="option">
           <span>Weapon size</span>
           <div class="right"
             style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
@@ -385,7 +420,6 @@
           Local Gallery
         </div>
       </div>
-      <div class="sep"></div>
       <div id="content">
         <div id="community-options" class="juice options inner">
           <div class="community-sidebar">
@@ -464,232 +498,337 @@
       </div>
     </div>
     <div id="client-options" class="juice options">
-      <div class="option-group">
-        <div class="option requires-restart">
-          <div class="left">
-            <span>Discord Activity</span>
-            <span class="description">
-              Display Dawn Client as your Discord activity
-            </span>
-          </div>
-          <div class="checkbox">
-            <input type="checkbox" id="discord_rpc" data-setting="discord_rpc" />
-            <label for="discord_rpc"></label>
-          </div>
+      <div id="inner-tabs" class="juice tabs">
+        <div data-tab="general" class="juice inner-tab">
+          <i class="fas fa-gears"></i>
+          General
         </div>
-        <div class="option custom">
-          <div class="left">
-            <span>Menu Toggle Keybind</span>
-            <span class="description">
-              Customizable keybind to toggle the menu
-            </span>
-          </div>
-          <button class="juice change-keybind"></button>
+        <div data-tab="appearance" class="juice inner-tab">
+          <i class="fas fa-brush"></i>
+          Appearance
         </div>
       </div>
-      <div class="option-group">
-        <div class="option local-customizations">
-          <div class="left">
-            <span>Local Customizations</span>
-            <span class="description">
-              Make your own gradient and badges that only you can see
-            </span>
+      <div id="general-options" class="juice options inner">
+        <div class="option-group">
+          <div class="option requires-restart">
+            <div class="left">
+              <span>Discord Activity</span>
+              <span class="description">
+                Display Dawn Client as your Discord activity
+              </span>
+            </div>
+            <div class="checkbox">
+              <input type="checkbox" id="discord_rpc" data-setting="discord_rpc" />
+              <label for="discord_rpc"></label>
+            </div>
           </div>
-          <div class="checkbox">
-            <input type="checkbox" id="local_customizations" data-setting="local_customizations" />
-            <label for="local_customizations"></label>
+          <div class="option custom">
+            <div class="left">
+              <span>Menu Toggle Keybind</span>
+              <span class="description">
+                Customizable keybind to toggle the menu
+              </span>
+            </div>
+            <button class="juice change-keybind menu"></button>
           </div>
         </div>
-        <div class="option dropdown custom_gradient">
-          <div class="top requires-refresh">
-            <i class="fas fa-angle-down"></i>
-            <span>Gradient</span>
-          </div>
-          <div class="content">
-            <div class="option animated">
-              <div class="left">
-                <span>Animated Gradient</span>
-                <div class="description">For a smooth animation put your starting color at the end as well</div>
-              </div>
-              <div class="checkbox">
-                <input type="checkbox" id="local_animated_gradient" data-setting="local_animated_gradient" />
-                <label for="local_animated_gradient"></label>
-              </div>
+        <div class="option-group">
+          <div class="option local-customizations">
+            <div class="left">
+              <span>Local Customizations</span>
+              <span class="description">
+                Make your own gradient and badges that only you can see
+              </span>
             </div>
-            <div class="option shadow">
-              <div class="left">
-                <span>Gradient Text Shadow</span>
+            <div class="checkbox">
+              <input type="checkbox" id="local_customizations" data-setting="local_customizations" />
+              <label for="local_customizations"></label>
+            </div>
+          </div>
+          <div class="option dropdown custom_gradient">
+            <div class="top requires-refresh">
+              <i class="fas fa-angle-down"></i>
+              <span>Gradient</span>
+            </div>
+            <div class="content">
+              <div class="option animated">
+                <div class="left">
+                  <span>Animated Gradient</span>
+                  <div class="description">For a smooth animation put your starting color at the end as well</div>
+                </div>
+                <div class="checkbox">
+                  <input type="checkbox" id="local_animated_gradient" data-setting="local_animated_gradient" />
+                  <label for="local_animated_gradient"></label>
+                </div>
               </div>
-              <div class="right"
-                style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
-                <input type="text" class="shadow-value" placeholder="0" style="width: 21.5%" maxlength="2" />
-                <div class="slider">
-                  <input type="range" id="local_gradient_shadow" class="slider-value"
-                    data-setting="local_gradient_shadow" min="0" max="100" />
-                  <label for="local_gradient_shadow"></label>
+              <div class="option shadow">
+                <div class="left">
+                  <span>Gradient Text Shadow</span>
+                </div>
+                <div class="right"
+                  style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
+                  <input type="text" class="shadow-value" placeholder="0" style="width: 21.5%" maxlength="2" />
+                  <div class="slider">
+                    <input type="range" id="local_gradient_shadow" class="slider-value"
+                      data-setting="local_gradient_shadow" min="0" max="100" />
+                    <label for="local_gradient_shadow"></label>
+                  </div>
+                </div>
+              </div>
+              <div class="option shadow-color" style="justify-content: flex-end">
+                <div class="color-input"
+                  style="display: flex; width: 38.4%; margin-top: 0.5rem; margin-bottom: 1.5rem;">
+                  <input type="text" class="hex" placeholder="#FFFFFF" maxlength="7" />
+                  <input type="color" class="color-picker" value="#FFFFFF" />
+                </div>
+              </div>
+              <div class="option rotation">
+                <div class="left">
+                  <span>Gradient Rotation</span>
+                </div>
+                <div class="right"
+                  style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
+                  <input type="text" class="rotation-value" placeholder="90" style="width: 21.5%" maxlength="3" />
+                  <div class="slider">
+                    <input type="range" id="local_gradient_rotation" class="slider-value"
+                      data-setting="local_gradient_rotation" min="0" max="360" />
+                    <label for="local_gradient_rotation"></label>
+                  </div>
+                </div>
+              </div>
+              <div class="colors">
+                <div class="juice-button add-color-btn" id="add-btn">
+                  <i class="fas fa-plus"></i>
+                  <span>Add Color</span>
                 </div>
               </div>
             </div>
-            <div class="option shadow-color" style="justify-content: flex-end">
-              <div class="color-input" style="display: flex; width: 38.4%; margin-top: 0.5rem; margin-bottom: 1.5rem;">
-                <input type="text" class="hex" placeholder="#FFFFFF" maxlength="7" />
-                <input type="color" class="color-picker" value="#FFFFFF" />
-              </div>
+          </div>
+          <div class="option dropdown custom_badges">
+            <div class="top requires-refresh">
+              <i class="fas fa-angle-down"></i>
+              <span>Badges</span>
             </div>
-            <div class="option rotation">
-              <div class="left">
-                <span>Gradient Rotation</span>
-              </div>
-              <div class="right"
-                style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
-                <input type="text" class="rotation-value" placeholder="90" style="width: 21.5%" maxlength="3" />
-                <div class="slider">
-                  <input type="range" id="local_gradient_rotation" class="slider-value"
-                    data-setting="local_gradient_rotation" min="0" max="360" />
-                  <label for="local_gradient_rotation"></label>
+            <div class="content">
+              <div class="badges">
+                <div class="juice-button add-badge-btn" id="add-btn">
+                  <i class="fas fa-plus"></i>
+                  <span>Add Badge</span>
                 </div>
               </div>
             </div>
-            <div class="colors">
-              <div class="juice-button add-color-btn" id="add-btn">
-                <i class="fas fa-plus"></i>
-                <span>Add Color</span>
+          </div>
+          <div class="option dropdown custom_profile_background">
+            <div class="top requires-refresh">
+              <i class="fas fa-angle-down"></i>
+              <span>Profile Background</span>
+            </div>
+            <div class="content">
+              <div class="profile_background">
+                <div class="background-input">
+                  <input type="text" class="background-url" placeholder="https://.../.png" />
+                  <i class="fas fa-trash remove-background"></i>
+                </div>
+                <img class="background-preview" style="display:none; max-width: 100%; object-fit: contain;" />
               </div>
             </div>
           </div>
         </div>
-        <div class="option dropdown custom_badges">
-          <div class="top requires-refresh">
-            <i class="fas fa-angle-down"></i>
-            <span>Badges</span>
+        <div class="option-group">
+          <div class="option">
+            <div class="left requires-refresh">
+              <span>General News</span>
+              <span class="description">Dawn-related news</span>
+            </div>
+            <div class="checkbox">
+              <input type="checkbox" id="general_news" data-setting="general_news" />
+              <label for="general_news"></label>
+            </div>
           </div>
-          <div class="content">
-            <div class="badges">
-              <div class="juice-button add-badge-btn" id="add-btn">
-                <i class="fas fa-plus"></i>
-                <span>Add Badge</span>
+          <div class="option">
+            <div class="left requires-refresh">
+              <span>Promotional News</span>
+              <span class="description">Live events (has a "LIVE" indicator)</span>
+            </div>
+            <div class="checkbox">
+              <input type="checkbox" id="promotional_news" data-setting="promotional_news" />
+              <label for="promotional_news"></label>
+            </div>
+          </div>
+          <div class="option">
+            <div class="left requires-refresh">
+              <span>Event News</span>
+              <span class="description">Events that you can participate in</span>
+            </div>
+            <div class="checkbox">
+              <input type="checkbox" id="event_news" data-setting="event_news" />
+              <label for="event_news"></label>
+            </div>
+          </div>
+          <div class="option">
+            <div class="left requires-refresh">
+              <span>Alerts</span>
+              <span class="description">Important alerts mainly posted by Kirka Staff</span>
+            </div>
+            <div class="checkbox">
+              <input type="checkbox" id="alert_news" data-setting="alert_news" />
+              <label for="alert_news"></label>
+            </div>
+          </div>
+        </div>
+        <div class="option-group">
+          <div class="option requires-refresh">
+            <span>Proxy URL</span>
+            <select id="base_url" data-setting="base_url">
+              <option value="https://kirka.io/">kirka.io</option>
+              <option value="https://snipers.io/">snipers.io</option>
+              <option value="https://ask101math.com/">ask101math.com</option>
+              <option value="https://fpsiogame.com/">fpsiogame.com</option>
+              <option value="https://cloudconverts.com/">cloudconverts.com</option>
+            </select>
+          </div>
+        </div>
+        <div class="option-group">
+          <div class="option">
+            <button id="open-swapper-folder" class="juice-button">
+              <span class="text">Open Swapper Folder</span>
+              <div class="custom-border"></div>
+            </button>
+            <button id="open-scripts-folder" class="juice-button">
+              <span class="text">Open Scripts Folder</span>
+              <div class="custom-border"></div>
+            </button>
+          </div>
+          <div class="option">
+            <button id="import-settings" class="juice-button">
+              <span class="text">Import Settings</span>
+              <div class="custom-border"></div>
+            </button>
+            <button id="export-settings" class="juice-button">
+              <span class="text">Export Settings</span>
+              <div class="custom-border"></div>
+            </button>
+          </div>
+          <div class="option">
+            <button id="reset-juice-settings" class="juice-button large">
+              <span class="text">Reset Dawn Client Settings</span>
+              <span class="description"> This action cannot be undone</span>
+              <div class="custom-border"></div>
+            </button>
+          </div>
+          <div class="option">
+            <button id="remote-to-static-links" class="juice-button large requires-refresh">
+              <span class="test">Replace Remote Links with Static Links</span>
+              <span class="description">
+                This will speed up your customizations. This action cannot be
+                undone
+              </span>
+              <div class="custom-border"></div>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div id="appearance-options" class="juice options inner">
+        <div class="option-group">
+          <div class="option">
+            <span>Menu Theme</span>
+            <select id="menu_theme" data-setting="menu_theme">
+              <option value="dark">Dark</option>
+              <option value="light">Light</option>
+              <option value="dawn">Dawn</option>
+              <option value="custom">Custom</option>
+            </select>
+          </div>
+        </div>
+        <div class="option-group" id="custom-theme-settings" style="display: none;">
+          <div class="option">
+            <div class="left">
+              <span>Custom Theme Colors</span>
+              <span class="description">These settings only apply when "Custom" theme is selected</span>
+            </div>
+          </div>
+          <div class="option">
+            <span>Primary Color</span>
+            <div class="color-input"
+              style="width: auto; min-width: 200px; display: flex; align-items: center; gap: 8px;">
+              <input type="text" class="custom-primary-hex" placeholder="#C391F5" maxlength="7" value="#C391F5"
+                style="width: 100px;" />
+              <input type="color" class="custom-primary-picker" value="#C391F5"
+                style="width: 32px; height: 32px; margin: 0;" />
+            </div>
+          </div>
+          <div class="option">
+            <span>Background Color</span>
+            <div class="color-input"
+              style="width: auto; min-width: 200px; display: flex; align-items: center; gap: 8px;">
+              <input type="text" class="custom-dark-hex" placeholder="#1C1626" maxlength="7" value="#1C1626"
+                style="width: 100px;" />
+              <input type="color" class="custom-dark-picker" value="#1C1626"
+                style="width: 32px; height: 32px; margin: 0;" />
+            </div>
+          </div>
+          <div class="option">
+            <span>Text Color</span>
+            <div class="color-input"
+              style="width: auto; min-width: 200px; display: flex; align-items: center; gap: 8px;">
+              <input type="text" class="custom-light-hex" placeholder="#E6E0F5" maxlength="7" value="#E6E0F5"
+                style="width: 100px;" />
+              <input type="color" class="custom-light-picker" value="#E6E0F5"
+                style="width: 32px; height: 32px; margin: 0;" />
+            </div>
+          </div>
+          <div class="option">
+            <span>Border Color</span>
+            <div class="color-input"
+              style="width: auto; min-width: 200px; display: flex; align-items: center; gap: 8px;">
+              <input type="text" class="custom-border-hex" placeholder="#E6E0F5" maxlength="7" value="#E6E0F5"
+                style="width: 100px; padding: 0 !important" />
+              <input type="color" class="custom-border-picker" value="#E6E0F5"
+                style="width: 32px; height: 32px; margin: 0;" />
+            </div>
+          </div>
+        </div>
+        <div class="option-group">
+          <div class="option">
+            <span>Corner Roundness</span>
+            <div class="right"
+              style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
+              <input type="text" class="corner-value" placeholder="12" style="width: 21.5%" maxlength="3" />
+              <div class="slider">
+                <input type="range" id="corner_roundness" class="slider-value" data-setting="corner_roundness" min="0"
+                  max="64" step="1" value="12" />
+                <label for="corner_roundness"></label>
               </div>
             </div>
           </div>
         </div>
-        <div class="option dropdown custom_profile_background">
-          <div class="top requires-refresh">
-            <i class="fas fa-angle-down"></i>
-            <span>Profile Background</span>
-          </div>
-          <div class="content">
-            <div class="profile_background">
-              <div class="background-input">
-                <input type="text" class="background-url" placeholder="https://.../.png" />
-                <i class="fas fa-trash remove-background"></i>
+        <div class="option-group">
+          <div class="option">
+            <span>Menu Opacity</span>
+            <div class="right"
+              style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
+              <input type="text" class="opacity-value" placeholder="100" style="width: 21.5%" maxlength="3" />
+              <div class="slider">
+                <input type="range" id="menu_opacity" class="slider-value" data-setting="menu_opacity" min="0" max="100"
+                  step="1" value="100" />
+                <label for="menu_opacity"></label>
               </div>
-              <img class="background-preview" style="display:none; max-width: 100%; object-fit: contain;" />
             </div>
           </div>
         </div>
-      </div>
-      <div class="option-group">
-        <div class="option">
-          <div class="left requires-refresh">
-            <span>General News</span>
-            <span class="description">Dawn-related news</span>
+        <div class="option-group">
+          <div class="option">
+            <span>Menu Blur</span>
+            <div class="right"
+              style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
+              <input type="text" class="blur-value" placeholder="0" style="width: 21.5%" maxlength="3" />
+              <div class="slider">
+                <input type="range" id="menu_blur" class="slider-value" data-setting="menu_blur" min="0" max="20"
+                  step="1" value="0" />
+                <label for="menu_blur"></label>
+              </div>
+            </div>
           </div>
-          <div class="checkbox">
-            <input type="checkbox" id="general_news" data-setting="general_news" />
-            <label for="general_news"></label>
-          </div>
-        </div>
-        <div class="option">
-          <div class="left requires-refresh">
-            <span>Promotional News</span>
-            <span class="description">Live events (has a "LIVE" indicator)</span>
-          </div>
-          <div class="checkbox">
-            <input type="checkbox" id="promotional_news" data-setting="promotional_news" />
-            <label for="promotional_news"></label>
-          </div>
-        </div>
-        <div class="option">
-          <div class="left requires-refresh">
-            <span>Event News</span>
-            <span class="description">Events that you can participate in</span>
-          </div>
-          <div class="checkbox">
-            <input type="checkbox" id="event_news" data-setting="event_news" />
-            <label for="event_news"></label>
-          </div>
-        </div>
-        <div class="option">
-          <div class="left requires-refresh">
-            <span>Alerts</span>
-            <span class="description">Important alerts mainly posted by Kirka Staff</span>
-          </div>
-          <div class="checkbox">
-            <input type="checkbox" id="alert_news" data-setting="alert_news" />
-            <label for="alert_news"></label>
-          </div>
-        </div>
-      </div>
-      <div class="option-group">
-        <div class="option">
-          <span>Menu Theme</span>
-          <select id="menu_theme" data-setting="menu_theme">
-            <option value="dark">Dark</option>
-            <option value="light">Light</option>
-            <option value="dawn">Dawn</option>
-            <option value="glass">Glass</option>
-          </select>
-        </div>
-      </div>
-      <div class="option-group">
-        <div class="option requires-refresh">
-          <span>Proxy URL</span>
-          <select id="base_url" data-setting="base_url">
-            <option value="https://kirka.io/">kirka.io</option>
-            <option value="https://snipers.io/">snipers.io</option>
-            <option value="https://ask101math.com/">ask101math.com</option>
-            <option value="https://fpsiogame.com/">fpsiogame.com</option>
-            <option value="https://cloudconverts.com/">cloudconverts.com</option>
-          </select>
-        </div>
-      </div>
-      <div class="option-group">
-        <div class="option">
-          <button id="open-swapper-folder" class="juice-button">
-            <span class="text">Open Swapper Folder</span>
-            <div class="custom-border"></div>
-          </button>
-          <button id="open-scripts-folder" class="juice-button">
-            <span class="text">Open Scripts Folder</span>
-            <div class="custom-border"></div>
-          </button>
-        </div>
-        <div class="option">
-          <button id="import-settings" class="juice-button">
-            <span class="text">Import Settings</span>
-            <div class="custom-border"></div>
-          </button>
-          <button id="export-settings" class="juice-button">
-            <span class="text">Export Settings</span>
-            <div class="custom-border"></div>
-          </button>
-        </div>
-        <div class="option">
-          <button id="reset-juice-settings" class="juice-button large">
-            <span class="text">Reset Dawn Client Settings</span>
-            <span class="description"> This action cannot be undone</span>
-            <div class="custom-border"></div>
-          </button>
-        </div>
-        <div class="option">
-          <button id="remote-to-static-links" class="juice-button large requires-refresh">
-            <span class="test">Replace Remote Links with Static Links</span>
-            <span class="description">
-              This will speed up your customizations. This action cannot be
-              undone
-            </span>
-            <div class="custom-border"></div>
-          </button>
         </div>
       </div>
     </div>
@@ -889,7 +1028,7 @@
       <div class="option-group">
         <div class="credits">
           <span class="title">A special thanks to these people!</span>
-          <p>- Daymian for maps and some additional CSS</p>
+          <p>- Daymian for maps, additional CSS and menu theme inspiration</p>
           <p>- Cheeseburger for the updated Chest/Pack opener</p>
           <p>
             - CarrySheriff for original Chest/Pack opener, Map Images Repo, Market Names
@@ -921,5 +1060,6 @@
         </div>
       </div>
     </div>
+    <div id="client-changelogs" class="juice options"></div>
   </div>
 </div>

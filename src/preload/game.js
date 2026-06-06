@@ -6,6 +6,7 @@ const { ipcRenderer, clipboard, app, contextBridge } = require("electron");
 const { initGallery } = require("../addons/gallery");
 const fs = require("fs");
 const path = require("path");
+const { pathToFileURL } = require("url");
 
 require("../addons/Custom Skin Link")
 
@@ -52,7 +53,83 @@ const observeForElement = (selector, functionToRun, target = document.body) => {
   return observer;
 };
 
-//here u go smudgy, just copy and paste like the rest of ur code ure somehow proud of:
+const originalConsole = {
+  log: console.log.bind(console),
+  warn: console.warn.bind(console),
+  error: console.error.bind(console),
+  info: console.info.bind(console),
+  trace: console.trace.bind(console),
+};
+
+let INSPECT_DURATION = settings.inspect_duration;
+let inspectStart = null;
+
+const inspectKeyframes = (t) => {
+  const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+  const easeIn = (x) => x * x * x;
+  const spin = (1 - Math.pow(1 - Math.pow(t, 1.5), 3)) * Math.PI * 2.0;
+  let offsetX = 0, offsetY = 0, scale = 1;
+  if (t < 0.4) {
+    const p = easeOut(t / 0.4);
+    offsetY = p * 0.20;
+    offsetX = p * 0.025;
+    scale = 1 + p * 0.06;
+  } else if (t < 0.6) {
+    const p = (t - 0.4) / 0.2;
+    offsetY = 0.20 - p * 0.04;
+    offsetX = 0.025;
+    scale = 1.06;
+  } else {
+    const p = easeIn((t - 0.6) / 0.4);
+    offsetY = 0.16 * (1 - p);
+    offsetX = 0.025 * (1 - p);
+    scale = 1.06 - p * 0.06;
+  }
+  return { offsetX, offsetY, offsetZ: 0, scale, spin };
+};
+
+const applyZSpin = (mat, angle) => {
+  const cos = Math.cos(angle), sin = Math.sin(angle);
+  const sx = Math.sqrt(mat[0] * mat[0] + mat[1] * mat[1] + mat[2] * mat[2]);
+  const sy = Math.sqrt(mat[4] * mat[4] + mat[5] * mat[5] + mat[6] * mat[6]);
+  const x0 = mat[0] / sx, x1 = mat[1] / sx, x2 = mat[2] / sx;
+  const y0 = mat[4] / sy, y1 = mat[5] / sy, y2 = mat[6] / sy;
+  const nx0 = x0 * cos - y0 * sin, nx1 = x1 * cos - y1 * sin, nx2 = x2 * cos - y2 * sin;
+  const ny0 = x0 * sin + y0 * cos, ny1 = x1 * sin + y1 * cos, ny2 = x2 * sin + y2 * cos;
+  mat[0] = nx0 * sx; mat[1] = nx1 * sx; mat[2] = nx2 * sx;
+  mat[4] = ny0 * sy; mat[5] = ny1 * sy; mat[6] = ny2 * sy;
+};
+
+let currentInspectKeybind = settings.inspect_keybind;
+
+const inspectKeybindHandler = (e) => {
+  let inputName;
+
+  if (e.type === "mousedown") {
+    switch (e.button) {
+      case 3: inputName = "MouseButton4"; break;
+      case 4: inputName = "MouseButton5"; break;
+      default: inputName = `MouseButton${e.button + 1}`;
+    }
+  } else if (e.type === "keydown") {
+    inputName = e.code;
+  }
+
+  if (inputName === currentInspectKeybind) {
+    inspectStart = performance.now();
+    e.preventDefault();
+  }
+};
+
+document.addEventListener("mousedown", inspectKeybindHandler, true);
+document.addEventListener("keydown", inspectKeybindHandler, true);
+
+document.addEventListener("juice-settings-changed", ({ detail }) => {
+  if (detail.setting === "inspect_keybind") {
+    currentInspectKeybind = detail.value;
+  }
+});
+
 const hsvToRgb = (hue) => {
   hue = ((hue % 360) + 360) % 360;
   const sector = Math.floor(hue / 60);
@@ -72,42 +149,46 @@ const hsvToRgb = (hue) => {
 const colMag = (m, i) =>
   Math.sqrt(m[i] * m[i] + m[i + 1] * m[i + 1] + m[i + 2] * m[i + 2]);
 
+const isEnemyScale = (s0, s1, s2) => {
+  const avg = (s0 + s1 + s2) / 3;
+  return (Math.abs(avg - 0.4) < 0.05) || (Math.abs(avg - 2.4) < 0.1);
+};
+
 const classify = (m) => {
   if (!m || m.length < 16) return null;
-
   if (Math.abs(m[3]) > 0.001) return null;
   if (Math.abs(m[7]) > 0.001) return null;
   if (Math.abs(m[11]) > 0.001) return null;
   if (Math.abs(m[15] - 1.0) > 0.001) return null;
 
-  const s0 = colMag(m, 0);
-  const s1 = colMag(m, 4);
-  const s2 = colMag(m, 8);
-
+  const s0 = colMag(m, 0), s1 = colMag(m, 4), s2 = colMag(m, 8);
   if (s0 < 0.001 || s0 > 15.0) return null;
   if (s1 < 0.001 || s1 > 15.0) return null;
   if (s2 < 0.001 || s2 > 15.0) return null;
+  if (isEnemyScale(s0, s1, s2)) return null;
 
   const tx = m[12], ty = m[13], tz = m[14];
   const dist = Math.sqrt(tx * tx + ty * ty + tz * tz);
   if (dist < 0.001 || dist > 0.6) return null;
 
   const maxS = Math.max(s0, s1, s2);
-  if (maxS < 1.7) return 'weapon';
-
   const minS = Math.min(s0, s1, s2);
-  return maxS / minS < 1.05 ? 'weapon' : 'arms';
+  const ratio = maxS / minS;
+
+  if (maxS < 1.7) return "weapon";
+  if (ratio < 1.05) return "weapon";
+  return "arms";
 };
 
-const isSpectating = () => !!document.querySelector('.infos .fps');
+const isSpectating = () => !!document.querySelector(".infos .fps");
 
 const hookedContexts = new WeakSet();
 const originalGetCtx = HTMLCanvasElement.prototype.getContext;
 
 HTMLCanvasElement.prototype.getContext = function (type, attrs) {
   const ctx = originalGetCtx.call(this, type, attrs);
-  if (!ctx || (type !== 'webgl' && type !== 'webgl2')) return ctx;
-  if (hookedContexts.has(ctx) || this.id !== 'game') return ctx;
+  if (!ctx || (type !== "webgl" && type !== "webgl2")) return ctx;
+  if (hookedContexts.has(ctx) || this.id !== "game") return ctx;
   hookedContexts.add(ctx);
 
   const gl = ctx;
@@ -128,6 +209,14 @@ HTMLCanvasElement.prototype.getContext = function (type, attrs) {
 
   let activeThisFrame = false;
   let lastBoundTexture = null;
+  let seenMatricesThisFrame = new Set();
+  let weaponTranslationsThisFrame = [];
+
+  const isNearWeapon = (tx, ty, tz) =>
+    weaponTranslationsThisFrame.some(([wx, wy, wz]) => {
+      const dx = tx - wx, dy = ty - wy, dz = tz - wz;
+      return Math.sqrt(dx * dx + dy * dy + dz * dz) < 0.12;
+    });
 
   gl.bindTexture = (target, texture) => {
     if (target === gl.TEXTURE_2D) lastBoundTexture = texture;
@@ -135,6 +224,8 @@ HTMLCanvasElement.prototype.getContext = function (type, attrs) {
   };
 
   gl.uniformMatrix4fv = (location, transpose, data, srcOffset, srcLength) => {
+    activeThisFrame = false;
+
     if (!isSpectating() && data && data.length >= 16) {
       const offset = srcOffset ?? 0;
       const slice = (offset === 0 && data.length === 16)
@@ -143,7 +234,29 @@ HTMLCanvasElement.prototype.getContext = function (type, attrs) {
 
       const kind = classify(slice);
 
-      if (kind === 'weapon' || (kind === 'arms' && settings.include_arms)) {
+      if (kind === "weapon" || (kind === "arms" && settings.include_arms)) {
+        const fp = `${slice[0].toFixed(3)},${slice[5].toFixed(3)},${slice[10].toFixed(3)},${slice[12].toFixed(4)},${slice[13].toFixed(4)},${slice[14].toFixed(4)}`;
+        if (seenMatricesThisFrame.has(fp)) {
+          return origUniformMatrix4fv(location, transpose, data, srcOffset, srcLength);
+        }
+        seenMatricesThisFrame.add(fp);
+
+        if (kind === "arms" && settings.include_arms) {
+          const tx = slice[12], ty = slice[13], tz = slice[14];
+          console.log("arm candidate", tx.toFixed(4), ty.toFixed(4), tz.toFixed(4),
+            "weapon translations:", JSON.stringify(weaponTranslationsThisFrame));
+          if (isNearWeapon(tx, ty, tz)) {
+            return origUniformMatrix4fv(location, transpose, data, srcOffset, srcLength);
+          }
+        }
+
+        if (kind === "arms") {
+          const tx = slice[12], ty = slice[13], tz = slice[14];
+          if (isNearWeapon(tx, ty, tz)) {
+            return origUniformMatrix4fv(location, transpose, data, srcOffset, srcLength);
+          }
+        }
+
         activeThisFrame = true;
 
         if (settings.weapon_color && settings.weapon_rgb && lastBoundTexture !== null) {
@@ -152,7 +265,7 @@ HTMLCanvasElement.prototype.getContext = function (type, attrs) {
           origBindTexture(gl.TEXTURE_2D, rgbTexture);
           gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, rgbPixel);
         } else if (settings.weapon_color && lastBoundTexture !== null) {
-          const hex = document.querySelector('.weapon-color .hex').value.replace('#', '');
+          const hex = document.querySelector(".weapon-color .hex").value.replace("#", "");
           rgbPixel[0] = parseInt(hex.substring(0, 2), 16);
           rgbPixel[1] = parseInt(hex.substring(2, 4), 16);
           rgbPixel[2] = parseInt(hex.substring(4, 6), 16);
@@ -163,15 +276,39 @@ HTMLCanvasElement.prototype.getContext = function (type, attrs) {
           origBindTexture(gl.TEXTURE_2D, lastBoundTexture);
         }
 
-        if (kind === 'weapon') {
-          const scale = settings.weapon_size ?? 1.0;
+        if (kind === "weapon") {
+          weaponTranslationsThisFrame.push([slice[12], slice[13], slice[14]]);
+
+          const base = settings.weapon_size ?? 1.0;
           matBuf.set(slice);
+
+          let scale = base;
+          let ox = settings.weapon_offset_x ?? 0;
+          let oy = settings.weapon_offset_y ?? 0;
+          let oz = settings.weapon_offset_z ?? 0;
+          let spinAngle = 0;
+
+          if (inspectStart !== null) {
+            const elapsed = performance.now() - inspectStart;
+            const t = Math.min(elapsed / INSPECT_DURATION, 1.0);
+            const kf = inspectKeyframes(t);
+            scale = base * kf.scale;
+            ox += kf.offsetX;
+            oy += kf.offsetY;
+            oz += kf.offsetZ;
+            spinAngle = kf.spin;
+            if (t >= 1.0) inspectStart = null;
+          }
+
           matBuf[0] *= scale; matBuf[1] *= scale; matBuf[2] *= scale;
           matBuf[4] *= scale; matBuf[5] *= scale; matBuf[6] *= scale;
           matBuf[8] *= scale; matBuf[9] *= scale; matBuf[10] *= scale;
-          matBuf[12] += settings.weapon_offset_x ?? 0;
-          matBuf[13] += settings.weapon_offset_y ?? 0;
-          matBuf[14] += settings.weapon_offset_z ?? 0;
+          matBuf[12] += ox;
+          matBuf[13] += oy;
+          matBuf[14] += oz;
+
+          if (spinAngle !== 0) applyZSpin(matBuf, spinAngle);
+
           return origUniformMatrix4fv(location, transpose, matBuf, 0, 16);
         }
       }
@@ -186,24 +323,20 @@ HTMLCanvasElement.prototype.getContext = function (type, attrs) {
   gl.drawArrays = (mode, first, count) => {
     if (settings.weapon_wireframe && activeThisFrame) mode = toWireframe(mode);
     activeThisFrame = false;
+    seenMatricesThisFrame.clear();
+    weaponTranslationsThisFrame = [];
     return origDrawArrays(mode, first, count);
   };
 
   gl.drawElements = (mode, count, type, offset) => {
     if (settings.weapon_wireframe && activeThisFrame) mode = toWireframe(mode);
     activeThisFrame = false;
+    seenMatricesThisFrame.clear();
+    weaponTranslationsThisFrame = [];
     return origDrawElements(mode, count, type, offset);
   };
 
   return ctx;
-};
-
-const originalConsole = {
-  log: console.log.bind(console),
-  warn: console.warn.bind(console),
-  error: console.error.bind(console),
-  info: console.info.bind(console),
-  trace: console.trace.bind(console),
 };
 
 window.addEventListener("DOMContentLoaded", async () => {
@@ -293,6 +426,9 @@ window.addEventListener("DOMContentLoaded", async () => {
       left: 148px;
       pointer-events: auto;
     `;
+    const dailyBtn = document.querySelector(".daily-rewards-btn");
+    const btnBottom = dailyBtn ? dailyBtn.getBoundingClientRect().bottom + window.scrollY : 280;
+    lobbyNewsContainer.style.top = `${btnBottom + 8}px`;
     document
       .querySelector("#app #left-interface")
       .appendChild(lobbyNewsContainer);
@@ -720,7 +856,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       const advancedCSS = settings.advanced_css;
 
       if (cssLink && settings.css_enabled) {
-        addedStyles.innerHTML = `@import url('${formatLink(cssLink)}');`;
+        addedStyles.innerHTML = `@import url("${formatLink(cssLink)}");`;
       } else {
         addedStyles.innerHTML = "";
       }
@@ -746,8 +882,8 @@ window.addEventListener("DOMContentLoaded", async () => {
           ".tab-team-info .players-cont { flex-direction: column !important; }",
           ".tab-info .player-list, .tab-team-info .player-list { margin: unset !important; gap: 0.25rem; }",
           ".tab-info > .head, .tab-team-info > .head { display: none; }",
-          '.tab-team-info .player-list:nth-child(1)::before { content: "RED"; width: 100%; text-align: left; padding: 0.25rem 0.5rem; font-size: 1.25rem; background-color: #ff4d42; border-radius: 0.25rem; box-sizing: border-box; }',
-          '.tab-team-info .player-list:nth-child(2)::before { content: "BLUE"; width: 100%; text-align: left; padding: 0.25rem 0.5rem; font-size: 1.25rem; background-color: #0d6dc6; border-radius: 0.25rem; box-sizing: border-box; margin-top: 0.5rem; }',
+          ".tab-team-info .player-list:nth-child(1)::before { content: 'RED'; width: 100%; text-align: left; padding: 0.25rem 0.5rem; font-size: 1.25rem; background-color: #ff4d42; border-radius: 0.25rem; box-sizing: border-box; }",
+          ".tab-team-info .player-list:nth-child(2)::before { content: 'BLUE'; width: 100%; text-align: left; padding: 0.25rem 0.5rem; font-size: 1.25rem; background-color: #0d6dc6; border-radius: 0.25rem; box-sizing: border-box; margin-top: 0.5rem; }",
           ".players-wrap .list { display: none !important; }",
           ".tab-info .list, .tab-team-info .player-list > .list { order: 999; }",
           ".tab-info .players-wrap, .tab-team-info .players-wrap { padding: 0.25rem; }",
@@ -936,9 +1072,9 @@ window.addEventListener("DOMContentLoaded", async () => {
           customs.badges.forEach((badge) => {
             const img = document.createElement("img");
 
-            if (badge.startsWith('/') || badge.match(/^[A-Za-z]:\\/)) {
-              const filePath = badge.replace(/\\/g, '/');
-              img.src = `file://${filePath.startsWith('/') ? '' : '/'}${filePath}`;
+            if (badge.startsWith("/") || badge.match(/^[A-Za-z]:\\/)) {
+              const filePath = badge.replace(/\\/g, "/");
+              img.src = `file://${filePath.startsWith("/") ? "" : "/"}${filePath}`;
             } else {
               img.src = badge;
             }
@@ -1157,7 +1293,7 @@ window.addEventListener("DOMContentLoaded", async () => {
               window.location.href = `${base_url}profile/${text.replace("#", "")}`;
               const username = e.target.innerText.replace(":", "");
               customNotification({
-                message: `Loading ${username}${text}'s profile...`,
+                message: `Loading ${username}${text}"s profile...`,
               });
             });
           }, 250);
@@ -1171,7 +1307,7 @@ window.addEventListener("DOMContentLoaded", async () => {
             const username = e.target.innerText.replace(":", "");
             navigator.clipboard.readText().then((text) => {
               customNotification({
-                message: `'${username}${text}' copied to clipboard!`,
+                message: `"${username}${text}" copied to clipboard!`,
               });
               clipboard.writeText(username + text);
             });
@@ -1488,9 +1624,9 @@ window.addEventListener("DOMContentLoaded", async () => {
 
         const customs = customizations.find((c) => c.shortId === shortId);
 
-        const savedGradient = JSON.parse(localStorage.getItem('gradientSettings') || 'null');
-        const savedBadges = JSON.parse(localStorage.getItem('badgeSettings') || 'null');
-        const savedShadow = JSON.parse(localStorage.getItem('gradientShadowSettings') || 'null');
+        const savedGradient = JSON.parse(localStorage.getItem("gradientSettings") || "null");
+        const savedBadges = JSON.parse(localStorage.getItem("badgeSettings") || "null");
+        const savedShadow = JSON.parse(localStorage.getItem("gradientShadowSettings") || "null");
 
         const gradientData = customs?.gradient || (settings.local_customizations && savedGradient ? {
           rot: `${savedGradient.rotation}deg`,
@@ -1500,7 +1636,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 
         const badgesData = customs?.badges || (settings.local_customizations ? savedBadges : null) || [];
         const isAnimated = customs?.animated ?? false;
-        const bgUrl = customs?.['profile-background'] || (settings.local_customizations ? localStorage.getItem('backgroundSettings') : null);
+        const bgUrl = customs?.["profile-background"] || (settings.local_customizations ? localStorage.getItem("backgroundSettings") : null);
 
         if (customs || savedGradient || savedBadges || bgUrl) {
           const span = nickname.querySelector(".nickname-span");
@@ -1552,9 +1688,9 @@ window.addEventListener("DOMContentLoaded", async () => {
             badgesData.forEach((badge) => {
               const img = document.createElement("img");
 
-              if (badge.startsWith('/') || badge.match(/^[A-Za-z]:\\/)) {
-                const filePath = badge.replace(/\\/g, '/');
-                img.src = `file://${filePath.startsWith('/') ? '' : '/'}${filePath}`;
+              if (badge.startsWith("/") || badge.match(/^[A-Za-z]:\\/)) {
+                const filePath = badge.replace(/\\/g, "/");
+                img.src = `file://${filePath.startsWith("/") ? "" : "/"}${filePath}`;
               } else {
                 img.src = badge;
               }
@@ -1687,7 +1823,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       return undefined;
     };
 
-    const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
     const setDisplay = (el, text) => {
       let overlay = el.querySelector(".juice-nickname-overlay");
@@ -1759,8 +1895,8 @@ window.addEventListener("DOMContentLoaded", async () => {
           let text = textNode.textContent;
           Object.entries(nicknames).forEach(([shortId, entry]) => {
             if (!entry.nickname || !entry.original) return;
-            const originalPattern = new RegExp(escapeRegex(entry.original) + '#' + shortId, "g");
-            const nicknamePattern = new RegExp(escapeRegex(entry.nickname) + '#' + shortId, "g");
+            const originalPattern = new RegExp(escapeRegex(entry.original) + "#" + shortId, "g");
+            const nicknamePattern = new RegExp(escapeRegex(entry.nickname) + "#" + shortId, "g");
             text = text.replace(nicknamePattern, `${entry.original}#${shortId}`);
             text = text.replace(originalPattern, `${entry.nickname}#${shortId}`);
           });
@@ -1840,7 +1976,7 @@ window.addEventListener("DOMContentLoaded", async () => {
                 processMessage(message);
               }).observe(body, {
                 attributes: true,
-                attributeFilter: ['class'],
+                attributeFilter: ["class"],
                 childList: true,
                 characterData: true,
                 subtree: true
@@ -2053,9 +2189,9 @@ window.addEventListener("DOMContentLoaded", async () => {
               const addBadge = (src) => {
                 if (![...badgesElem.children].some((img) => img.src === src)) {
                   const img = document.createElement("img");
-                  if (src.startsWith('/') || src.match(/^[A-Za-z]:\\/)) {
-                    const filePath = src.replace(/\\/g, '/');
-                    img.src = `file://${filePath.startsWith('/') ? '' : '/'}${filePath}`;
+                  if (src.startsWith("/") || src.match(/^[A-Za-z]:\\/)) {
+                    const filePath = src.replace(/\\/g, "/");
+                    img.src = `file://${filePath.startsWith("/") ? "" : "/"}${filePath}`;
                   } else {
                     img.src = src;
                   }
@@ -2168,9 +2304,9 @@ window.addEventListener("DOMContentLoaded", async () => {
               const addBadge = (src) => {
                 if (![...badgesElem.children].some((img) => img.src === src)) {
                   const img = document.createElement("img");
-                  if (src.startsWith('/') || src.match(/^[A-Za-z]:\\/)) {
-                    const filePath = src.replace(/\\/g, '/');
-                    img.src = `file://${filePath.startsWith('/') ? '' : '/'}${filePath}`;
+                  if (src.startsWith("/") || src.match(/^[A-Za-z]:\\/)) {
+                    const filePath = src.replace(/\\/g, "/");
+                    img.src = `file://${filePath.startsWith("/") ? "" : "/"}${filePath}`;
                   } else {
                     img.src = src;
                   }
@@ -2369,7 +2505,7 @@ window.addEventListener("DOMContentLoaded", async () => {
             processMessage(message);
           }).observe(body, {
             attributes: true,
-            attributeFilter: ['class'],
+            attributeFilter: ["class"],
             childList: true,
             characterData: true,
             subtree: true
@@ -2538,7 +2674,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         });
       });
 
-      const listContainer = container.querySelector('.list-container');
+      const listContainer = container.querySelector(".list-container");
       if (listContainer) addSorting(listContainer);
     }
 
@@ -2654,23 +2790,23 @@ window.addEventListener("DOMContentLoaded", async () => {
     });
 
     function addSorting(container) {
-      const labels = container.querySelectorAll('.labels .label');
-      const list = container.querySelector('.list');
+      const labels = container.querySelectorAll(".labels .label");
+      const list = container.querySelector(".list");
 
       if (!labels.length || !list) return;
 
       const state = [0, 0];
-      const icons = ['', ' <i class="fa-solid fa-caret-up"></i>', ' <i class="fa-solid fa-caret-down"></i>'];
-      const baseText = ['scores per month', 'scores'];
+      const icons = ["", ' <i class="fa - solid fa - caret - up"></i>", " <i class="fa - solid fa - caret - down"></i>'];
+      const baseText = ["scores per month", "scores"];
 
       function getItems() {
-        return Array.from(list.querySelectorAll('.item'));
+        return Array.from(list.querySelectorAll(".item"));
       }
 
       function getStatValue(item, colIndex) {
-        const stats = item.querySelectorAll('.stat');
+        const stats = item.querySelectorAll(".stat");
         if (!stats[colIndex]) return 0;
-        return parseInt(stats[colIndex].textContent.replace(/\D/g, '')) || 0;
+        return parseInt(stats[colIndex].textContent.replace(/\D/g, "")) || 0;
       }
 
       function applySort(colIndex) {
@@ -2691,24 +2827,24 @@ window.addEventListener("DOMContentLoaded", async () => {
         }
 
         items.forEach((item, i) => {
-          item.querySelector('.number').textContent = dir === 0 ? parseInt(item.dataset.origIndex) + 1 : i + 1;
+          item.querySelector(".number").textContent = dir === 0 ? parseInt(item.dataset.origIndex) + 1 : i + 1;
           list.appendChild(item);
         });
       }
 
       function updateLabels() {
         labels.forEach((label, i) => {
-          label.innerHTML = baseText[i] + (icons[state[i]] || '');
+          label.innerHTML = baseText[i] + (icons[state[i]] || "");
         });
       }
 
       getItems().forEach((item, i) => item.dataset.origIndex = i);
 
       labels.forEach((label, colIndex) => {
-        label.style.cursor = 'pointer';
-        label.style.userSelect = 'none';
+        label.style.cursor = "pointer";
+        label.style.userSelect = "none";
 
-        label.addEventListener('click', () => {
+        label.addEventListener("click", () => {
           const other = colIndex === 0 ? 1 : 0;
           state[other] = 0;
           state[colIndex] = (state[colIndex] + 1) % 3;
@@ -2738,7 +2874,7 @@ window.addEventListener("DOMContentLoaded", async () => {
                 ".my-clan .all-scores-value"
               ].forEach(selector => {
                 document.querySelectorAll(selector).forEach(el => {
-                  const raw = parseInt(el.textContent.replace(/\D/g, ''));
+                  const raw = parseInt(el.textContent.replace(/\D/g, ""));
                   if (Number.isFinite(raw) && !isNaN(raw)) el.textContent = raw.toLocaleString();
                 });
               });
@@ -2863,7 +2999,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 
       const eyeDiv = document.createElement("div");
       eyeDiv.className = "spectate-eye";
-      eyeDiv.innerHTML = '<i class="fa-solid fa-eye"></i>';
+      eyeDiv.innerHTML = '<i class="fa - solid fa - eye"></i>';
       div.insertAdjacentElement("afterend", eyeDiv);
 
       eyeDiv.addEventListener("click", (e) => {
@@ -2917,16 +3053,34 @@ window.addEventListener("DOMContentLoaded", async () => {
 
           if (entry?.nickname) {
             const textNode = [...nickname.childNodes].find(n => n.nodeType === Node.TEXT_NODE);
-            if (textNode) textNode.textContent = entry.nickname;
+            if (textNode) {
+              if (!nickname.dataset.ingameName) {
+                nickname.dataset.ingameName = textNode.textContent.trim();
+              } else {
+                const raw = textNode.textContent.trim();
+                if (raw !== nickname.dataset.ingameName && raw !== entry.nickname) {
+                  nickname.dataset.ingameName = raw;
+                }
+              }
+
+              const currentIngameName = nickname.dataset.ingameName;
+
+              if (entry.original && entry.original !== currentIngameName) {
+                entry.original = currentIngameName;
+                nicknames[shortId] = entry;
+                localStorage.setItem("nicknames", JSON.stringify(nicknames));
+              }
+              textNode.textContent = entry.nickname;
+            }
           }
 
           if (customs) {
             nickname.style = `
-            display: flex !important;
-            align-items: flex-end !important;
-            gap: 0.25rem !important;
-            overflow: unset !important;
-          `;
+              display: flex !important;
+              align-items: flex-end !important;
+              gap: 0.25rem !important;
+              overflow: unset !important;
+            `;
 
             if (customs.gradient) {
               nickname.style.background = `linear-gradient(${customs.gradient.rot}, ${customs.gradient.stops.join(", ")})`;
@@ -2987,7 +3141,7 @@ window.addEventListener("DOMContentLoaded", async () => {
           }
         });
       }
-    }
+    };
     applyCustomizations();
 
     document.querySelectorAll(".friends .tab").forEach((tab) => {
@@ -3087,6 +3241,10 @@ window.addEventListener("DOMContentLoaded", async () => {
         } else {
           window.removeGradientAnimations();
         }
+        break;
+
+      case "inspect_duration":
+        INSPECT_DURATION = value;
         break;
     }
   });

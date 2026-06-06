@@ -1,5 +1,16 @@
 [
   {
+    "version": "1.0.14",
+    "date": "6/6/2026",
+    "changelogs": [
+      "Added an experimental Custom Inspect",
+      "Added Menu Appearance customization",
+      "Added a Custom theme",
+      "Added Changelogs Tab",
+      "Fixed corrupted player models"
+    ]
+  },
+  {
     "version": "1.0.13",
     "date": "5/6/2026",
     "changelogs": [

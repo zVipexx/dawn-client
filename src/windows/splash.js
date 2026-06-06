@@ -3,8 +3,6 @@ const { autoUpdater } = require("electron-updater");
 const { initGame } = require("./game");
 const path = require("path");
 
-autoUpdater.autoDownload = true;
-
 autoUpdater.setFeedURL({
   provider: "github",
   owner: "zVipexx",
