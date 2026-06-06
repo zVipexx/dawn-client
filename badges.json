@@ -615,5 +615,20 @@
     "badges": [
       "https://i.imgur.com/vv6idrN.png"
     ]
+  },
+  {
+    "shortId": "SODASS",
+    "animated": true,
+    "profile-background": "https://i.imgur.com/yj18oMi.png",
+    "gradient": {
+      "rot": "90deg",
+      "stops": [
+        "#FF00AE 0%",
+        "#8000FF 33%",
+        "#9900FF 67%",
+        "#FF00D4 100%"
+      ],
+      "shadow": "0 0 30px #1289a7"
+    }
   }
 ]
