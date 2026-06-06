@@ -633,5 +633,20 @@
     "badges": [
       "https://i.imgur.com/U1rkEeV.png"
     ]
+  },
+  {
+    "shortId": "3H2D6N",
+    "profile-background": "https://res.cloudinary.com/dsnfes6pa/image/upload/v1780752729/image_2026-06-06_143208606_u4idiw.png",
+    "gradient": {
+      "rot": "0deg",
+      "stops": [
+        "#FFFFFF 0%",
+        "#D9D9D9 100%"
+      ],
+      "shadow": "0 0 12px #ffffff"
+    },
+    "badges": [
+      "https://res.cloudinary.com/dsnfes6pa/image/upload/v1780752615/tumblr_my5joz7vn51t2pdcpo1_1280_pyzt9n.gif?width=1008&height=1008"
+    ]
   }
 ]
