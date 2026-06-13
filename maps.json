@@ -74,13 +74,13 @@
   {
     "map": "Station",
     "modes": ["TDM 2v2"],
-    "code": "https://ktiers.com/maps/files/Station%20(Tournament%20Version).txt",
+    "code": "https://ktiers.com/maps/files/Station.txt",
     "preview": "https://ktiers.com/imgs/maps/Station.png"
   },
   {
     "map": "Nuke",
     "modes": ["TDM 2v2"],
-    "code": "https://ktiers.com/maps/files/Nuke%20(Tournament%20Version).txt",
+    "code": "https://ktiers.com/maps/files/Nuke.txt",
     "preview": "https://ktiers.com/imgs/maps/Nuke.png"
   },
   {
