@@ -1,12 +1,12 @@
 [
   {
-    "category": "event",
+    "category": "promotional",
     "title": "KIRKA x KCL $50 + 10,000 GEMS KICKOFF TOURNAMENT",
     "content": "2v2 TDM, First to 50 kills\nDate: Saturday, 13th June 2026 at 1pm EST",
     "img": "https://i.imgur.com/kkykpLk.png",
     "imgType": "icon",
-    "link": "https://discord.gg/QM9aXsAnFQ",
+    "link": "https://www.twitch.tv/kirkacomp",
     "updatedAt": 1780664059884,
-    "live": false
+    "live": true
   }
 ]
