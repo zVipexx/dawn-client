@@ -36,10 +36,30 @@ class Menu {
       client: this.menu.querySelector("#client-options"),
       scripts: this.menu.querySelector("#scripts-options"),
       about: this.menu.querySelector("#about-client"),
-      general: this.menu.querySelector("#general-options"),
-      appearance: this.menu.querySelector("#appearance-options"),
       changelogs: this.menu.querySelector("#client-changelogs"),
     };
+    this.weaponIds = ["vita", "scar", "rev", "ar9", "mac10", "m60", "weatie", "lar", "shark", "bayonet", "tomahawk"];
+    this.restingSigToWeaponId = {
+      "0.11,0.11,0.11": "vita",
+      "0.59,0.89,0.60": "scar",
+      "0.17,0.17,0.17": "rev",
+      "0.73,0.64,0.73": "ar9",
+      "0.77,0.77,0.77": "mac10",
+      "0.11,0.10,0.10": "m60",
+      "0.84,0.84,0.84": "weatie",
+      "0.77,1.01,0.77": "lar",
+      "0.01,0.01,0.01": "shark",
+      "1.27,1.05,1.62": "bayonet",
+      "1.54,0.92,2.24": "tomahawk"
+    };
+    this.weaponSettings = this.loadWeaponSettings();
+    this.selectedWeapon = "vita";
+    this.selectedArm = null;
+    this.universalModeActive = this.settings.universal_settings || false;
+    this.universalSettings = this.weaponSettings.universalSettings;
+    this.viewMode = "weapon";
+    this.universalArmActive = false;
+    this.updateGlobalWeaponConfig();
   }
 
   createMenu() {
@@ -79,6 +99,7 @@ class Menu {
     this.handleSelectorChanges();
     this.handleDropdowns();
     this.handleAppearance();
+    this.bindWeaponOptions();
     this.handleSearch();
     this.handleButtons();
 
@@ -97,6 +118,500 @@ class Menu {
     const savedSelector = this.localStorage.getItem("juice-menu-selector");
     const selectorEl = savedSelector ? this.menu.querySelector(`[data-selector="${savedSelector}"]`) : null;
     this.handleSelectorChange(selectorEl ?? this.menu.querySelector(".juice.selector"));
+
+    const savedWeaponState = this.localStorage.getItem("dawn-weapon-selection");
+    if (savedWeaponState) {
+      try {
+        const weaponState = JSON.parse(savedWeaponState);
+        const currentTab = this.localStorage.getItem("juice-menu-tab");
+        if (currentTab === "game" || currentTab === "weapons") {
+          if (weaponState.universalModeActive !== undefined) {
+            const universalCheckbox = this.menu.querySelector("#universal_settings");
+            if (universalCheckbox && universalCheckbox.checked !== weaponState.universalModeActive) {
+              universalCheckbox.click();
+            }
+          }
+
+          if (weaponState.viewMode === "universal") {
+            const universalSelector = this.menu.querySelector('[data-selector="universal"]');
+            if (universalSelector) {
+              universalSelector.click();
+            }
+          } else if (weaponState.selectedWeapon && !this.universalModeActive) {
+            const weaponSelector = this.menu.querySelector(`.selector[data-selector="${weaponState.selectedWeapon}"]`);
+            if (weaponSelector) {
+              weaponSelector.click();
+            }
+          }
+        }
+      } catch (e) {
+        console.error("Error restoring weapon selection:", e);
+      }
+    }
+  }
+
+  saveWeaponSelectionState() {
+    const state = {
+      selectedWeapon: this.selectedWeapon,
+      selectedArm: this.selectedArm,
+      universalModeActive: this.universalModeActive,
+      viewMode: this.viewMode
+    };
+    this.localStorage.setItem("dawn-weapon-selection", JSON.stringify(state));
+  }
+
+  updateGlobalWeaponConfig() {
+    const universalModeActive = this.universalModeActive;
+    const weaponSettings = this.weaponSettings;
+    const settings = this.settings;
+
+    window.dawnWeaponConfig = {
+      universal: universalModeActive,
+      wireframe: settings.weapon_wireframe || false,
+      colorEnabled: settings.weapon_color || false,
+      colorHex: localStorage.getItem("weapon_color_hex") || "#FFFFFF",
+      rgb: settings.weapon_rgb || false,
+      inspectKeybind: settings.inspect_keybind || "KeyI",
+      weaponSettings: weaponSettings,
+      universalModeActive: universalModeActive,
+
+      getSettings: function (weaponId) {
+        if (this.universalModeActive) {
+          return this.weaponSettings.universalSettings;
+        }
+        return this.weaponSettings.settings[weaponId] || this.weaponSettings.settings["vita"];
+      },
+
+      getArmSettings: function (weaponId, arm) {
+        const weapon = this.getSettings(weaponId);
+        const armKey = arm === 'left' ? 'leftArm' : 'rightArm';
+        const armData = weapon[armKey] || {};
+        return {
+          size: armData.size ?? 1.0,
+          offsetX: armData.offsetX ?? 0,
+          offsetY: armData.offsetY ?? 0,
+          offsetZ: armData.offsetZ ?? 0,
+          wireframe: armData.wireframe ?? false,
+          colorEnabled: armData.colorEnabled ?? false,
+          colorHex: armData.colorHex ?? "#FFFFFF",
+          rgb: armData.rgb ?? false
+        };
+      }
+    };
+  }
+
+  bindWeaponOptions() {
+    const sidebar = this.menu.querySelector(".weapons-sidebar");
+    const weaponSelectors = sidebar.querySelectorAll(".selector-group:first-child + .selector-group .selector");
+    const leftArmSelector = sidebar.querySelector('[data-selector="leftarm"]');
+    const rightArmSelector = sidebar.querySelector('[data-selector="rightarm"]');
+    const weaponsContent = this.menu.querySelector("#weapons-options .content.weapons");
+    const armsContent = this.menu.querySelector("#weapons-options .content.arms");
+    const universalCheckbox = weaponsContent.querySelector("#universal_settings");
+    const universalSelector = sidebar.querySelector('[data-selector="universal"]');
+    const mirrorArmCheckbox = armsContent.querySelector("#universal_arm_settings");
+
+    if (!universalCheckbox) return;
+
+    const weaponSizeInput = weaponsContent.querySelector("#weapon_size");
+    const offsetXInput = weaponsContent.querySelector("#weapon_offset_x");
+    const offsetYInput = weaponsContent.querySelector("#weapon_offset_y");
+    const offsetZInput = weaponsContent.querySelector("#weapon_offset_z");
+    const armSizeInput = armsContent.querySelector("#arm_size");
+    const armOffsetXInput = armsContent.querySelector("#arm_offset_x");
+    const armOffsetYInput = armsContent.querySelector("#arm_offset_y");
+    const armOffsetZInput = armsContent.querySelector("#arm_offset_z");
+    const armWireframeCheckbox = armsContent.querySelector("#arm_wireframe");
+    const armColorCheckbox = armsContent.querySelector("#arm_color");
+    const armColorHexInput = armsContent.querySelector(".arm-color .hex");
+    const armColorPicker = armsContent.querySelector(".arm-color .color-picker");
+    const armRgbCheckbox = armsContent.querySelector("#arm_rgb");
+
+    const getActiveConfig = () => {
+      return this.viewMode === "universal"
+        ? this.weaponSettings.universalSettings
+        : this.weaponSettings.settings[this.selectedWeapon] || this.weaponSettings.settings["vita"];
+    };
+
+    const getWeaponConfig = (weaponId) => {
+      return this.viewMode === "universal"
+        ? this.weaponSettings.universalSettings
+        : this.weaponSettings.settings[weaponId] || this.weaponSettings.settings["vita"];
+    };
+
+    const setWeaponConfig = (weaponId, config) => {
+      if (this.viewMode === "universal") {
+        this.weaponSettings.universalSettings = { ...this.weaponSettings.universalSettings, ...config };
+      } else {
+        this.weaponSettings.settings[weaponId] = { ...this.weaponSettings.settings[weaponId], ...config };
+      }
+    };
+
+    const getArmSettings = (weaponId, arm) => {
+      const weapon = getWeaponConfig(weaponId);
+      const armKey = arm === 'left' ? 'leftArm' : 'rightArm';
+      return weapon[armKey] || {
+        size: 1.0,
+        offsetX: 0,
+        offsetY: 0,
+        offsetZ: 0,
+        wireframe: false,
+        colorEnabled: false,
+        colorHex: "#FFFFFF",
+        rgb: false
+      };
+    };
+
+    const setArmSettings = (weaponId, arm, settings) => {
+      const armKey = arm === 'left' ? 'leftArm' : 'rightArm';
+      const weapon = getWeaponConfig(weaponId);
+      if (!weapon[armKey]) weapon[armKey] = {};
+      weapon[armKey] = { ...weapon[armKey], ...settings };
+      this.saveWeaponSettings();
+    };
+
+    const getMirrorState = () => {
+      const config = getActiveConfig();
+      return config.mirrorArm || false;
+    };
+
+    const getMirrorMaster = () => {
+      const config = getActiveConfig();
+      return config.mirrorMaster || 'left';
+    };
+
+    const setMirrorState = (enabled, master) => {
+      const config = getActiveConfig();
+      config.mirrorArm = enabled;
+      if (master) config.mirrorMaster = master;
+      this.saveWeaponSettings();
+    };
+
+    const updateArmSelectorsState = () => {
+      const singleArmWeapons = ["rev", "shark"];
+      const isSingleArm = this.viewMode !== "universal" && singleArmWeapons.includes(this.selectedWeapon);
+      const mirror = getMirrorState();
+
+      if (isSingleArm) {
+        leftArmSelector.style.opacity = "0.3";
+        leftArmSelector.style.pointerEvents = "none";
+        rightArmSelector.style.opacity = "1";
+        rightArmSelector.style.pointerEvents = "";
+        if (this.selectedArm === "left") this.selectedArm = "right";
+        return;
+      }
+
+      if (mirror) {
+        const master = getMirrorMaster();
+        if (master === 'left') {
+          leftArmSelector.style.opacity = "1";
+          leftArmSelector.style.pointerEvents = "";
+          rightArmSelector.style.opacity = "0.3";
+          rightArmSelector.style.pointerEvents = "none";
+        } else {
+          rightArmSelector.style.opacity = "1";
+          rightArmSelector.style.pointerEvents = "";
+          leftArmSelector.style.opacity = "0.3";
+          leftArmSelector.style.pointerEvents = "none";
+        }
+      } else {
+        leftArmSelector.style.opacity = "1";
+        leftArmSelector.style.pointerEvents = "";
+        rightArmSelector.style.opacity = "1";
+        rightArmSelector.style.pointerEvents = "";
+      }
+    };
+
+    const loadWeaponToUI = (settings) => {
+      weaponSizeInput.value = settings.size;
+      offsetXInput.value = settings.offsetX;
+      offsetYInput.value = settings.offsetY;
+      offsetZInput.value = settings.offsetZ;
+      const sizeVal = weaponsContent.querySelector(".weapon-size-value");
+      if (sizeVal) sizeVal.value = settings.size;
+      const oxVal = weaponsContent.querySelector(".weapon-offset-x-value");
+      if (oxVal) oxVal.value = settings.offsetX;
+      const oyVal = weaponsContent.querySelector(".weapon-offset-y-value");
+      if (oyVal) oyVal.value = settings.offsetY;
+      const ozVal = weaponsContent.querySelector(".weapon-offset-z-value");
+      if (ozVal) ozVal.value = settings.offsetZ;
+    };
+
+    const loadArmToUI = (armSettings) => {
+      armSizeInput.value = armSettings.size;
+      armOffsetXInput.value = armSettings.offsetX;
+      armOffsetYInput.value = armSettings.offsetY;
+      armOffsetZInput.value = armSettings.offsetZ;
+      if (armWireframeCheckbox) armWireframeCheckbox.checked = armSettings.wireframe || false;
+      if (armColorCheckbox) armColorCheckbox.checked = armSettings.colorEnabled || false;
+      if (armColorHexInput) armColorHexInput.value = armSettings.colorHex || "#FFFFFF";
+      if (armColorPicker) armColorPicker.value = armSettings.colorHex || "#FFFFFF";
+      if (armRgbCheckbox) armRgbCheckbox.checked = armSettings.rgb || false;
+      const sizeVal = armsContent.querySelector(".arm-size-value");
+      if (sizeVal) sizeVal.value = armSettings.size;
+      const oxVal = armsContent.querySelector(".arm-offset-x-value");
+      if (oxVal) oxVal.value = armSettings.offsetX;
+      const oyVal = armsContent.querySelector(".arm-offset-y-value");
+      if (oyVal) oyVal.value = armSettings.offsetY;
+      const ozVal = armsContent.querySelector(".arm-offset-z-value");
+      if (ozVal) ozVal.value = armSettings.offsetZ;
+    };
+
+    const saveCurrentWeaponUI = () => {
+      const newSettings = {
+        size: parseFloat(weaponSizeInput.value),
+        offsetX: parseFloat(offsetXInput.value),
+        offsetY: parseFloat(offsetYInput.value),
+        offsetZ: parseFloat(offsetZInput.value),
+      };
+      const weaponId = this.viewMode === "universal" ? "universal" : this.selectedWeapon;
+      setWeaponConfig(weaponId, newSettings);
+      this.saveWeaponSettings();
+    };
+
+    const saveCurrentArmUI = () => {
+      if (!this.selectedArm) return;
+      const newSettings = {
+        size: parseFloat(armSizeInput.value),
+        offsetX: parseFloat(armOffsetXInput.value),
+        offsetY: parseFloat(armOffsetYInput.value),
+        offsetZ: parseFloat(armOffsetZInput.value),
+        wireframe: armWireframeCheckbox ? armWireframeCheckbox.checked : false,
+        colorEnabled: armColorCheckbox ? armColorCheckbox.checked : false,
+        colorHex: armColorHexInput ? armColorHexInput.value : "#FFFFFF",
+        rgb: armRgbCheckbox ? armRgbCheckbox.checked : false,
+      };
+      setArmSettings(this.selectedWeapon, this.selectedArm, newSettings);
+      const mirror = getMirrorState();
+      if (mirror) {
+        const master = getMirrorMaster();
+        if (this.selectedArm === master) {
+          const other = master === 'left' ? 'right' : 'left';
+          setArmSettings(this.selectedWeapon, other, newSettings);
+        }
+      }
+    };
+
+    const refreshUI = () => {
+      universalCheckbox.checked = this.universalModeActive;
+      if (mirrorArmCheckbox) {
+        mirrorArmCheckbox.checked = getMirrorState();
+      }
+
+      const universalOnlyDiv = weaponsContent.querySelector(".universal-only");
+      const perWeaponOnlyDiv = weaponsContent.querySelector(".per-weapon-only");
+
+      if (this.viewMode === "universal") {
+        loadWeaponToUI(this.weaponSettings.universalSettings);
+        if (universalOnlyDiv) universalOnlyDiv.style.display = "flex";
+        if (perWeaponOnlyDiv) {
+          perWeaponOnlyDiv.style.display = this.universalModeActive ? "block" : "none";
+        }
+      } else {
+        if (this.selectedWeapon) {
+          const weapon = getWeaponConfig(this.selectedWeapon);
+          loadWeaponToUI(weapon);
+        }
+        if (universalOnlyDiv) universalOnlyDiv.style.display = "none";
+        if (perWeaponOnlyDiv) perWeaponOnlyDiv.style.display = "block";
+      }
+
+      if (this.universalModeActive) {
+        weaponSelectors.forEach(sel => {
+          sel.style.pointerEvents = "none";
+          sel.style.opacity = "0.5";
+        });
+        sidebar.classList.add("universal-enabled");
+      } else {
+        weaponSelectors.forEach(sel => {
+          sel.style.pointerEvents = "";
+          sel.style.opacity = "";
+        });
+        sidebar.classList.remove("universal-enabled");
+      }
+
+      updateArmSelectorsState();
+
+      if (this.selectedArm && armsContent) {
+        weaponsContent.style.display = "none";
+        armsContent.style.display = "flex";
+        const armSettings = getArmSettings(this.selectedWeapon, this.selectedArm);
+        loadArmToUI(armSettings);
+      } else if (armsContent) {
+        armsContent.style.display = "none";
+        weaponsContent.style.display = "flex";
+      }
+    };
+
+    universalSelector.addEventListener("click", () => {
+      this.viewMode = "universal";
+      this.selectedArm = null;
+      leftArmSelector.classList.remove("active");
+      rightArmSelector.classList.remove("active");
+
+      universalSelector.classList.add("active");
+      weaponSelectors.forEach(sel => sel.classList.remove("active"));
+
+      refreshUI();
+      this.saveWeaponSelectionState();
+    });
+
+    weaponSelectors.forEach(selector => {
+      selector.addEventListener("click", () => {
+        if (this.universalModeActive) return;
+        this.viewMode = "weapon";
+        this.selectedWeapon = selector.dataset.selector;
+        this.selectedArm = null;
+        universalSelector.classList.remove("active");
+        weaponSelectors.forEach(sel => sel.classList.remove("active"));
+        selector.classList.add("active");
+        leftArmSelector.classList.remove("active");
+        rightArmSelector.classList.remove("active");
+        refreshUI();
+        this.saveWeaponSelectionState();
+      });
+    });
+
+    const selectArm = (arm) => {
+      const mirror = getMirrorState();
+      if (mirror) {
+        const master = getMirrorMaster();
+        if (arm !== master) return;
+      }
+      if (this.selectedArm === arm) {
+        this.selectedArm = null;
+        leftArmSelector.classList.remove("active");
+        rightArmSelector.classList.remove("active");
+      } else {
+        this.selectedArm = arm;
+        leftArmSelector.classList.toggle("active", arm === 'left');
+        rightArmSelector.classList.toggle("active", arm === 'right');
+      }
+      refreshUI();
+      this.saveWeaponSelectionState();
+    };
+
+    leftArmSelector.addEventListener("click", () => selectArm('left'));
+    rightArmSelector.addEventListener("click", () => selectArm('right'));
+
+    universalCheckbox.addEventListener("change", (e) => {
+      this.universalModeActive = e.target.checked;
+      if (this.universalModeActive && !this.weaponSettings.universalSettings) {
+        this.weaponSettings.universalSettings = { ...this.weaponSettings.settings[this.selectedWeapon || "vita"] };
+      }
+      refreshUI();
+      this.saveWeaponSelectionState();
+    });
+
+    if (mirrorArmCheckbox) {
+      mirrorArmCheckbox.addEventListener("change", (e) => {
+        const enabled = e.target.checked;
+        let master = this.selectedArm || getMirrorMaster();
+        if (enabled) {
+          if (this.selectedArm) {
+            master = this.selectedArm;
+          } else {
+            master = getMirrorMaster();
+          }
+          const masterSettings = getArmSettings(this.selectedWeapon, master);
+          const other = master === 'left' ? 'right' : 'left';
+          setArmSettings(this.selectedWeapon, other, masterSettings);
+        }
+        setMirrorState(enabled, master);
+        refreshUI();
+      });
+    }
+
+    const weaponInputs = weaponsContent.querySelectorAll("input");
+    weaponInputs.forEach(input => {
+      input.addEventListener("change", saveCurrentWeaponUI);
+      input.addEventListener("input", saveCurrentWeaponUI);
+    });
+
+    const armInputs = armsContent.querySelectorAll("input");
+    armInputs.forEach(input => {
+      input.addEventListener("change", saveCurrentArmUI);
+      input.addEventListener("input", saveCurrentArmUI);
+    });
+
+    this.universalModeActive = this.settings.universal_settings || false;
+    this.viewMode = "weapon";
+    universalCheckbox.checked = this.universalModeActive;
+    if (!this.universalModeActive) {
+      this.selectedWeapon = "vita";
+      weaponSelectors.forEach(sel => {
+        if (sel.dataset.selector === this.selectedWeapon) sel.classList.add("active");
+      });
+    }
+    refreshUI();
+  }
+
+  loadWeaponSettings() {
+    const defaultArmSettings = {
+      size: 1.0,
+      offsetX: 0,
+      offsetY: 0,
+      offsetZ: 0,
+      wireframe: false,
+      colorEnabled: false,
+      colorHex: "#FFFFFF",
+      rgb: false
+    };
+
+    const defaultWeaponSettings = {
+      size: 1.0,
+      offsetX: 0,
+      offsetY: 0,
+      offsetZ: 0,
+      leftArm: { ...defaultArmSettings },
+      rightArm: { ...defaultArmSettings },
+      mirrorArm: false,
+      mirrorMaster: 'left'
+    };
+
+    const defaultUniversalSettings = {
+      size: 1.0,
+      offsetX: 0,
+      offsetY: 0,
+      offsetZ: 0,
+      wireframe: false,
+      colorEnabled: false,
+      colorHex: "#FFFFFF",
+      rgb: false,
+      inspectKeybind: "KeyI",
+      leftArm: { ...defaultArmSettings },
+      rightArm: { ...defaultArmSettings },
+      mirrorArm: false,
+      mirrorMaster: 'left'
+    };
+
+    let stored = localStorage.getItem("dawn_weapon_config");
+    let config = stored ? JSON.parse(stored) : { universal: false, settings: {} };
+    if (!config.universalSettings) {
+      config.universalSettings = { ...defaultUniversalSettings };
+    }
+    for (let id of this.weaponIds) {
+      if (!config.settings[id]) {
+        config.settings[id] = { ...defaultWeaponSettings };
+        if (this.settings) {
+          config.settings[id].size = this.settings.weapon_size ?? 1.0;
+          config.settings[id].offsetX = this.settings.weapon_offset_x ?? 0;
+          config.settings[id].offsetY = this.settings.weapon_offset_y ?? 0;
+          config.settings[id].offsetZ = this.settings.weapon_offset_z ?? 0;
+        }
+      }
+      if (!config.settings[id].leftArm) config.settings[id].leftArm = { ...defaultArmSettings };
+      if (!config.settings[id].rightArm) config.settings[id].rightArm = { ...defaultArmSettings };
+      if (config.settings[id].mirrorArm === undefined) config.settings[id].mirrorArm = false;
+      if (!config.settings[id].mirrorMaster) config.settings[id].mirrorMaster = 'left';
+    }
+    localStorage.setItem("dawn_weapon_config", JSON.stringify(config));
+    return config;
+  }
+
+  saveWeaponSettings() {
+    localStorage.setItem("dawn_weapon_config", JSON.stringify(this.weaponSettings));
+    this.updateGlobalWeaponConfig();
   }
 
   setVersion() {
@@ -1100,7 +1615,6 @@ class Menu {
       const githubBtn = document.createElement("a");
       githubBtn.className = "changelog-github-btn";
       githubBtn.target = "_blank";
-      githubBtn.rel = "noopener noreferrer";
       let versionNumber = changelog.version;
       if (!versionNumber.startsWith("v")) {
         versionNumber = "v" + versionNumber;
@@ -1195,8 +1709,24 @@ class Menu {
         input: document.querySelector(".blur-value"),
       },
       {
-        slider: document.getElementById("inspect_duration"),
-        input: document.querySelector(".inspect-duration-value"),
+        slider: document.getElementById("arm_size"),
+        input: document.querySelector(".arm-size-value"),
+      },
+      {
+        slider: document.getElementById("arm_offset_x"),
+        input: document.querySelector(".arm-offset-x-value"),
+      },
+      {
+        slider: document.getElementById("arm_offset_y"),
+        input: document.querySelector(".arm-offset-y-value"),
+      },
+      {
+        slider: document.getElementById("arm_offset_z"),
+        input: document.querySelector(".arm-offset-z-value"),
+      },
+      {
+        slider: document.getElementById("arm_offset_z"),
+        input: document.querySelector(".arm-offset-z-value"),
       },
     ];
 
@@ -1222,14 +1752,19 @@ class Menu {
   handleColorInputs() {
     const colorMap = [
       {
-        picker: document.querySelector(".shadow-color.color-picker"),
-        hex: document.querySelector(".shadow-color.hex"),
+        picker: document.querySelector(".shadow-color .color-picker"),
+        hex: document.querySelector(".shadow-color .hex"),
         storageKey: null,
       },
       {
         picker: document.querySelector(".weapon-color .color-picker"),
         hex: document.querySelector(".weapon-color .hex"),
         storageKey: "weapon_color_hex",
+      },
+      {
+        picker: document.querySelector(".arm-color .color-picker"),
+        hex: document.querySelector(".arm-color .hex"),
+        storageKey: "arm_color_hex",
       },
     ];
 
@@ -1245,12 +1780,14 @@ class Menu {
       picker.addEventListener("input", () => {
         hex.value = picker.value.toUpperCase();
         if (storageKey) localStorage.setItem(storageKey, picker.value);
+        this.updateGlobalWeaponConfig();
       });
 
       hex.addEventListener("input", () => {
         if (/^#[0-9A-Fa-f]{6}$/.test(hex.value)) {
           picker.value = hex.value;
           if (storageKey) localStorage.setItem(storageKey, hex.value);
+          this.updateGlobalWeaponConfig();
         }
       });
     });
@@ -1834,7 +2371,6 @@ class Menu {
 
         const tradeId = match[1];
         selectedTradeId = tradeId;
-        console.log(selectedTradeId);
 
         tradeElem.classList.add("selected");
 

@@ -1,5 +1,26 @@
 [
   {
+    "version": "1.0.15",
+    "date": "18/6/2026",
+    "changelogs": [
+      "Updated some of the inspects",
+      "Added per-Weapon customizations",
+      "Added customizable Zoom strength (0ads)",
+      "Added an Assists Indicator",
+      "Added a toggle for Server Map Backgrounds",
+      "Added replacing the join button with a spectate button for full servers",
+      "Added inventory favorites",
+      "Added Command Abbreviations to the global chat",
+      "Added a Dusk Theme",
+      "Added clan gradients to my clan/clan lookup",
+      "Made the menu values manually editable by text",
+      "Moved some stuff around in the Menu",
+      "Fixed Clan lookup not working for clans with special characters",
+      "Fixed Fanny and other skins not being affected by the Custom Skin Link",
+      "Fixed the inspect button not working in chat/disabling other hotkeys"
+    ]
+  },
+  {
     "version": "1.0.14",
     "date": "6/6/2026",
     "changelogs": [

@@ -61,284 +61,6 @@ const originalConsole = {
   trace: console.trace.bind(console),
 };
 
-let INSPECT_DURATION = settings.inspect_duration;
-let inspectStart = null;
-
-const inspectKeyframes = (t) => {
-  const easeOut = (x) => 1 - Math.pow(1 - x, 3);
-  const easeIn = (x) => x * x * x;
-  const spin = (1 - Math.pow(1 - Math.pow(t, 1.5), 3)) * Math.PI * 2.0;
-  let offsetX = 0, offsetY = 0, scale = 1;
-  if (t < 0.4) {
-    const p = easeOut(t / 0.4);
-    offsetY = p * 0.20;
-    offsetX = p * 0.025;
-    scale = 1 + p * 0.06;
-  } else if (t < 0.6) {
-    const p = (t - 0.4) / 0.2;
-    offsetY = 0.20 - p * 0.04;
-    offsetX = 0.025;
-    scale = 1.06;
-  } else {
-    const p = easeIn((t - 0.6) / 0.4);
-    offsetY = 0.16 * (1 - p);
-    offsetX = 0.025 * (1 - p);
-    scale = 1.06 - p * 0.06;
-  }
-  return { offsetX, offsetY, offsetZ: 0, scale, spin };
-};
-
-const applyZSpin = (mat, angle) => {
-  const cos = Math.cos(angle), sin = Math.sin(angle);
-  const sx = Math.sqrt(mat[0] * mat[0] + mat[1] * mat[1] + mat[2] * mat[2]);
-  const sy = Math.sqrt(mat[4] * mat[4] + mat[5] * mat[5] + mat[6] * mat[6]);
-  const x0 = mat[0] / sx, x1 = mat[1] / sx, x2 = mat[2] / sx;
-  const y0 = mat[4] / sy, y1 = mat[5] / sy, y2 = mat[6] / sy;
-  const nx0 = x0 * cos - y0 * sin, nx1 = x1 * cos - y1 * sin, nx2 = x2 * cos - y2 * sin;
-  const ny0 = x0 * sin + y0 * cos, ny1 = x1 * sin + y1 * cos, ny2 = x2 * sin + y2 * cos;
-  mat[0] = nx0 * sx; mat[1] = nx1 * sx; mat[2] = nx2 * sx;
-  mat[4] = ny0 * sy; mat[5] = ny1 * sy; mat[6] = ny2 * sy;
-};
-
-let currentInspectKeybind = settings.inspect_keybind;
-
-const inspectKeybindHandler = (e) => {
-  let inputName;
-
-  if (e.type === "mousedown") {
-    switch (e.button) {
-      case 3: inputName = "MouseButton4"; break;
-      case 4: inputName = "MouseButton5"; break;
-      default: inputName = `MouseButton${e.button + 1}`;
-    }
-  } else if (e.type === "keydown") {
-    inputName = e.code;
-  }
-
-  if (inputName === currentInspectKeybind) {
-    inspectStart = performance.now();
-    e.preventDefault();
-  }
-};
-
-document.addEventListener("mousedown", inspectKeybindHandler, true);
-document.addEventListener("keydown", inspectKeybindHandler, true);
-
-document.addEventListener("juice-settings-changed", ({ detail }) => {
-  if (detail.setting === "inspect_keybind") {
-    currentInspectKeybind = detail.value;
-  }
-});
-
-const hsvToRgb = (hue) => {
-  hue = ((hue % 360) + 360) % 360;
-  const sector = Math.floor(hue / 60);
-  const f = (hue / 60) - sector;
-  const q = Math.round((1 - f) * 255);
-  const t = Math.round(f * 255);
-  switch (sector) {
-    case 0: return [255, t, 0];
-    case 1: return [q, 255, 0];
-    case 2: return [0, 255, t];
-    case 3: return [0, q, 255];
-    case 4: return [t, 0, 255];
-    default: return [255, 0, q];
-  }
-};
-
-const colMag = (m, i) =>
-  Math.sqrt(m[i] * m[i] + m[i + 1] * m[i + 1] + m[i + 2] * m[i + 2]);
-
-const isEnemyScale = (s0, s1, s2) => {
-  const avg = (s0 + s1 + s2) / 3;
-  return (Math.abs(avg - 0.4) < 0.05) || (Math.abs(avg - 2.4) < 0.1);
-};
-
-const classify = (m) => {
-  if (!m || m.length < 16) return null;
-  if (Math.abs(m[3]) > 0.001) return null;
-  if (Math.abs(m[7]) > 0.001) return null;
-  if (Math.abs(m[11]) > 0.001) return null;
-  if (Math.abs(m[15] - 1.0) > 0.001) return null;
-
-  const s0 = colMag(m, 0), s1 = colMag(m, 4), s2 = colMag(m, 8);
-  if (s0 < 0.001 || s0 > 15.0) return null;
-  if (s1 < 0.001 || s1 > 15.0) return null;
-  if (s2 < 0.001 || s2 > 15.0) return null;
-  if (isEnemyScale(s0, s1, s2)) return null;
-
-  const tx = m[12], ty = m[13], tz = m[14];
-  const dist = Math.sqrt(tx * tx + ty * ty + tz * tz);
-  if (dist < 0.001 || dist > 0.6) return null;
-
-  const maxS = Math.max(s0, s1, s2);
-  const minS = Math.min(s0, s1, s2);
-  const ratio = maxS / minS;
-
-  if (maxS < 1.7) return "weapon";
-  if (ratio < 1.05) return "weapon";
-  return "arms";
-};
-
-const isSpectating = () => !!document.querySelector(".infos .fps");
-
-const hookedContexts = new WeakSet();
-const originalGetCtx = HTMLCanvasElement.prototype.getContext;
-
-HTMLCanvasElement.prototype.getContext = function (type, attrs) {
-  const ctx = originalGetCtx.call(this, type, attrs);
-  if (!ctx || (type !== "webgl" && type !== "webgl2")) return ctx;
-  if (hookedContexts.has(ctx) || this.id !== "game") return ctx;
-  hookedContexts.add(ctx);
-
-  const gl = ctx;
-  const matBuf = new Float32Array(16);
-  const rgbPixel = new Uint8Array([255, 255, 255, 255]);
-
-  const rgbTexture = gl.createTexture();
-  gl.bindTexture(gl.TEXTURE_2D, rgbTexture);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, rgbPixel);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-  gl.bindTexture(gl.TEXTURE_2D, null);
-
-  const origUniformMatrix4fv = gl.uniformMatrix4fv.bind(gl);
-  const origDrawArrays = gl.drawArrays.bind(gl);
-  const origDrawElements = gl.drawElements.bind(gl);
-  const origBindTexture = gl.bindTexture.bind(gl);
-
-  let activeThisFrame = false;
-  let lastBoundTexture = null;
-  let seenMatricesThisFrame = new Set();
-  let weaponTranslationsThisFrame = [];
-
-  const isNearWeapon = (tx, ty, tz) =>
-    weaponTranslationsThisFrame.some(([wx, wy, wz]) => {
-      const dx = tx - wx, dy = ty - wy, dz = tz - wz;
-      return Math.sqrt(dx * dx + dy * dy + dz * dz) < 0.12;
-    });
-
-  gl.bindTexture = (target, texture) => {
-    if (target === gl.TEXTURE_2D) lastBoundTexture = texture;
-    return origBindTexture(target, texture);
-  };
-
-  gl.uniformMatrix4fv = (location, transpose, data, srcOffset, srcLength) => {
-    activeThisFrame = false;
-
-    if (!isSpectating() && data && data.length >= 16) {
-      const offset = srcOffset ?? 0;
-      const slice = (offset === 0 && data.length === 16)
-        ? data
-        : (data.subarray ? data.subarray(offset, offset + 16) : data.slice(offset, offset + 16));
-
-      const kind = classify(slice);
-
-      if (kind === "weapon" || (kind === "arms" && settings.include_arms)) {
-        const fp = `${slice[0].toFixed(3)},${slice[5].toFixed(3)},${slice[10].toFixed(3)},${slice[12].toFixed(4)},${slice[13].toFixed(4)},${slice[14].toFixed(4)}`;
-        if (seenMatricesThisFrame.has(fp)) {
-          return origUniformMatrix4fv(location, transpose, data, srcOffset, srcLength);
-        }
-        seenMatricesThisFrame.add(fp);
-
-        if (kind === "arms" && settings.include_arms) {
-          const tx = slice[12], ty = slice[13], tz = slice[14];
-          console.log("arm candidate", tx.toFixed(4), ty.toFixed(4), tz.toFixed(4),
-            "weapon translations:", JSON.stringify(weaponTranslationsThisFrame));
-          if (isNearWeapon(tx, ty, tz)) {
-            return origUniformMatrix4fv(location, transpose, data, srcOffset, srcLength);
-          }
-        }
-
-        if (kind === "arms") {
-          const tx = slice[12], ty = slice[13], tz = slice[14];
-          if (isNearWeapon(tx, ty, tz)) {
-            return origUniformMatrix4fv(location, transpose, data, srcOffset, srcLength);
-          }
-        }
-
-        activeThisFrame = true;
-
-        if (settings.weapon_color && settings.weapon_rgb && lastBoundTexture !== null) {
-          const [r, g, b] = hsvToRgb((performance.now() / 3000) * 360);
-          rgbPixel[0] = r; rgbPixel[1] = g; rgbPixel[2] = b; rgbPixel[3] = 255;
-          origBindTexture(gl.TEXTURE_2D, rgbTexture);
-          gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, rgbPixel);
-        } else if (settings.weapon_color && lastBoundTexture !== null) {
-          const hex = document.querySelector(".weapon-color .hex").value.replace("#", "");
-          rgbPixel[0] = parseInt(hex.substring(0, 2), 16);
-          rgbPixel[1] = parseInt(hex.substring(2, 4), 16);
-          rgbPixel[2] = parseInt(hex.substring(4, 6), 16);
-          rgbPixel[3] = 255;
-          origBindTexture(gl.TEXTURE_2D, rgbTexture);
-          gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, rgbPixel);
-        } else if (lastBoundTexture !== null) {
-          origBindTexture(gl.TEXTURE_2D, lastBoundTexture);
-        }
-
-        if (kind === "weapon") {
-          weaponTranslationsThisFrame.push([slice[12], slice[13], slice[14]]);
-
-          const base = settings.weapon_size ?? 1.0;
-          matBuf.set(slice);
-
-          let scale = base;
-          let ox = settings.weapon_offset_x ?? 0;
-          let oy = settings.weapon_offset_y ?? 0;
-          let oz = settings.weapon_offset_z ?? 0;
-          let spinAngle = 0;
-
-          if (inspectStart !== null) {
-            const elapsed = performance.now() - inspectStart;
-            const t = Math.min(elapsed / INSPECT_DURATION, 1.0);
-            const kf = inspectKeyframes(t);
-            scale = base * kf.scale;
-            ox += kf.offsetX;
-            oy += kf.offsetY;
-            oz += kf.offsetZ;
-            spinAngle = kf.spin;
-            if (t >= 1.0) inspectStart = null;
-          }
-
-          matBuf[0] *= scale; matBuf[1] *= scale; matBuf[2] *= scale;
-          matBuf[4] *= scale; matBuf[5] *= scale; matBuf[6] *= scale;
-          matBuf[8] *= scale; matBuf[9] *= scale; matBuf[10] *= scale;
-          matBuf[12] += ox;
-          matBuf[13] += oy;
-          matBuf[14] += oz;
-
-          if (spinAngle !== 0) applyZSpin(matBuf, spinAngle);
-
-          return origUniformMatrix4fv(location, transpose, matBuf, 0, 16);
-        }
-      }
-    }
-    return origUniformMatrix4fv(location, transpose, data, srcOffset, srcLength);
-  };
-
-  const toWireframe = (mode) =>
-    (mode === gl.TRIANGLES || mode === gl.TRIANGLE_FAN || mode === gl.TRIANGLE_STRIP)
-      ? gl.LINES : mode;
-
-  gl.drawArrays = (mode, first, count) => {
-    if (settings.weapon_wireframe && activeThisFrame) mode = toWireframe(mode);
-    activeThisFrame = false;
-    seenMatricesThisFrame.clear();
-    weaponTranslationsThisFrame = [];
-    return origDrawArrays(mode, first, count);
-  };
-
-  gl.drawElements = (mode, count, type, offset) => {
-    if (settings.weapon_wireframe && activeThisFrame) mode = toWireframe(mode);
-    activeThisFrame = false;
-    seenMatricesThisFrame.clear();
-    weaponTranslationsThisFrame = [];
-    return origDrawElements(mode, count, type, offset);
-  };
-
-  return ctx;
-};
-
 window.addEventListener("DOMContentLoaded", async () => {
   console.log = originalConsole.log;
   console.warn = originalConsole.warn;
@@ -629,7 +351,7 @@ window.addEventListener("DOMContentLoaded", async () => {
             rightPart.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
             rightPart.click();
 
-            await new Promise(resolve => setTimeout(resolve, 150));
+            await new Promise(resolve => setTimeout(resolve, 0));
 
             let options = Array.from(el.querySelectorAll(".items div"));
             if (options.length === 0) options = Array.from(document.querySelectorAll(".items div"));
@@ -643,7 +365,7 @@ window.addEventListener("DOMContentLoaded", async () => {
               }
             }
 
-            await new Promise(resolve => setTimeout(resolve, 100));
+            await new Promise(resolve => setTimeout(resolve, 0));
           }
         }
       }
@@ -841,6 +563,74 @@ window.addEventListener("DOMContentLoaded", async () => {
     }
   };
 
+  initSettingsSliderInputs = () => {
+    function handleValues() {
+      document.querySelectorAll(".settings .right").forEach((row) => {
+        const valueDiv = row.querySelector(".value");
+        const slider = row.querySelector(".range");
+        if (!valueDiv || !slider) return;
+
+        const valueInput = document.createElement("input");
+        valueInput.type = "number";
+        valueInput.classList.add("setting-value");
+        valueInput.value = valueDiv.textContent.trim();
+        valueInput.title = "";
+        valueDiv.replaceWith(valueInput);
+
+        const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+          window.HTMLInputElement.prototype,
+          "value"
+        ).set;
+
+        function setSliderValue(num) {
+          if (num < parseFloat(slider.min)) slider.min = num;
+          if (num > parseFloat(slider.max)) slider.max = num;
+
+          nativeInputValueSetter.call(slider, num);
+          slider.dispatchEvent(new Event("input", { bubbles: true }));
+          slider.dispatchEvent(new Event("change", { bubbles: true }));
+        }
+
+        slider.addEventListener("input", () => {
+          valueInput.value = slider.value;
+        });
+
+        function commit() {
+
+        }
+
+        valueInput.addEventListener("blur", () => {
+          const raw = valueInput.value;
+          const num = parseFloat(raw);
+
+          if (raw === "" || Number.isNaN(num)) {
+            valueInput.value = slider.value;
+            return;
+          }
+
+          setSliderValue(num);
+        });
+
+        valueInput.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            valueInput.blur();
+          }
+        });
+      });
+    }
+
+    handleValues();
+
+    document.querySelectorAll(".settings .tab").forEach((tab) => {
+      tab.addEventListener("click", () => {
+        handleValues();
+      })
+    })
+  }
+
+  observeForElement(".settings", initSettingsSliderInputs)
+
   const loadTheme = () => {
     const addedStyles = document.createElement("style");
     addedStyles.id = "juice-styles-theme";
@@ -878,28 +668,29 @@ window.addEventListener("DOMContentLoaded", async () => {
 
       if (settings.perm_tablist)
         styles.push(
-          ".tab-info, .tab-team-info { display: flex !important; border-radius: 0.5rem !important; max-width: 30rem !important; top: 0 !important; right: 0 !important; position: absolute; margin: 0.5rem !important; padding: 0.15rem !important; width: 35rem !important; }",
-          ".tab-team-info .players-cont { flex-direction: column !important; }",
-          ".tab-info .player-list, .tab-team-info .player-list { margin: unset !important; gap: 0.25rem; }",
-          ".tab-info > .head, .tab-team-info > .head { display: none; }",
-          ".tab-team-info .player-list:nth-child(1)::before { content: 'RED'; width: 100%; text-align: left; padding: 0.25rem 0.5rem; font-size: 1.25rem; background-color: #ff4d42; border-radius: 0.25rem; box-sizing: border-box; }",
-          ".tab-team-info .player-list:nth-child(2)::before { content: 'BLUE'; width: 100%; text-align: left; padding: 0.25rem 0.5rem; font-size: 1.25rem; background-color: #0d6dc6; border-radius: 0.25rem; box-sizing: border-box; margin-top: 0.5rem; }",
-          ".players-wrap .list { display: none !important; }",
-          ".tab-info .list, .tab-team-info .player-list > .list { order: 999; }",
-          ".tab-info .players-wrap, .tab-team-info .players-wrap { padding: 0.25rem; }",
-          ".tab-info .player-cont, .tab-team-info .player-cont { margin: unset; }",
-          ".kill-bar-cont { right: 37.5rem !important; }",
-          ".tab-info { background: #141414a3 !important; border-radius: 0.25rem !important; max-width: 35rem !important; }",
-          ".tab-info .head { background: linear-gradient(90deg, #ff932d, transparent) !important; border: unset; font-style: normal; border-top-left-radius: 0.25rem; }",
-          ".tab-info .head .server-id { display: none; }",
-          ".tab-info .list-value { color: #acfa70; }",
-          ".tab-team-info { background: #141414a3 !important; border-radius: 0.25rem !important; max-width: 60rem !important; }",
-          ".tab-team-info .head { background: transparent !important; }",
-          ".tab-team-info .label.red { border-top-left-radius: 0.25rem; background: linear-gradient(90deg, #ff4c4c, #141414a3); justify-content: flex-start; padding-left: 0.75rem; }",
-          ".tab-team-info .label.blue { border-top-right-radius: 0.25rem; background: linear-gradient(-90deg, #4476ff, #141414a3); justify-content: flex-end; padding-right: 0.75rem; }",
-          ".player-list .list-value { color: #acfa70; }",
-          ".player-list .player-cont { background: #141414a3 !important; border-radius: 0.25rem; padding: 0.25rem; }",
-          ".player-cont .nickname.bolder { color: #edb846; }"
+          ".desktop-game-interface .tab-info, .tab-team-info { display: flex !important; border-radius: 0.5rem !important; max-width: 30rem !important; top: 0 !important; right: 0 !important; position: absolute; margin: 0.5rem !important; padding: 0.15rem !important; width: 35rem !important; box-shadow: none !important; }",
+          ".desktop-game-interface .tab-team-info .players-cont { flex-direction: column !important; }",
+          ".desktop-game-interface .tab-info .player-list, .tab-team-info .player-list { margin: unset !important; gap: 0.25rem; }",
+          ".desktop-game-interface .tab-info > .head, .tab-team-info > .head { display: none; }",
+          ".desktop-game-interface .tab-team-info .player-list:nth-child(1)::before { content: 'RED'; width: 100%; text-align: left; padding: 0.25rem 0.5rem; font-size: 1.25rem; background-color: #ff4d42; border-radius: 0.25rem; box-sizing: border-box; }",
+          ".desktop-game-interface .tab-team-info .player-list:nth-child(2)::before { content: 'BLUE'; width: 100%; text-align: left; padding: 0.25rem 0.5rem; font-size: 1.25rem; background-color: #0d6dc6; border-radius: 0.25rem; box-sizing: border-box; margin-top: 0.5rem; }",
+          ".desktop-game-interface .players-wrap .list { display: none !important; }",
+          ".desktop-game-interface .tab-info .list, .tab-team-info .player-list > .list { order: 999; }",
+          ".desktop-game-interface .tab-info .players-wrap, .tab-team-info .players-wrap { padding: 0.25rem; }",
+          ".desktop-game-interface .tab-info .player-cont, .tab-team-info .player-cont { margin: unset; }",
+          ".desktop-game-interface .kill-bar-cont { right: 37.5rem !important; }",
+          ".desktop-game-interface .tab-info { background: #141414a3 !important; border-radius: 0.25rem !important; max-width: 35rem !important; }",
+          ".desktop-game-interface .tab-info .head { background: linear-gradient(90deg, #ff932d, transparent) !important; border: unset; font-style: normal; border-top-left-radius: 0.25rem; }",
+          ".desktop-game-interface .tab-info .head .server-id { display: none; }",
+          ".desktop-game-interface .tab-info .list-value { color: #acfa70; }",
+          ".desktop-game-interface .tab-team-info { background: #141414a3 !important; border-radius: 0.25rem !important; max-width: 60rem !important; }",
+          ".desktop-game-interface .tab-team-info .head { background: transparent !important; }",
+          ".desktop-game-interface .tab-team-info .label.red { border-top-left-radius: 0.25rem; background: linear-gradient(90deg, #ff4c4c, #141414a3); justify-content: flex-start; padding-left: 0.75rem; }",
+          ".desktop-game-interface .tab-team-info .label.blue { border-top-right-radius: 0.25rem; background: linear-gradient(-90deg, #4476ff, #141414a3); justify-content: flex-end; padding-right: 0.75rem; }",
+          ".desktop-game-interface .player-list .list-value { color: #acfa70; }",
+          ".desktop-game-interface .player-list .player-cont { background: #141414a3 !important; border-radius: 0.25rem; padding: 0.25rem }",
+          ".desktop-game-interface .player-list .player-cont.dead .player-left { transform: translateX(2rem) }",
+          ".desktop-game-interface .player-cont .nickname.bolder { color: #edb846; }"
         );
       if (settings.hide_chat)
         styles.push(
@@ -976,7 +767,6 @@ window.addEventListener("DOMContentLoaded", async () => {
         "interface_opacity",
         "interface_bounds",
         "hitmarker_link",
-        "permanent_crosshair",
         "ui_animations",
         "colored_killfeed",
         "rave_mode",
@@ -989,6 +779,1267 @@ window.addEventListener("DOMContentLoaded", async () => {
     });
     updateUIFeatures();
   };
+
+  function findCamera(instance) {
+    for (const key of Object.getOwnPropertyNames(instance)) {
+      try {
+        const val = instance[key];
+        if (!val || typeof val !== 'object') continue;
+        const names = Object.getOwnPropertyNames(val);
+        const hasFov = names.some(k => {
+          const desc = Object.getOwnPropertyDescriptor(val, k);
+          if (!desc?.get) return false;
+          try {
+            const v = desc.get.call(val);
+            return typeof v === 'number' && v >= 40 && v <= 150;
+          } catch (e) { return false; }
+        });
+        const hasZoom = names.includes('zoom');
+        if (hasFov && hasZoom) return val;
+      } catch (e) { }
+    }
+    return null;
+  }
+
+  window.ads_power = 1;
+  const setAdsPower = (multiplier) => {
+    window.ads_power = multiplier;
+
+    const interval = setInterval(() => {
+      if (!window.__zoomInstance) return;
+      const cam = findCamera(window.__zoomInstance);
+      if (!cam) return;
+      clearInterval(interval);
+
+      const fovKey = Object.getOwnPropertyNames(cam).find(key => {
+        const desc = Object.getOwnPropertyDescriptor(cam, key);
+        if (!desc?.get) return false;
+        try {
+          const val = desc.get.call(cam);
+          return typeof val === 'number' && val >= 40 && val <= 150;
+        } catch (e) { return false; }
+      });
+
+      if (!fovKey) return;
+
+      const desc = Object.getOwnPropertyDescriptor(cam, fovKey);
+      const origGet = desc.get;
+      const origSet = desc.set;
+
+      const defaultFov = parseFloat(localStorage.getItem('SETTINGS___SETTING/CAMERA___SETTING/MAIN_FOV___SETTING')?.replace(/"/g, '')) || 100;
+
+      let ads = false;
+
+      Object.defineProperty(cam, fovKey, {
+        get() { return origGet.call(this); },
+        set(v) {
+          if (v === defaultFov) {
+            ads = false;
+            origSet.call(this, v);
+            return;
+          }
+
+          if (v < defaultFov) {
+            ads = true;
+          }
+
+          if (ads) {
+            const zoomDelta = Math.abs(defaultFov - v);
+            const curved = Math.pow(window.ads_power, 0.4);
+            const newFov = defaultFov - zoomDelta * curved;
+            origSet.call(this, Math.max(1, Math.min(179, newFov)));
+          } else {
+            origSet.call(this, v);
+          }
+        },
+        configurable: true,
+        enumerable: true
+      });
+    }, 100);
+  };
+
+  const initWeaponMods = () => {
+    let inspectStart = null;
+    let inspectingWeaponId = null;
+
+    let latchedWeaponSig = null;
+    let settlerSig = null;
+    let settlerSince = 0;
+    const SETTLE_MS = 120;
+
+    const INSPECT_DURATIONS = {
+      vita: 600,
+      rev: 550,
+      mac10: 800,
+      ar9: 550,
+      m60: 550,
+      scar: 550,
+      shark: 550,
+      lar: 550,
+      weatie: 550,
+      bayonet: 800,
+      tomahawk: 750,
+    };
+
+    const inspectKeyframes_vita = (t) => {
+      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+      const easeIn = (x) => x * x * x;
+
+      let offsetZ, offsetX, spinX;
+      if (t < 0.35) {
+        const p = easeOut(t / 0.35);
+        offsetZ = p * -0.2;
+        offsetX = p * -0.15;
+        spinX = p * -0.25;
+      } else if (t < 0.85) {
+        offsetZ = -0.2;
+        offsetX = -0.15;
+        spinX = - 0.25;
+      } else {
+        const p = easeIn((t - 0.85) / 0.15);
+        offsetZ = (1 - p) * -0.2;
+        offsetX = (1 - p) * -0.15;
+        spinX = (1 - easeOut(p)) * -0.25;
+      }
+
+      const spinZ = t * Math.PI * -2;
+
+      return {
+        offsetX,
+        offsetY: 0,
+        offsetZ,
+        scale: 1,
+        spinZ,
+        spinX,
+      };
+    };
+
+    const inspectKeyframes_rev = (t) => {
+      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+      const easeIn = (x) => x * x * x;
+      const bump = t < 0.5 ? easeOut(t / 0.5) : 1 - easeIn((t - 0.5) / 0.5);
+      const spinZ = (1 - Math.pow(1 - Math.pow(t, 1.2), 3)) * Math.PI * 2.0;
+      return {
+        offsetX: bump * 0.02,
+        offsetY: bump * 0.15,
+        offsetZ: 0,
+        scale: 1 + bump * 0.05,
+        spinZ: spinZ,
+      };
+    };
+
+    const inspectKeyframes_mac10 = (t) => {
+      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+      const easeIn = (x) => x * x * x;
+      const spinZ = (1 - Math.pow(1 - Math.pow(t, 1.2), 3)) * Math.PI * 2.0;
+      let spinX;
+
+      if (t < 0.1) {
+        spinX = easeOut(t / 0.1) * -0.25;
+      } else if (t < 0.5) {
+        spinX = -0.25;
+      } else {
+        spinX = (1 - easeIn((t - 0.5) / 0.5)) * -0.25;
+      }
+
+      return {
+        offsetX: 0,
+        offsetY: 0,
+        offsetZ: 0,
+        scale: 1 + 0,
+        spinZ: spinZ * 4,
+        spinX: spinX,
+      };
+    };
+
+    const inspectKeyframes_ar9 = (t) => {
+      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+      const easeIn = (x) => x * x * x;
+
+      let offsetZ, offsetX, spinX;
+      if (t < 0.35) {
+        const p = easeOut(t / 0.35);
+        offsetZ = p * -0.2;
+        offsetX = p * -0.15;
+        spinX = p * -0.25;
+      } else if (t < 0.85) {
+        offsetZ = -0.2;
+        offsetX = -0.15;
+        spinX = - 0.25;
+      } else {
+        const p = easeIn((t - 0.85) / 0.15);
+        offsetZ = (1 - p) * -0.2;
+        offsetX = (1 - p) * -0.15;
+        spinX = (1 - easeOut(p)) * -0.25;
+      }
+
+      const spinY = t * Math.PI * 2;
+
+      return {
+        offsetX,
+        offsetY: 0,
+        offsetZ,
+        scale: 1,
+        spinY,
+        spinX,
+      };
+    };
+
+    const inspectKeyframes_m60 = (t) => {
+      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+      const easeIn = (x) => x * x * x;
+
+      let offsetZ, offsetX, spinX;
+      if (t < 0.35) {
+        const p = easeOut(t / 0.35);
+        offsetZ = p * -0.2;
+        offsetX = p * -0.15;
+        spinX = p * -0.25;
+      } else if (t < 0.85) {
+        offsetZ = -0.2;
+        offsetX = -0.15;
+        spinX = - 0.25;
+      } else {
+        const p = easeIn((t - 0.85) / 0.15);
+        offsetZ = (1 - p) * -0.2;
+        offsetX = (1 - p) * -0.15;
+        spinX = (1 - easeOut(p)) * -0.25;
+      }
+
+      const spinZ = t * Math.PI * -2;
+
+      return {
+        offsetX,
+        offsetY: 0,
+        offsetZ,
+        scale: 1,
+        spinZ,
+        spinX,
+      };
+    };
+
+    const inspectKeyframes_scar = (t) => {
+      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+      const easeIn = (x) => x * x * x;
+
+      let offsetZ, offsetX, spinX;
+      if (t < 0.35) {
+        const p = easeOut(t / 0.35);
+        offsetZ = p * -0.2;
+        offsetX = p * -0.15;
+        spinX = p * -0.25;
+      } else if (t < 0.85) {
+        offsetZ = -0.2;
+        offsetX = -0.15;
+        spinX = - 0.25;
+      } else {
+        const p = easeIn((t - 0.85) / 0.15);
+        offsetZ = (1 - p) * -0.2;
+        offsetX = (1 - p) * -0.15;
+        spinX = (1 - easeOut(p)) * -0.25;
+      }
+
+      const spinZ = t * Math.PI * -2;
+
+      return {
+        offsetX,
+        offsetY: 0,
+        offsetZ,
+        scale: 1,
+        spinZ,
+        spinX,
+      };
+    };
+
+    const inspectKeyframes_shark = (t) => {
+      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+      const easeIn = (x) => x * x * x;
+      const bump = t < 0.5 ? easeOut(t / 0.5) : 1 - easeIn((t - 0.5) / 0.5);
+      const spinX = (1 - Math.pow(1 - Math.pow(t, 1.2), 3)) * Math.PI * 2.0;
+      return {
+        offsetX: bump * 0.04,
+        offsetY: bump * 0.20,
+        offsetZ: 0,
+        scale: 1 + bump * 0.08,
+        spinX: spinX,
+      };
+    };
+
+    const inspectKeyframes_lar = (t) => {
+      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+      const easeIn = (x) => x * x * x;
+
+      let offsetZ, offsetX, spinX;
+      if (t < 0.35) {
+        const p = easeOut(t / 0.35);
+        offsetZ = p * -0.2;
+        offsetX = p * -0.15;
+        spinX = p * -0.25;
+      } else if (t < 0.85) {
+        offsetZ = -0.2;
+        offsetX = -0.15;
+        spinX = - 0.25;
+      } else {
+        const p = easeIn((t - 0.85) / 0.15);
+        offsetZ = (1 - p) * -0.2;
+        offsetX = (1 - p) * -0.15;
+        spinX = (1 - easeOut(p)) * -0.25;
+      }
+
+      const spinZ = t * Math.PI * -2;
+
+      return {
+        offsetX,
+        offsetY: 0,
+        offsetZ,
+        scale: 1,
+        spinZ,
+        spinX,
+      };
+    };
+
+    const inspectKeyframes_weatie = (t) => {
+      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+      const easeIn = (x) => x * x * x;
+
+      let offsetZ, offsetX, spinX;
+      if (t < 0.35) {
+        const p = easeOut(t / 0.35);
+        offsetZ = p * -0.2;
+        offsetX = p * -0.15;
+        spinX = p * -0.25;
+      } else if (t < 0.85) {
+        offsetZ = -0.2;
+        offsetX = -0.15;
+        spinX = - 0.25;
+      } else {
+        const p = easeIn((t - 0.85) / 0.15);
+        offsetZ = (1 - p) * -0.2;
+        offsetX = (1 - p) * -0.15;
+        spinX = (1 - easeOut(p)) * -0.25;
+      }
+
+      const spinZ = t * Math.PI * -2;
+
+      return {
+        offsetX,
+        offsetY: 0,
+        offsetZ,
+        scale: 1,
+        spinZ,
+        spinX,
+      };
+    };
+
+    const inspectKeyframes_knife = (t) => {
+      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+      const easeIn = (x) => x * x * x;
+      const bump = t < 0.5 ? easeOut(t / 0.5) : 1 - easeIn((t - 0.5) / 0.5);
+      const spinZ = (1 - Math.pow(1 - Math.pow(t, 1.2), 3)) * Math.PI * 2.0;
+      return {
+        offsetX: bump * 0,
+        offsetY: bump * 0,
+        offsetZ: 0,
+        scale: 1 + bump * 0.10,
+        spinZ: spinZ * 5,
+      };
+    };
+
+    const inspectKeyframes_tomahawk = (t) => {
+      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+      const easeIn = (x) => x * x * x;
+      const spinZ = (1 - Math.pow(1 - Math.pow(t, 1.2), 3)) * Math.PI * 2.0;
+      return {
+        offsetX: 0,
+        offsetY: 0,
+        offsetZ: 0,
+        scale: 1,
+        spinZ: spinZ * -2,
+      };
+    };
+
+    const armKeyframes_disabled = (t) => {
+      return {
+        offsetX: 0,
+        offsetY: 0,
+        offsetZ: 0,
+        scale: 1,
+      };
+    };
+
+    const armKeyframes_rev = (t) => {
+      const arc = Math.sin(t * Math.PI);
+      return {
+        offsetX: arc * 0.02,
+        offsetY: arc * 0.06,
+        offsetZ: 0,
+        scale: 1,
+        spinZ: 0,
+      };
+    };
+
+    const armKeyframes_vita_right = (t) => {
+      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+      const easeIn = (x) => x * x * x;
+
+      let offsetX, offsetY, offsetZ;
+
+      if (t < 0.55) {
+        const p = easeOut(t / 0.55);
+        const arch = 4 * p * (1 - p);
+        offsetX = p * -0.38;
+        offsetY = arch * 0.06;
+        offsetZ = p * -0.05;
+      } else if (t < 0.75) {
+        const p = easeIn((t - 0.55) / 0.2);
+        offsetX = -0.38 + p * 0.38;
+        offsetY = 0;
+        offsetZ = -0.05 + p * 0.05;
+      } else {
+        const p = easeOut((t - 0.75) / 0.25);
+        offsetX = 0;
+        offsetY = 0;
+        offsetZ = 0;
+      }
+
+      return {
+        offsetX,
+        offsetY,
+        offsetZ,
+        scale: 1,
+        spinZ: 0,
+      };
+    };
+
+    const armKeyframes_vita_left = (t) => {
+      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+      const easeIn = (x) => x * x * x;
+
+      let offsetZ, offsetX;
+      if (t < 0.6) {
+        offsetZ = easeOut(t / 0.6) * 0.4;
+        offsetX = easeOut(t / 0.6) * -0.4;
+      } else {
+        offsetZ = (1 - easeIn((t - 0.4) / 0.6)) * 0.4;
+        offsetX = (1 - easeIn((t - 0.4) / 0.6)) * -0.4;
+      }
+
+      return {
+        offsetX,
+        offsetY: 0,
+        offsetZ,
+        scale: 1,
+        spinZ: 0,
+      };
+    };
+
+    const armKeyframes_ar9_right = (t) => {
+      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+      const easeIn = (x) => x * x * x;
+
+      let offsetX, offsetY, offsetZ;
+
+      if (t < 0.55) {
+        const p = easeOut(t / 0.55);
+        const arch = 4 * p * (1 - p);
+        offsetX = p * -0.38;
+        offsetY = arch * 0.06;
+        offsetZ = p * -0.05;
+      } else if (t < 0.75) {
+        const p = easeIn((t - 0.55) / 0.2);
+        offsetX = -0.38 + p * 0.38;
+        offsetY = 0;
+        offsetZ = -0.05 + p * 0.05;
+      } else {
+        const p = easeOut((t - 0.75) / 0.25);
+        offsetX = 0;
+        offsetY = 0;
+        offsetZ = 0;
+      }
+
+      return {
+        offsetX,
+        offsetY,
+        offsetZ,
+        scale: 1,
+        spinZ: 0,
+      };
+    };
+
+    const armKeyframes_ar9_left = (t) => {
+      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+      const easeIn = (x) => x * x * x;
+
+      let offsetZ, offsetX;
+      if (t < 0.6) {
+        offsetZ = easeOut(t / 0.6) * 0.4;
+        offsetX = easeOut(t / 0.6) * -0.4;
+      } else {
+        offsetZ = (1 - easeIn((t - 0.4) / 0.6)) * 0.4;
+        offsetX = (1 - easeIn((t - 0.4) / 0.6)) * -0.4;
+      }
+
+      return {
+        offsetX,
+        offsetY: 0,
+        offsetZ,
+        scale: 1,
+        spinZ: 0,
+      };
+    };
+
+    const armKeyframes_m60_right = (t) => {
+      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+      const easeIn = (x) => x * x * x;
+
+      let offsetX, offsetY, offsetZ;
+
+      if (t < 0.55) {
+        const p = easeOut(t / 0.55);
+        const arch = 4 * p * (1 - p);
+        offsetX = p * -0.38;
+        offsetY = arch * 0.06;
+        offsetZ = p * -0.05;
+      } else if (t < 0.75) {
+        const p = easeIn((t - 0.55) / 0.2);
+        offsetX = -0.38 + p * 0.38;
+        offsetY = 0;
+        offsetZ = -0.05 + p * 0.05;
+      } else {
+        const p = easeOut((t - 0.75) / 0.25);
+        offsetX = 0;
+        offsetY = 0;
+        offsetZ = 0;
+      }
+
+      return {
+        offsetX,
+        offsetY,
+        offsetZ,
+        scale: 1,
+        spinZ: 0,
+      };
+    };
+
+    const armKeyframes_m60_left = (t) => {
+      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+      const easeIn = (x) => x * x * x;
+
+      let offsetZ, offsetX;
+      if (t < 0.6) {
+        offsetZ = easeOut(t / 0.6) * 0.4;
+        offsetX = easeOut(t / 0.6) * -0.4;
+      } else {
+        offsetZ = (1 - easeIn((t - 0.4) / 0.6)) * 0.4;
+        offsetX = (1 - easeIn((t - 0.4) / 0.6)) * -0.4;
+      }
+
+      return {
+        offsetX,
+        offsetY: 0,
+        offsetZ,
+        scale: 1,
+        spinZ: 0,
+      };
+    };
+
+    const armKeyframes_weatie_right = (t) => {
+      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+      const easeIn = (x) => x * x * x;
+
+      let offsetX, offsetY, offsetZ;
+
+      if (t < 0.55) {
+        const p = easeOut(t / 0.55);
+        const arch = 4 * p * (1 - p);
+        offsetX = p * -0.38;
+        offsetY = arch * 0.06;
+        offsetZ = p * -0.05;
+      } else if (t < 0.75) {
+        const p = easeIn((t - 0.55) / 0.2);
+        offsetX = -0.38 + p * 0.38;
+        offsetY = 0;
+        offsetZ = -0.05 + p * 0.05;
+      } else {
+        const p = easeOut((t - 0.75) / 0.25);
+        offsetX = 0;
+        offsetY = 0;
+        offsetZ = 0;
+      }
+
+      return {
+        offsetX,
+        offsetY,
+        offsetZ,
+        scale: 1,
+        spinZ: 0,
+      };
+    };
+
+    const armKeyframes_weatie_left = (t) => {
+      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+      const easeIn = (x) => x * x * x;
+
+      let offsetZ, offsetX;
+      if (t < 0.6) {
+        offsetZ = easeOut(t / 0.6) * 0.4;
+        offsetX = easeOut(t / 0.6) * -0.4;
+      } else {
+        offsetZ = (1 - easeIn((t - 0.4) / 0.6)) * 0.4;
+        offsetX = (1 - easeIn((t - 0.4) / 0.6)) * -0.4;
+      }
+
+      return {
+        offsetX,
+        offsetY: 0,
+        offsetZ,
+        scale: 1,
+        spinZ: 0,
+      };
+    };
+
+    const armKeyframes_lar_right = (t) => {
+      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+      const easeIn = (x) => x * x * x;
+
+      let offsetX, offsetY, offsetZ;
+
+      if (t < 0.55) {
+        const p = easeOut(t / 0.55);
+        const arch = 4 * p * (1 - p);
+        offsetX = p * -0.38;
+        offsetY = arch * 0.06;
+        offsetZ = p * -0.05;
+      } else if (t < 0.75) {
+        const p = easeIn((t - 0.55) / 0.2);
+        offsetX = -0.38 + p * 0.38;
+        offsetY = 0;
+        offsetZ = -0.05 + p * 0.05;
+      } else {
+        const p = easeOut((t - 0.75) / 0.25);
+        offsetX = 0;
+        offsetY = 0;
+        offsetZ = 0;
+      }
+
+      return {
+        offsetX,
+        offsetY,
+        offsetZ,
+        scale: 1,
+        spinZ: 0,
+      };
+    };
+
+    const armKeyframes_lar_left = (t) => {
+      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+      const easeIn = (x) => x * x * x;
+
+      let offsetZ, offsetX;
+      if (t < 0.6) {
+        offsetZ = easeOut(t / 0.6) * 0.4;
+        offsetX = easeOut(t / 0.6) * -0.4;
+      } else {
+        offsetZ = (1 - easeIn((t - 0.4) / 0.6)) * 0.4;
+        offsetX = (1 - easeIn((t - 0.4) / 0.6)) * -0.4;
+      }
+
+      return {
+        offsetX,
+        offsetY: 0,
+        offsetZ,
+        scale: 1,
+        spinZ: 0,
+      };
+    };
+
+    const armKeyframes_scar_right = (t) => {
+      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+      const easeIn = (x) => x * x * x;
+
+      let offsetX, offsetY, offsetZ;
+
+      if (t < 0.55) {
+        const p = easeOut(t / 0.55);
+        const arch = 4 * p * (1 - p);
+        offsetX = p * -0.38;
+        offsetY = arch * 0.06;
+        offsetZ = p * -0.05;
+      } else if (t < 0.75) {
+        const p = easeIn((t - 0.55) / 0.2);
+        offsetX = -0.38 + p * 0.38;
+        offsetY = 0;
+        offsetZ = -0.05 + p * 0.05;
+      } else {
+        const p = easeOut((t - 0.75) / 0.25);
+        offsetX = 0;
+        offsetY = 0;
+        offsetZ = 0;
+      }
+
+      return {
+        offsetX,
+        offsetY,
+        offsetZ,
+        scale: 1,
+        spinZ: 0,
+      };
+    };
+
+    const armKeyframes_scar_left = (t) => {
+      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+      const easeIn = (x) => x * x * x;
+
+      let offsetZ, offsetX;
+      if (t < 0.6) {
+        offsetZ = easeOut(t / 0.6) * 0.4;
+        offsetX = easeOut(t / 0.6) * -0.4;
+      } else {
+        offsetZ = (1 - easeIn((t - 0.4) / 0.6)) * 0.4;
+        offsetX = (1 - easeIn((t - 0.4) / 0.6)) * -0.4;
+      }
+
+      return {
+        offsetX,
+        offsetY: 0,
+        offsetZ,
+        scale: 1,
+        spinZ: 0,
+      };
+    };
+
+    const armKeyframes_shark = armKeyframes_rev;
+    const armKeyframes_mac10 = armKeyframes_disabled;
+    const armKeyframes_ar9 = armKeyframes_disabled;
+    const armKeyframes_knife = armKeyframes_disabled;
+    const armKeyframes_tomahawk = armKeyframes_disabled;
+
+    const sigToWeaponId = {
+      "0.11,0.11,0.11": "vita",
+      "0.59,0.89,0.60": "scar",
+      "0.17,0.17,0.17": "rev",
+      "0.73,0.64,0.73": "ar9",
+      "0.77,0.77,0.77": "mac10",
+      "0.11,0.10,0.10": "m60",
+      "0.84,0.84,0.84": "weatie",
+      "0.77,1.01,0.77": "lar",
+      "0.01,0.01,0.01": "shark",
+      "1.27,1.05,1.62": "bayonet",
+      "1.45,1.26,1.29": "bayonet",
+      "1.46,1.25,1.28": "bayonet",
+      "1.48,1.24,1.28": "bayonet",
+      "1.48,1.24,1.27": "bayonet",
+      "1.49,1.23,1.27": "bayonet",
+      "1.49,1.23,1.28": "bayonet",
+      "1.47,1.23,1.29": "bayonet",
+      "1.46,1.23,1.32": "bayonet",
+      "1.43,1.23,1.34": "bayonet",
+      "1.39,1.24,1.38": "bayonet",
+      "1.35,1.25,1.41": "bayonet",
+      "1.31,1.26,1.43": "bayonet",
+      "1.28,1.27,1.45": "bayonet",
+      "1.26,1.28,1.46": "bayonet",
+      "1.27,1.29,1.44": "bayonet",
+      "1.29,1.31,1.41": "bayonet",
+      "1.33,1.31,1.37": "bayonet",
+      "1.37,1.32,1.32": "bayonet",
+      "1.41,1.32,1.28": "bayonet",
+      "1.42,1.31,1.27": "bayonet",
+      "1.41,1.29,1.30": "bayonet",
+      "1.38,1.27,1.36": "bayonet",
+      "1.33,1.24,1.43": "bayonet",
+      "1.29,1.21,1.50": "bayonet",
+      "1.27,1.17,1.54": "bayonet",
+      "1.29,1.14,1.55": "bayonet",
+      "1.35,1.11,1.52": "bayonet",
+      "1.44,1.08,1.45": "bayonet",
+      "1.54,1.06,1.37": "bayonet",
+      "1.60,1.05,1.30": "bayonet",
+      "1.62,1.05,1.27": "bayonet",
+      "1.59,1.05,1.31": "bayonet",
+      "1.51,1.05,1.40": "bayonet",
+      "1.41,1.05,1.50": "bayonet",
+      "1.54,0.92,2.24": "tomahawk"
+    };
+
+    const weaponKeyframeMap = {
+      "0.11,0.11,0.11": inspectKeyframes_vita,
+      "0.17,0.17,0.17": inspectKeyframes_rev,
+      "0.77,0.77,0.77": inspectKeyframes_mac10,
+      "0.73,0.64,0.73": inspectKeyframes_ar9,
+      "0.11,0.10,0.10": inspectKeyframes_m60,
+      "0.84,0.84,0.84": inspectKeyframes_vita,
+      "0.77,1.01,0.77": inspectKeyframes_lar,
+      "0.59,0.89,0.60": inspectKeyframes_scar,
+      "0.01,0.01,0.01": inspectKeyframes_shark,
+      "1.27,1.05,1.62": inspectKeyframes_knife,
+      "1.45,1.26,1.29": inspectKeyframes_knife,
+      "1.46,1.25,1.28": inspectKeyframes_knife,
+      "1.48,1.24,1.28": inspectKeyframes_knife,
+      "1.48,1.24,1.27": inspectKeyframes_knife,
+      "1.49,1.23,1.27": inspectKeyframes_knife,
+      "1.49,1.23,1.28": inspectKeyframes_knife,
+      "1.47,1.23,1.29": inspectKeyframes_knife,
+      "1.46,1.23,1.32": inspectKeyframes_knife,
+      "1.43,1.23,1.34": inspectKeyframes_knife,
+      "1.39,1.24,1.38": inspectKeyframes_knife,
+      "1.35,1.25,1.41": inspectKeyframes_knife,
+      "1.31,1.26,1.43": inspectKeyframes_knife,
+      "1.28,1.27,1.45": inspectKeyframes_knife,
+      "1.26,1.28,1.46": inspectKeyframes_knife,
+      "1.27,1.29,1.44": inspectKeyframes_knife,
+      "1.29,1.31,1.41": inspectKeyframes_knife,
+      "1.33,1.31,1.37": inspectKeyframes_knife,
+      "1.37,1.32,1.32": inspectKeyframes_knife,
+      "1.41,1.32,1.28": inspectKeyframes_knife,
+      "1.42,1.31,1.27": inspectKeyframes_knife,
+      "1.41,1.29,1.30": inspectKeyframes_knife,
+      "1.38,1.27,1.36": inspectKeyframes_knife,
+      "1.33,1.24,1.43": inspectKeyframes_knife,
+      "1.29,1.21,1.50": inspectKeyframes_knife,
+      "1.27,1.17,1.54": inspectKeyframes_knife,
+      "1.29,1.14,1.55": inspectKeyframes_knife,
+      "1.35,1.11,1.52": inspectKeyframes_knife,
+      "1.44,1.08,1.45": inspectKeyframes_knife,
+      "1.54,1.06,1.37": inspectKeyframes_knife,
+      "1.60,1.05,1.30": inspectKeyframes_knife,
+      "1.62,1.05,1.27": inspectKeyframes_knife,
+      "1.59,1.05,1.31": inspectKeyframes_knife,
+      "1.51,1.05,1.40": inspectKeyframes_knife,
+      "1.41,1.05,1.50": inspectKeyframes_knife,
+      "1.54,0.92,2.24": inspectKeyframes_tomahawk,
+    };
+
+    const armSigs = new Set([
+      "1.40,1.40,1.40",
+      "1.99,1.68,2.11",
+      "1.88,1.40,1.88",
+      "1.11,1.11,1.77",
+      "1.50,1.40,1.76",
+      "1.13,0.85,1.77",
+      "0.81,1.08,1.38",
+      "1.52,1.15,1.61",
+      "1.16,1.48,0.94",
+      "1.08,1.10,1.77",
+      "1.54,0.92,2.24",
+    ]);
+
+    const armKeyframeMap = {
+      vita_right: armKeyframes_vita_right,
+      vita_left: armKeyframes_vita_left,
+      scar_right: armKeyframes_scar_right,
+      scar_left: armKeyframes_scar_left,
+      ar9_right: armKeyframes_ar9_right,
+      ar9_left: armKeyframes_ar9_left,
+      mac10_right: armKeyframes_mac10,
+      mac10_left: armKeyframes_mac10,
+      m60_right: armKeyframes_m60_right,
+      m60_left: armKeyframes_m60_left,
+      lar_right: armKeyframes_lar_right,
+      lar_left: armKeyframes_lar_left,
+      weatie_right: armKeyframes_weatie_right,
+      weatie_left: armKeyframes_weatie_left,
+      bayonet_right: armKeyframes_knife,
+      bayonet_left: armKeyframes_knife,
+      rev_right: armKeyframes_rev,
+      shark_right: armKeyframes_shark,
+    };
+
+    const applyZSpin = (mat, angle) => {
+      const cos = Math.cos(angle), sin = Math.sin(angle);
+      const sx = Math.sqrt(mat[0] * mat[0] + mat[1] * mat[1] + mat[2] * mat[2]);
+      const sy = Math.sqrt(mat[4] * mat[4] + mat[5] * mat[5] + mat[6] * mat[6]);
+      const x0 = mat[0] / sx, x1 = mat[1] / sx, x2 = mat[2] / sx;
+      const y0 = mat[4] / sy, y1 = mat[5] / sy, y2 = mat[6] / sy;
+      const nx0 = x0 * cos - y0 * sin, nx1 = x1 * cos - y1 * sin, nx2 = x2 * cos - y2 * sin;
+      const ny0 = x0 * sin + y0 * cos, ny1 = x1 * sin + y1 * cos, ny2 = x2 * sin + y2 * cos;
+      mat[0] = nx0 * sx; mat[1] = nx1 * sx; mat[2] = nx2 * sx;
+      mat[4] = ny0 * sy; mat[5] = ny1 * sy; mat[6] = ny2 * sy;
+    };
+
+    const applyXSpin = (mat, angle) => {
+      const cos = Math.cos(angle), sin = Math.sin(angle);
+      const sy = Math.sqrt(mat[4] * mat[4] + mat[5] * mat[5] + mat[6] * mat[6]);
+      const sz = Math.sqrt(mat[8] * mat[8] + mat[9] * mat[9] + mat[10] * mat[10]);
+      const y0 = mat[4] / sy, y1 = mat[5] / sy, y2 = mat[6] / sy;
+      const z0 = mat[8] / sz, z1 = mat[9] / sz, z2 = mat[10] / sz;
+      const ny0 = y0 * cos - z0 * sin, ny1 = y1 * cos - z1 * sin, ny2 = y2 * cos - z2 * sin;
+      const nz0 = y0 * sin + z0 * cos, nz1 = y1 * sin + z1 * cos, nz2 = y2 * sin + z2 * cos;
+      mat[4] = ny0 * sy; mat[5] = ny1 * sy; mat[6] = ny2 * sy;
+      mat[8] = nz0 * sz; mat[9] = nz1 * sz; mat[10] = nz2 * sz;
+    };
+
+    const applyYSpin = (mat, angle) => {
+      const cos = Math.cos(angle), sin = Math.sin(angle);
+      const sx = Math.sqrt(mat[0] * mat[0] + mat[1] * mat[1] + mat[2] * mat[2]);
+      const sz = Math.sqrt(mat[8] * mat[8] + mat[9] * mat[9] + mat[10] * mat[10]);
+      const x0 = mat[0] / sx, x1 = mat[1] / sx, x2 = mat[2] / sx;
+      const z0 = mat[8] / sz, z1 = mat[9] / sz, z2 = mat[10] / sz;
+      const nx0 = x0 * cos + z0 * sin, nx1 = x1 * cos + z1 * sin, nx2 = x2 * cos + z2 * sin;
+      const nz0 = -x0 * sin + z0 * cos, nz1 = -x1 * sin + z1 * cos, nz2 = -x2 * sin + z2 * cos;
+      mat[0] = nx0 * sx; mat[1] = nx1 * sx; mat[2] = nx2 * sx;
+      mat[8] = nz0 * sz; mat[9] = nz1 * sz; mat[10] = nz2 * sz;
+    };
+
+    let currentInspectKeybind = settings.inspect_keybind;
+
+    const inspectKeybindHandler = (e) => {
+      let inputName;
+      if (e.type === "mousedown") {
+        switch (e.button) {
+          case 3: inputName = "MouseButton4"; break;
+          case 4: inputName = "MouseButton5"; break;
+          default: inputName = `MouseButton${e.button + 1}`;
+        }
+      } else if (e.type === "keydown") {
+        inputName = e.code;
+      }
+      if (inputName === currentInspectKeybind) {
+        if (document.querySelector(".chat input[type='text']:focus")) return;
+        inspectStart = performance.now();
+        inspectingWeaponId = sigToWeaponId[latchedWeaponSig] || null;
+        e.preventDefault();
+      }
+    };
+
+    document.addEventListener("mousedown", inspectKeybindHandler, true);
+    document.addEventListener("keydown", inspectKeybindHandler, true);
+
+    document.addEventListener("juice-settings-changed", ({ detail }) => {
+      if (detail.setting === "inspect_keybind") {
+        currentInspectKeybind = detail.value;
+      }
+    });
+
+    const hsvToRgb = (hue) => {
+      hue = ((hue % 360) + 360) % 360;
+      const sector = Math.floor(hue / 60);
+      const f = (hue / 60) - sector;
+      const q = Math.round((1 - f) * 255);
+      const t = Math.round(f * 255);
+      switch (sector) {
+        case 0: return [255, t, 0];
+        case 1: return [q, 255, 0];
+        case 2: return [0, 255, t];
+        case 3: return [0, q, 255];
+        case 4: return [t, 0, 255];
+        default: return [255, 0, q];
+      }
+    };
+
+    const colMag = (m, i) =>
+      Math.sqrt(m[i] * m[i] + m[i + 1] * m[i + 1] + m[i + 2] * m[i + 2]);
+
+    const hookedContexts = new WeakSet();
+    const originalGetCtx = HTMLCanvasElement.prototype.getContext;
+
+    HTMLCanvasElement.prototype.getContext = function (type, attrs) {
+      const ctx = originalGetCtx.call(this, type, attrs);
+      if (!ctx || (type !== "webgl" && type !== "webgl2")) return ctx;
+      if (hookedContexts.has(ctx) || this.id !== "game") return ctx;
+      hookedContexts.add(ctx);
+
+      const gl = ctx;
+      const matBuf = new Float32Array(16);
+      const rgbPixel = new Uint8Array([255, 255, 255, 255]);
+
+      const rgbTexture = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, rgbTexture);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, rgbPixel);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+      gl.bindTexture(gl.TEXTURE_2D, null);
+
+      const origUniformMatrix4fv = gl.uniformMatrix4fv.bind(gl);
+      const origDrawArrays = gl.drawArrays.bind(gl);
+      const origDrawElements = gl.drawElements.bind(gl);
+      const origBindTexture = gl.bindTexture.bind(gl);
+
+      let activeThisFrame = false;
+      let lastBoundTexture = null;
+      let seenMatricesThisFrame = new Set();
+      let lastFrameTime = -1;
+      let currentFrameWeaponSig = null;
+
+      let lastClearMask = 0;
+
+      const origClear = gl.clear.bind(gl);
+      gl.clear = (mask) => {
+        lastClearMask = mask;
+        return origClear(mask);
+      };
+
+      gl.bindTexture = (target, texture) => {
+        if (target === gl.TEXTURE_2D) lastBoundTexture = texture;
+        return origBindTexture(target, texture);
+      };
+
+      gl.uniformMatrix4fv = (location, transpose, data, srcOffset, srcLength) => {
+        activeThisFrame = false;
+
+        const now = performance.now();
+        if (now !== lastFrameTime) {
+          seenMatricesThisFrame.clear();
+          currentFrameWeaponSig = null;
+          lastFrameTime = now;
+        }
+
+        if (data && data.length >= 16) {
+          const offset = srcOffset ?? 0;
+          const slice = (offset === 0 && data.length === 16)
+            ? data
+            : (data.subarray ? data.subarray(offset, offset + 16) : data.slice(offset, offset + 16));
+
+          if (
+            Math.abs(slice[3]) > 0.001 ||
+            Math.abs(slice[7]) > 0.001 ||
+            Math.abs(slice[11]) > 0.001 ||
+            Math.abs(slice[15] - 1.0) > 0.001
+          ) {
+            return origUniformMatrix4fv(location, transpose, data, srcOffset, srcLength);
+          }
+
+          const s0 = colMag(slice, 0), s1 = colMag(slice, 4), s2 = colMag(slice, 8);
+          const sig = `${s0.toFixed(2)},${s1.toFixed(2)},${s2.toFixed(2)}`;
+
+          if (sig in weaponKeyframeMap) {
+            if (lastClearMask !== 256) {
+              return origUniformMatrix4fv(location, transpose, data, srcOffset, srcLength);
+            }
+
+            const fp = `${slice[0].toFixed(3)},${slice[5].toFixed(3)},${slice[10].toFixed(3)},${slice[12].toFixed(4)},${slice[13].toFixed(4)},${slice[14].toFixed(4)}`;
+            if (seenMatricesThisFrame.has(fp)) {
+              return origUniformMatrix4fv(location, transpose, data, srcOffset, srcLength);
+            }
+            seenMatricesThisFrame.add(fp);
+
+            if (sigToWeaponId[sig]) currentFrameWeaponSig = sig;
+
+            const currentWeaponId = sigToWeaponId[latchedWeaponSig] || "vita";
+
+            if (inspectStart !== null && inspectingWeaponId !== null && inspectingWeaponId !== currentWeaponId) {
+              inspectStart = null;
+              inspectingWeaponId = null;
+            }
+
+            const weaponCfg = window.dawnWeaponConfig?.getSettings?.(currentWeaponId) || {
+              size: 1.0, offsetX: 0, offsetY: 0, offsetZ: 0
+            };
+            const globalCfg = window.dawnWeaponConfig || {
+              wireframe: false, colorEnabled: false, rgb: false, colorHex: "#FFFFFF"
+            };
+
+            if (globalCfg.colorEnabled) {
+              if (globalCfg.rgb) {
+                const [r, g, b] = hsvToRgb((now / 3000) * 360);
+                rgbPixel[0] = r; rgbPixel[1] = g; rgbPixel[2] = b; rgbPixel[3] = 255;
+                origBindTexture(gl.TEXTURE_2D, rgbTexture);
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, rgbPixel);
+              } else {
+                const hex = globalCfg.colorHex.replace("#", "");
+                rgbPixel[0] = parseInt(hex.substring(0, 2), 16);
+                rgbPixel[1] = parseInt(hex.substring(2, 4), 16);
+                rgbPixel[2] = parseInt(hex.substring(4, 6), 16);
+                rgbPixel[3] = 255;
+                origBindTexture(gl.TEXTURE_2D, rgbTexture);
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, rgbPixel);
+              }
+            } else if (lastBoundTexture) {
+              origBindTexture(gl.TEXTURE_2D, lastBoundTexture);
+            }
+
+            if (sigToWeaponId[sig] && sig !== latchedWeaponSig) {
+              latchedWeaponSig = sig;
+            }
+            if (sig !== settlerSig) {
+              settlerSig = sig;
+              settlerSince = now;
+            }
+
+            let base = weaponCfg.size ?? 1.0;
+            matBuf.set(slice);
+            let scale = base;
+            let ox = weaponCfg.offsetX ?? 0;
+            let oy = weaponCfg.offsetY ?? 0;
+            let oz = weaponCfg.offsetZ ?? 0;
+            let spinZAngle = 0;
+            let spinXAngle = 0;
+            let spinYAngle = 0;
+            let baseSpinXAngle = 0;
+
+            if (inspectStart !== null && inspectingWeaponId === null) {
+              inspectingWeaponId = currentWeaponId;
+            }
+
+            if (inspectStart !== null && inspectingWeaponId === currentWeaponId) {
+              const animFn = weaponKeyframeMap[sig];
+              const weaponId = sigToWeaponId[sig] || currentWeaponId;
+              const inspectDuration = INSPECT_DURATIONS[weaponId] ?? 1000;
+              if (animFn) {
+                const elapsed = now - inspectStart;
+                const t = Math.min(elapsed / inspectDuration, 1.0);
+                const kf = animFn(t);
+                scale = base * (kf.scale ?? 1);
+                ox += (kf.offsetX ?? 0) * scale;
+                oy += (kf.offsetY ?? 0) * scale;
+                oz += (kf.offsetZ ?? 0) * scale;
+                spinZAngle = kf.spinZ ?? 0;
+                spinXAngle = kf.spinX ?? 0;
+                spinYAngle = kf.spinY ?? 0;
+                if (t >= 1.0) {
+                  inspectStart = null;
+                  inspectingWeaponId = null;
+                }
+              } else {
+                inspectStart = null;
+                inspectingWeaponId = null;
+              }
+            }
+
+            matBuf[0] *= scale; matBuf[1] *= scale; matBuf[2] *= scale;
+            matBuf[4] *= scale; matBuf[5] *= scale; matBuf[6] *= scale;
+            matBuf[8] *= scale; matBuf[9] *= scale; matBuf[10] *= scale;
+            matBuf[12] += ox;
+            matBuf[13] += oy;
+            matBuf[14] += oz;
+
+            if (spinZAngle !== 0) applyZSpin(matBuf, spinZAngle);
+            if (baseSpinXAngle !== 0) applyXSpin(matBuf, baseSpinXAngle);
+            if (spinXAngle !== 0) applyXSpin(matBuf, spinXAngle);
+            if (spinYAngle !== 0) applyYSpin(matBuf, spinYAngle);
+
+            if (globalCfg.wireframe) activeThisFrame = true;
+
+            return origUniformMatrix4fv(location, transpose, matBuf, 0, 16);
+          }
+
+          if (armSigs.has(sig)) {
+            if (lastClearMask !== 256) {
+              return origUniformMatrix4fv(location, transpose, data, srcOffset, srcLength);
+            }
+
+            const fp = `${slice[0].toFixed(3)},${slice[5].toFixed(3)},${slice[10].toFixed(3)},${slice[12].toFixed(4)},${slice[13].toFixed(4)},${slice[14].toFixed(4)}`;
+            if (seenMatricesThisFrame.has(fp)) {
+              return origUniformMatrix4fv(location, transpose, data, srcOffset, srcLength);
+            }
+            seenMatricesThisFrame.add(fp);
+
+            const currentWeaponId = sigToWeaponId[currentFrameWeaponSig] || sigToWeaponId[latchedWeaponSig] || "vita";
+
+            const armSigToType = {
+              "1.40,1.40,1.40": "right",
+              "1.99,1.68,2.11": "left",
+              "1.11,1.11,1.77": "right",
+              "1.50,1.40,1.76": "right",
+              "1.13,0.85,1.77": "left",
+              "0.81,1.08,1.38": "left",
+              "1.52,1.15,1.61": "right",
+              "1.16,1.48,0.94": "right",
+              "1.54,0.92,2.24": "right",
+              "1.08,1.10,1.77": "left",
+              "1.88,1.40,1.88": "left"
+            };
+
+            let armType = armSigToType[sig] || "left";
+
+            if (armType === null) {
+              return origUniformMatrix4fv(location, transpose, data, srcOffset, srcLength);
+            }
+
+            const armSettings = window.dawnWeaponConfig?.getArmSettings?.(currentWeaponId, armType) || {
+              size: 1.0, offsetX: 0, offsetY: 0, offsetZ: 0,
+              wireframe: false, colorEnabled: false, colorHex: "#FFFFFF", rgb: false
+            };
+
+            matBuf.set(slice);
+
+            let armScale = armSettings.size ?? 1.0;
+            let ox = armSettings.offsetX ?? 0;
+            let oy = armSettings.offsetY ?? 0;
+            let oz = armSettings.offsetZ ?? 0;
+
+            let armSpinX = 0;
+            let armSpinY = 0;
+            let armSpinZ = 0;
+
+            if (inspectStart !== null && inspectingWeaponId === currentWeaponId) {
+              const armFn = armKeyframeMap[`${currentWeaponId}_${armType}`] ?? null;
+              const inspectDuration = INSPECT_DURATIONS[currentWeaponId] ?? 1000;
+              if (armFn !== null) {
+                const elapsed = now - inspectStart;
+                const t = Math.min(elapsed / inspectDuration, 1.0);
+                const kf = armFn(t);
+                ox += (kf.offsetX ?? 0) * armScale;
+                oy += (kf.offsetY ?? 0) * armScale;
+                oz += (kf.offsetZ ?? 0) * armScale;
+                armSpinX = kf.spinX ?? 0;
+                armSpinY = kf.spinY ?? 0;
+                armSpinZ = kf.spinZ ?? 0;
+              }
+            }
+
+            matBuf[0] *= armScale; matBuf[1] *= armScale; matBuf[2] *= armScale;
+            matBuf[4] *= armScale; matBuf[5] *= armScale; matBuf[6] *= armScale;
+            matBuf[8] *= armScale; matBuf[9] *= armScale; matBuf[10] *= armScale;
+            matBuf[12] += ox;
+            matBuf[13] += oy;
+            matBuf[14] += oz;
+
+            if (armSpinX !== 0) applyXSpin(matBuf, armSpinX);
+            if (armSpinY !== 0) applyYSpin(matBuf, armSpinY);
+            if (armSpinZ !== 0) applyZSpin(matBuf, armSpinZ);
+
+            if (armSettings.colorEnabled) {
+              if (armSettings.rgb) {
+                const [r, g, b] = hsvToRgb((now / 3000) * 360);
+                rgbPixel[0] = r; rgbPixel[1] = g; rgbPixel[2] = b; rgbPixel[3] = 255;
+                origBindTexture(gl.TEXTURE_2D, rgbTexture);
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, rgbPixel);
+              } else {
+                const hex = (armSettings.colorHex || "#FFFFFF").replace("#", "");
+                rgbPixel[0] = parseInt(hex.substring(0, 2), 16);
+                rgbPixel[1] = parseInt(hex.substring(2, 4), 16);
+                rgbPixel[2] = parseInt(hex.substring(4, 6), 16);
+                rgbPixel[3] = 255;
+                origBindTexture(gl.TEXTURE_2D, rgbTexture);
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, rgbPixel);
+              }
+            } else if (lastBoundTexture) {
+              origBindTexture(gl.TEXTURE_2D, lastBoundTexture);
+            }
+
+            if (armSettings.wireframe) activeThisFrame = true;
+
+            return origUniformMatrix4fv(location, transpose, matBuf, 0, 16);
+          }
+        }
+
+        return origUniformMatrix4fv(location, transpose, data, srcOffset, srcLength);
+      };
+
+      const toWireframe = (mode) =>
+        (mode === gl.TRIANGLES || mode === gl.TRIANGLE_FAN || mode === gl.TRIANGLE_STRIP)
+          ? gl.LINES : mode;
+
+      gl.drawArrays = (mode, first, count) => {
+        if (activeThisFrame) mode = toWireframe(mode);
+        activeThisFrame = false;
+        seenMatricesThisFrame.clear();
+        return origDrawArrays(mode, first, count);
+      };
+
+      gl.drawElements = (mode, count, type, offset) => {
+        if (activeThisFrame) mode = toWireframe(mode);
+        activeThisFrame = false;
+        seenMatricesThisFrame.clear();
+        return origDrawElements(mode, count, type, offset);
+      };
+
+      return ctx;
+    };
+  }
+
+  initWeaponMods();
 
   const handleLobby = () => {
     const warmupAPI = () => {
@@ -1254,6 +2305,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 
     const processedServers = new Set();
     const replaceMapImages = () => {
+      if (!settings.map_backgrounds) return;
       const servers = document.querySelectorAll(".server");
       for (let i = 0; i < servers.length; i++) {
         const server = servers[i];
@@ -1273,7 +2325,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     replaceMapImages();
 
     const observer = new MutationObserver(() => {
-      if (!window.location.href.startsWith(base_url + "servers/")) {
+      if (!window.location.href.startsWith(base_url + "servers/" || !settings.map_backgrounds)) {
         observer.disconnect();
         return;
       }
@@ -1282,6 +2334,50 @@ window.addEventListener("DOMContentLoaded", async () => {
 
     const serverList = document.querySelector(".servers-list") || document.body;
     observer.observe(serverList, { childList: true, subtree: true });
+
+    function addSpectateButton(server) {
+      const joinBtn = server.querySelector(".button.join");
+      const joinText = joinBtn.querySelector(".text");
+      const spectateBtn = document.querySelector(".img-bg .spectate-btn");
+
+      if (joinText.innerHTML === "spec") return;
+      joinText.innerHTML = "spec";
+      joinBtn.style.filter = "grayscale(0.8)"
+
+      if (joinBtn._clickHandler) {
+        joinBtn.removeEventListener("click", joinBtn._clickHandler);
+      }
+
+      joinBtn._clickHandler = () => spectateBtn.click();
+      joinBtn.addEventListener("click", joinBtn._clickHandler);
+    }
+
+    function removeSpectateButton(server) {
+      const joinBtn = server.querySelector(".button.join");
+      const joinText = joinBtn.querySelector(".text");
+
+      joinText.innerHTML = "join";
+      joinBtn.style.filter = "none"
+
+      if (joinBtn._clickHandler) {
+        joinBtn.removeEventListener("click", joinBtn._clickHandler);
+        delete joinBtn._clickHandler;
+      }
+    }
+
+    if (serverList) {
+      document.querySelectorAll(".server").forEach((server) => {
+        if (server.classList.contains("is-locked") && settings.spectate_full_games) addSpectateButton(server);
+        else removeSpectateButton(server);
+      })
+
+      new MutationObserver(() => {
+        document.querySelectorAll(".server").forEach((server) => {
+          if (server.classList.contains("is-locked") && settings.spectate_full_games) addSpectateButton(server);
+          else removeSpectateButton(server);
+        })
+      }).observe(document.querySelector(".servers .list-cont>.list"), { childList: true, characterData: true })
+    }
 
     if (!window.servers) {
       window.servers = true;
@@ -1293,7 +2389,7 @@ window.addEventListener("DOMContentLoaded", async () => {
               window.location.href = `${base_url}profile/${text.replace("#", "")}`;
               const username = e.target.innerText.replace(":", "");
               customNotification({
-                message: `Loading ${username}${text}"s profile...`,
+                message: `Loading ${username}${text}'s profile...`,
               });
             });
           }, 250);
@@ -1315,6 +2411,9 @@ window.addEventListener("DOMContentLoaded", async () => {
         }
       });
     }
+
+    const input = document.querySelector(".servers .chat .input");
+    const sendBtn = document.querySelector(".servers .chat .enter");
 
     const createTradeButtons = () => {
       const chatLabel = document.querySelector(".servers .chat-label");
@@ -1360,9 +2459,6 @@ window.addEventListener("DOMContentLoaded", async () => {
         });
         return div;
       };
-
-      const input = document.querySelector(".servers .chat .input");
-      const sendBtn = document.querySelector(".servers .chat .enter");
 
       const offerDiv = makeDivButton("Offer", "#3b82f6", "#60a5fa", "#1d4ed8");
       offerDiv.addEventListener("click", () => {
@@ -1415,14 +2511,81 @@ window.addEventListener("DOMContentLoaded", async () => {
 
       tradeElem.classList.add("selected");
 
-      const input = document.querySelector(".servers .chat .input");
-      const sendBtn = document.querySelector(".servers .chat .enter");
       if (!input || !sendBtn) return;
 
       input.value = `/trade accept ${tradeId}`;
       input.dispatchEvent(new Event("input", { bubbles: true }));
       sendBtn.click();
     }
+
+    let lastValue = "";
+    input.addEventListener("input", () => {
+      lastValue = input.value;
+    });
+
+    const commandMap = {
+      "/t": "/trade",
+      "/cw": "/confirmwager",
+      "/w": "/wager",
+      "/cl": "/claim",
+      "/p": "/price",
+      "/cf": "/coinflip",
+      "/i": "/inventory",
+      "/inv": "/inventory",
+    };
+
+    const subCommandMap = {
+      "a": "accept",
+      "acc": "accept",
+      "c": "cancel",
+      "ca": "cancel",
+      "co": "confirm",
+      "conf": "confirm",
+      "b": "bump",
+      "o": "offer",
+    };
+
+    const setInputValue = (value, cursorPos) => {
+      const nativeSetter = Object.getOwnPropertyDescriptor(
+        window.HTMLInputElement.prototype,
+        "value"
+      ).set;
+      nativeSetter.call(input, value);
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      if (cursorPos != null) {
+        input.setSelectionRange(cursorPos, cursorPos);
+      }
+    };
+
+    input.addEventListener("input", () => {
+      if (!ipcRenderer.sendSync("get-settings").command_abbreviations) return;
+      const text = input.value;
+
+      const match = text.match(/^(\S*)(\s*)(\S*)(\s*)(.*)$/);
+      if (!match) return;
+
+      let [, cmd, space1, sub, space2, rest] = match;
+      let changed = false;
+
+      if (commandMap[cmd] && (!(ipcRenderer.sendSync("get-settings").abbreviation_confirmation) || space1.length > 0)) {
+        cmd = commandMap[cmd];
+        changed = true;
+      }
+
+      if (subCommandMap[sub] && (!(ipcRenderer.sendSync("get-settings").abbreviation_confirmation) || space2.length > 0)) {
+        sub = subCommandMap[sub];
+        changed = true;
+      }
+
+      if (!changed) return;
+
+      const newText = cmd + space1 + sub + space2 + rest;
+      if (newText !== text) {
+        const cursorPos = input.selectionStart;
+        const diff = newText.length - text.length;
+        setInputValue(newText, cursorPos + diff);
+      }
+    });
   };
 
   let disconnectObservers = () => { };
@@ -1665,14 +2828,13 @@ window.addEventListener("DOMContentLoaded", async () => {
                           inset 0 6px 0 -5px rgba(0, 0, 0, 0.5);
             `;
             document.querySelector(".profile-cont .head-right .nickname").style.cssText = `
-              backdrop-filter: blur(5px);
               padding: 0 5px 5px 5px;
               border-radius: 5px;
-              border: 1px solid rgba(255, 255, 255, .3);
+              box-shadow: 0 0 15px rgba(0, 0, 0, 1), inset 0 0 30px black;
             `
             document.querySelector(".profile-cont .clan-tag").style.cssText = `
               z-index: 1;
-              transform: translateX(15px)
+              transform: translate(15px, -2px)
             `;
             document.querySelectorAll(".profile-cont .card").forEach(card => {
               card.style.cssText = `
@@ -1760,6 +2922,8 @@ window.addEventListener("DOMContentLoaded", async () => {
   const handleInGame = () => {
     let settings = ipcRenderer.sendSync("get-settings");
     const nicknames = JSON.parse(localStorage.getItem("nicknames") || "{}");
+
+    setAdsPower(settings.ads_power);
 
     let red_players = [];
     let blue_players = [];
@@ -2088,7 +3252,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       const deathCount = parseFloat(deaths.innerText) || 1;
       const kdRatio = (killCount / deathCount).toFixed(2);
 
-      const nextHtml = `<span class="kd-ratio">${kdRatio}</span> <span class="text-kd" style="font-size: 0.75rem;">K/D</span>`;
+      const nextHtml = `<span class="kd-ratio">${kdRatio}</span> <span class="text-kd" style="font-size: 0.75rem;">KD</span>`;
       if (kd.innerHTML !== nextHtml) {
         kd.innerHTML = nextHtml;
       }
@@ -2111,6 +3275,49 @@ window.addEventListener("DOMContentLoaded", async () => {
       document.querySelector(".kill-death").appendChild(kd);
       kills.addEventListener("DOMSubtreeModified", updateKD);
       deaths.addEventListener("DOMSubtreeModified", updateKD);
+    };
+
+    let assistsCount = 0;
+
+    const createAssists = () => {
+      if (document.querySelector(".kill-death .assists")) return;
+      const kills = document.querySelector(".kill-death .kill");
+      const assists = kills?.cloneNode(true);
+
+      if (!assists) return;
+      assists.classList.add("assists");
+      assists.classList.remove("kill");
+      assists.style.display = "flex";
+      assists.style.alignItems = "center";
+      assists.style.gap = "0.25rem";
+
+      assists.querySelector("svg").style.fill = "yellow";
+
+      kills.parentElement.insertBefore(assists, kills.parentElement.children[2]);
+
+      const container = document.querySelector(".desktop-game-interface .player-list");
+      let lastScores = new Map();
+
+      new MutationObserver(() => {
+        document.querySelectorAll(".desktop-game-interface .player-list .player-cont").forEach((player) => {
+          const nicknameEl = player.querySelector(".nickname.bolder");
+          if (!nicknameEl) return;
+
+          const name = nicknameEl.textContent;
+          const score = player.querySelector(".player-value:nth-child(3)");
+          if (!score) return;
+
+          const currentScore = parseFloat(score.textContent) || 0;
+          const lastScore = lastScores.get(name) ?? currentScore;
+
+          if (currentScore - lastScore === 5) {
+            assistsCount++;
+            assists.childNodes[0].nodeValue = assistsCount;
+          }
+
+          lastScores.set(name, currentScore);
+        });
+      }).observe(container, { subtree: true, characterData: true });
     };
 
     const customizations = JSON.parse(localStorage.getItem("juice-customizations"));
@@ -2224,6 +3431,8 @@ window.addEventListener("DOMContentLoaded", async () => {
         applyingCustomizationsTab = false;
       }
     };
+
+    let escObserver = null;
 
     let applyingCustomizationsEsc = false;
     const applyCustomizationsEsc = () => {
@@ -2372,6 +3581,12 @@ window.addEventListener("DOMContentLoaded", async () => {
       } finally {
         applyingCustomizationsEsc = false;
       }
+
+      const escPlayersList = document.querySelector(".esc-interface .player-list")
+
+      if (escObserver) escObserver.disconnect();
+      escObserver = new MutationObserver(applyCustomizationsEsc);
+      if (escPlayersList) escObserver.observe(escPlayersList, { subtree: false, childList: true });
     };
 
     const kdVisibility = () => {
@@ -2385,6 +3600,22 @@ window.addEventListener("DOMContentLoaded", async () => {
     document.addEventListener("juice-settings-changed", ({ detail }) => {
       if (detail.setting === "kd_indicator") {
         kdVisibility();
+      }
+    });
+
+    const assistsVisibility = () => {
+      if (!document.querySelector(".kill-death .assists") && settings.assists_indicator) {
+        createAssists();
+      } else if (document.querySelector(".kill-death .assists") && !settings.assists_indicator) {
+        document.querySelector(".kill-death .assists").remove();
+      }
+    };
+    assistsVisibility();
+
+    document.addEventListener("juice-settings-changed", ({ detail }) => {
+      if (detail.setting === "assists_indicator") {
+        settings.assists_indicator = detail.value;
+        assistsVisibility();
       }
     });
 
@@ -2587,7 +3818,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   const handleClans = () => {
     async function fetchClan(clan) {
-      const clanData = await fetch(`https://kirka.onrender.com/api/clan/${clan}`).then((res) => res.json())
+      const clanData = await fetch(`https://kirka.onrender.com/api/clan/${encodeURIComponent(clan)}`).then((res) => res.json());
       return clanData;
     }
 
@@ -2645,12 +3876,12 @@ window.addEventListener("DOMContentLoaded", async () => {
             <div data-v-1c9e870c="" class="right-info">
               <div data-v-1c9e870c="" class="description background">${data.description ?? ""}</div>
               ${data.discordLink ? `
-                <div data-v-1c9e870c="" class="discord-cont">
+                <a data-v-1c9e870c="" class="discord-cont" href="${data.discordLink}" target="_blank">
                   <svg data-v-2b44d870="" data-v-1c9e870c="" xmlns="http://www.w3.org/2000/svg" class="discord-icon svg-icon svg-icon--__discord-classic__">
                     <use data-v-2b44d870="" xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="/img/icons.8d8d28b5.svg#__discord-classic__"></use>
                   </svg>
                   DISCORD
-                </div>
+                </a>
               ` : "<!---->"}
             </div>
           </div>
@@ -2676,23 +3907,28 @@ window.addEventListener("DOMContentLoaded", async () => {
 
       const listContainer = container.querySelector(".list-container");
       if (listContainer) addSorting(listContainer);
+
+      applyClanCustomizations();
     }
 
     function addClanPage(clanName) {
       const pagesNav = document.querySelector(".pages-nav");
       const clansContainer = document.querySelector(".clans");
 
-      if (pagesNav.querySelector(`.nav.${clanName}`)) {
-        pagesNav.querySelector(`.nav.${clanName}`).click();
+      const existingTab = pagesNav.querySelector(`.nav[data-clan="${CSS.escape(clanName)}"]`);
+      if (existingTab) {
+        existingTab.click();
         return;
       }
 
       const clanTab = document.createElement("div");
-      clanTab.className = `nav other-clan ${clanName}`;
+      clanTab.className = `nav other-clan`;
+      clanTab.dataset.clan = clanName;
       clanTab.textContent = clanName.toUpperCase();
 
       const clanPage = document.createElement("div");
-      clanPage.className = `other-clan-page ${clanName}`;
+      clanPage.className = `other-clan-page`;
+      clanPage.dataset.clan = clanName;
 
       const loading = document.createElement("div");
       loading.className = "clan-loading";
@@ -2727,6 +3963,31 @@ window.addEventListener("DOMContentLoaded", async () => {
       pagesNav.childNodes[1].click();
       observeForElement(".my-clan", clickClanTab);
     }
+
+    applyClanCustomizations = () => {
+      const clancustomizations = JSON.parse(localStorage.getItem("juice-clans"));
+      const clans = document.querySelectorAll(".clan-name");
+      clans.forEach((clan) => {
+        const clanName = clan.textContent.trim();
+        const customs = clancustomizations.find((c) => c.clan === clanName);
+        if (!customs) return;
+
+        if (customs.gradient) {
+          clan.style.display = "inline-block";
+          clan.style.background = `linear-gradient(${customs.gradient.rot}, ${customs.gradient.stops.join(", ")})`;
+          clan.style.backgroundClip = "text";
+          clan.style.webkitBackgroundClip = "text";
+          clan.style.color = "transparent";
+          clan.style.fontWeight = "700";
+          clan.style.textShadow = customs.gradient.shadow || "0 0 0 transparent";
+
+          if (settings.animations && customs.animated) {
+            clan.style.backgroundSize = "200% 200%";
+            clan.style.animation = "animated-gradient 3s linear infinite";
+          }
+        }
+      })
+    };
 
     document.querySelectorAll(".champions-list .item").forEach((clan) => {
       clan.addEventListener("click", () => {
@@ -2796,7 +4057,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       if (!labels.length || !list) return;
 
       const state = [0, 0];
-      const icons = ["", ' <i class="fa - solid fa - caret - up"></i>", " <i class="fa - solid fa - caret - down"></i>'];
+      const icons = ["", ' <i class="fas fa-caret-up"></i>', ' <i class="fas fa-caret-down"></i>'];
       const baseText = ["scores per month", "scores"];
 
       function getItems() {
@@ -2878,6 +4139,7 @@ window.addEventListener("DOMContentLoaded", async () => {
                   if (Number.isFinite(raw) && !isNaN(raw)) el.textContent = raw.toLocaleString();
                 });
               });
+              applyClanCustomizations();
             } else {
               polling = setTimeout(tryApply, 10);
             }
@@ -3151,6 +4413,107 @@ window.addEventListener("DOMContentLoaded", async () => {
     });
   };
 
+  const handleInventory = () => {
+    const STORAGE_KEY = "inventory_favorites";
+
+    function getFavorites() {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+    }
+
+    function saveFavorite(id, isFavorite) {
+      const favorites = getFavorites();
+      if (isFavorite) {
+        if (!favorites.includes(id)) favorites.push(id);
+      } else {
+        const index = favorites.indexOf(id);
+        if (index > -1) favorites.splice(index, 1);
+      }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(favorites));
+    }
+
+    function sortInventory() {
+      const container = document.querySelector(".inventory .subjects");
+      if (!container) return;
+      const items = [...container.children];
+      items.sort((a, b) => b.classList.contains("favorite") - a.classList.contains("favorite"));
+      items.forEach(item => container.appendChild(item));
+    }
+
+    function applyFavorites() {
+      const favorites = getFavorites();
+      document.querySelectorAll(".inventory .subject").forEach((subject) => {
+        const id = subject.textContent.trim();;
+        if (favorites.includes(id)) {
+          subject.classList.add("favorite");
+
+          subject.addEventListener("click", (e) => {
+            if (!ipcRenderer.sendSync("get-settings").prevent_selling_favorites) return;
+            const sellBtn = e.target.closest(".sell-btn");
+            if (sellBtn) {
+              e.stopImmediatePropagation();
+              return false;
+            }
+          }, true);
+        }
+      });
+    }
+
+    function addFavoriteButtons() {
+      document.querySelectorAll(".inventory .subject").forEach((subject) => {
+        if (subject.querySelector(".favorite-btn")) return;
+        const toggleFavorite = document.createElement("div");
+        toggleFavorite.classList.add("favorite-btn");
+        toggleFavorite.innerHTML = '<i class="fas fa-star"></i>';
+
+        toggleFavorite.addEventListener("click", () => {
+          subject.classList.toggle("favorite");
+          const isFavorite = subject.classList.contains("favorite");
+          saveFavorite(subject.textContent.trim(), isFavorite);
+          sortInventory();
+        });
+
+        toggleFavorite.addEventListener("mouseenter", (e) => {
+          subject.querySelectorAll(".bottom-inv").forEach(button => button.style.visibility = "hidden");
+          subject.querySelector(".hover-bg").style.visibility = "hidden";
+        })
+        toggleFavorite.addEventListener("mouseleave", () => {
+          subject.querySelectorAll(".bottom-inv").forEach(button => button.style.visibility = "visible");
+          subject.querySelector(".hover-bg").style.visibility = "visible";
+        })
+
+        subject.appendChild(toggleFavorite);
+      });
+    }
+
+    document.querySelectorAll(".inventory .tab").forEach((tab) => {
+      tab.addEventListener("click", () => {
+        applyFavorites();
+        addFavoriteButtons();
+        sortInventory();
+      });
+    });
+
+    let observer;
+
+    observeForElement(".inventory .gun", () => {
+      applyFavorites();
+      addFavoriteButtons();
+      sortInventory();
+
+      const container = document.querySelector(".inventory .subjects");
+
+      observer = new MutationObserver(() => {
+        observer.disconnect();
+        applyFavorites();
+        addFavoriteButtons();
+        sortInventory();
+        observer.observe(container, { childList: true, subtree: false });
+      });
+
+      observer.observe(container, { childList: true, subtree: false });
+    });
+  };
+
   const customNotification = (data) => {
     const notifElement = document.createElement("div");
     notifElement.classList.add("vue-notification-wrapper");
@@ -3206,7 +4569,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       "weapon_offset_x", "weapon_offset_y", "weapon_offset_z",
       "weapon_size", "weapon_wireframe", "weapon_rgb", "weapon_color",
       "include_arms", "kd_indicator", "customizations",
-      "local_customizations"
+      "local_customizations", "map_backgrounds"
     ];
 
     if (directSettings.includes(setting)) {
@@ -3246,6 +4609,11 @@ window.addEventListener("DOMContentLoaded", async () => {
       case "inspect_duration":
         INSPECT_DURATION = value;
         break;
+
+      case "ads_power":
+        settings.ads_power = value;
+        setAdsPower(value);
+        break;
     }
   });
 
@@ -3270,6 +4638,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     if (url === `${base_url}hub/clans/champions-league`) handleClans();
     if (url === `${base_url}hub/market`) handleMarket();
     if (url === `${base_url}friends`) handleFriends();
+    if (url === `${base_url}inventory`) handleInventory();
   });
 
   const handleInitialLoad = () => {
@@ -3285,6 +4654,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     if (url === `${base_url}hub/clans/champions-league`) handleClans();
     if (url === `${base_url}hub/market`) handleMarket();
     if (url === `${base_url}friends`) handleFriends();
+    if (url === `${base_url}inventory`) handleInventory();
 
     loadTheme();
     applyUIFeatures();

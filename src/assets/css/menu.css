@@ -52,6 +52,23 @@
     --opacity-quarter: 255, 245, 230, 0.25;
 }
 
+.menu[data-theme="dusk"] {
+    --dark: 18, 27, 38;
+    --light: 189, 203, 203;
+    --orange: 179, 193, 234;
+    --green: 160, 185, 145;
+    --blue: 130, 155, 195;
+    --red: 220, 85, 47;
+    --hover-dark: 25, 38, 55;
+    --hover-dark-darker: 14, 22, 35;
+    --hover-light: 200, 215, 240, 0.05;
+    --border: 255, 255, 255, 0.15;
+    --border-active: 255, 245, 230, 0.25;
+    --shadow: 60, 30, 10, 0.5;
+    --opacity-half: 200, 215, 240, 0.5;
+    --opacity-quarter: 200, 215, 240, 0.25;
+}
+
 .menu[data-theme="custom"] {
     --custom-primary: 195, 145, 245;
     --custom-dark: 28, 22, 38;
@@ -233,7 +250,7 @@
 
 .menu .content input[type="text"] {
     width: 40%;
-    min-width: 70px;
+    min-width: 76px;
     box-sizing: border-box;
     height: 2.5rem;
     padding: 0 1rem;
@@ -314,7 +331,7 @@
 .menu .juice.tab.active {
     background: rgba(var(--orange), 0.12);
     color: rgb(var(--orange));
-    border-left: 2px solid rgb(var(--orange));
+    box-shadow: -2px 0 0 0 rgb(var(--orange));
 }
 
 .menu .juice.tab.active i,
@@ -419,6 +436,7 @@
     grid-column: 1 / -1;
 }
 
+.menu .weapons-sidebar,
 .menu .community-sidebar {
     grid-area: sidebar;
     display: flex;
@@ -1118,7 +1136,6 @@
     padding: 0 1rem;
     background: rgba(var(--dark), 0.1);
     border: 0.1rem solid rgba(var(--border));
-    border-radius: 0.5rem;
     color: rgb(var(--light));
     font-family: "Satoshi", sans-serif;
     outline: none;
@@ -2290,6 +2307,10 @@ button:focus,
     backdrop-filter: blur(4px);
 }
 
+.community-sidebar .selector-group span {
+    border-bottom: 1px solid rgba(var(--border));
+}
+
 .community-sidebar .selector-group .juice.selector {
     background: rgba(var(--hover-dark-darker));
 }
@@ -2535,4 +2556,85 @@ button:focus,
 
 .changelog-github-btn:active {
     transform: scale(0.95);
+}
+
+#weapons-options.active {
+    display: grid;
+    grid-template-columns: 10rem 1fr;
+    grid-template-areas: "sidebar content";
+    height: 100%;
+    min-height: 0;
+}
+
+#weapons-options>.content {
+    display: flex;
+    gap: 1rem;
+    flex-direction: column;
+    height: 100%;
+}
+
+.universal-only {
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.content.weapons {
+    gap: 0 !important;
+}
+
+.favorite-btn {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    padding: 3px 4px 4px 4px;
+    border: 1px solid rgba(255, 255, 255, .17);
+    transition: 0.3s ease;
+    border-radius: 16px;
+}
+
+.subject.favorite .favorite-btn {
+    color: yellow;
+}
+
+.subject .selected {
+    right: 2.7rem;
+}
+
+.favorite-btn:hover {
+    border: 1px solid rgba(255, 255, 0, 0.5);
+    transition: 0.3s ease;
+    cursor: pointer;
+}
+
+.inventory .bottom-inv {
+    transition: background .3s ease !important;
+}
+
+.nav {
+    white-space: nowrap;
+}
+
+.discord-cont {
+    color: white;
+    text-decoration: none;
+}
+
+.setting-value {
+    font-size: 2rem;
+    margin-right: .5rem;
+    border: none;
+    background: none;
+    color: white;
+    text-align: right;
+    width: 5rem;
+}
+
+.setting-value:focus {
+    outline: none;
+}
+
+.setting-value::-webkit-outer-spin-button,
+.setting-value::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
 }
