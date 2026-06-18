@@ -351,14 +351,14 @@
     "gradient": {
       "rot": "90deg",
       "stops": [
-        "#000000 0%",
-        "#ff0000 50%",
-        "#000000 100%"
+        "#004CFF 0%",
+        "#6600FF 50%",
+        "#004CFF 100%"
       ]
     },
     "animated": true,
     "badges": [
-      "https://i.imgur.com/F8yYxrw.gif"
+      "https://i.imgur.com/dLLT1bV.png"
     ]
   },
   {
@@ -502,6 +502,7 @@
   },
   {
     "shortId": "1110KH",
+    "profile-background": "https://i.imgur.com/69eti5A.png",
     "gradient": {
       "rot": "to right",
       "stops": [
