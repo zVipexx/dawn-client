@@ -3,7 +3,7 @@
     "version": "1.0.15",
     "date": "18/6/2026",
     "changelogs": [
-      "Updated some of the inspects",
+      "Updated some of the inspects (still work in progress)",
       "Added per-Weapon customizations",
       "Added customizable Zoom strength (0ads)",
       "Added an Assists Indicator",
