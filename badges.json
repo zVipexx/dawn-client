@@ -650,6 +650,13 @@
   },
   {
     "shortId": "52326P",
+    "gradient": {
+      "rot": "0deg",
+      "stops": [
+        "#FFFFFF",
+        "#FFFFFF"
+      ]
+    },
     "badges": [
       "https://i.imgur.com/mM9VwDM.png"
     ]
