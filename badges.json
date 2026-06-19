@@ -22,8 +22,6 @@
       ]
     },
     "badges": [
-      "https://juice.irrvlo.xyz/juicemod.png",
-      "https://daymian-flow.netlify.app/imgs/flow.jpg",
       "https://irrvlo.xyz/ss03.png"
     ]
   },
@@ -648,6 +646,12 @@
     },
     "badges": [
       "https://res.cloudinary.com/dsnfes6pa/image/upload/v1780752615/tumblr_my5joz7vn51t2pdcpo1_1280_pyzt9n.gif?width=1008&height=1008"
+    ]
+  },
+  {
+    "shortId": "52326P",
+    "badges": [
+      "https://i.imgur.com/mM9VwDM.png"
     ]
   }
 ]
