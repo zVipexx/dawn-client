@@ -784,17 +784,17 @@ window.addEventListener("DOMContentLoaded", async () => {
     for (const key of Object.getOwnPropertyNames(instance)) {
       try {
         const val = instance[key];
-        if (!val || typeof val !== 'object') continue;
+        if (!val || typeof val !== "object") continue;
         const names = Object.getOwnPropertyNames(val);
         const hasFov = names.some(k => {
           const desc = Object.getOwnPropertyDescriptor(val, k);
           if (!desc?.get) return false;
           try {
             const v = desc.get.call(val);
-            return typeof v === 'number' && v >= 40 && v <= 150;
+            return typeof v === "number" && v >= 40 && v <= 150;
           } catch (e) { return false; }
         });
-        const hasZoom = names.includes('zoom');
+        const hasZoom = names.includes("zoom");
         if (hasFov && hasZoom) return val;
       } catch (e) { }
     }
@@ -816,7 +816,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         if (!desc?.get) return false;
         try {
           const val = desc.get.call(cam);
-          return typeof val === 'number' && val >= 40 && val <= 150;
+          return typeof val === "number" && val >= 40 && val <= 150;
         } catch (e) { return false; }
       });
 
@@ -826,7 +826,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       const origGet = desc.get;
       const origSet = desc.set;
 
-      const defaultFov = parseFloat(localStorage.getItem('SETTINGS___SETTING/CAMERA___SETTING/MAIN_FOV___SETTING')?.replace(/"/g, '')) || 100;
+      const defaultFov = parseFloat(localStorage.getItem("SETTINGS___SETTING/CAMERA___SETTING/MAIN_FOV___SETTING")?.replace(/"/g, "")) || 100;
 
       let ads = false;
 
@@ -3252,14 +3252,14 @@ window.addEventListener("DOMContentLoaded", async () => {
       const deathCount = parseFloat(deaths.innerText) || 1;
       const kdRatio = (killCount / deathCount).toFixed(2);
 
-      const nextHtml = `<span class="kd-ratio">${kdRatio}</span> <span class="text-kd" style="font-size: 0.75rem;">KD</span>`;
+      const nextHtml = `<span class="kd-ratio">${kdRatio}</span> <span class="text-kd" style="font-size: 0.75rem;">K/D</span>`;
       if (kd.innerHTML !== nextHtml) {
         kd.innerHTML = nextHtml;
       }
     };
 
     const createKD = () => {
-      if (document.querySelector(".kill-death .kd")) return;
+      if (document.querySelector(".kill-death .kd")) document.querySelector(".kill-death .kd").remove();
       const kills = document.querySelector(".kill-death .kill");
       const deaths = document.querySelector("div > svg.icon-death")?.parentElement;
       const kd = kills?.cloneNode(true);
@@ -3272,7 +3272,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       kd.style.gap = "0.25rem";
       kd.innerHTML = `<span class="kd-ratio">0</span> <span class="text-kd" style="font-size: 0.75rem;">K/D</span>`;
 
-      document.querySelector(".kill-death").appendChild(kd);
+      document.querySelector(".kill-death").insertBefore(kd, kills.parentElement.children[2]);
       kills.addEventListener("DOMSubtreeModified", updateKD);
       deaths.addEventListener("DOMSubtreeModified", updateKD);
     };
@@ -3293,31 +3293,153 @@ window.addEventListener("DOMContentLoaded", async () => {
 
       assists.querySelector("svg").style.fill = "yellow";
 
-      kills.parentElement.insertBefore(assists, kills.parentElement.children[2]);
+      kills.parentElement.insertBefore(assists, kills.parentElement.children[3]);
 
-      const container = document.querySelector(".desktop-game-interface .player-list");
-      let lastScores = new Map();
+      const achCont = document.querySelector(".ach-cont");
+      if (achCont) {
+        let lastTriggered = 0;
 
-      new MutationObserver(() => {
-        document.querySelectorAll(".desktop-game-interface .player-list .player-cont").forEach((player) => {
-          const nicknameEl = player.querySelector(".nickname.bolder");
-          if (!nicknameEl) return;
+        const observer = new MutationObserver((mutations) => {
+          for (const mutation of mutations) {
+            const animCont = mutation.target;
+            if (
+              mutation.attributeName === "class" &&
+              animCont.classList.contains("slide-fade-enter-active") &&
+              animCont.classList.contains("slide-fade-enter-to") &&
+              animCont.querySelector(".text")?.textContent.includes("ASSIST")
+            ) {
+              const now = Date.now();
+              if (now - lastTriggered < 200) continue;
+              lastTriggered = now;
 
-          const name = nicknameEl.textContent;
-          const score = player.querySelector(".player-value:nth-child(3)");
-          if (!score) return;
-
-          const currentScore = parseFloat(score.textContent) || 0;
-          const lastScore = lastScores.get(name) ?? currentScore;
-
-          if (currentScore - lastScore === 5) {
-            assistsCount++;
-            assists.childNodes[0].nodeValue = assistsCount;
+              assistsCount++;
+              assists.childNodes[0].nodeValue = assistsCount;
+            }
           }
-
-          lastScores.set(name, currentScore);
         });
-      }).observe(container, { subtree: true, characterData: true });
+
+        observer.observe(achCont, {
+          subtree: true,
+          attributes: true,
+          attributeFilter: ["class"],
+        });
+      }
+    };
+
+    let objectivesCount = 0;
+
+    const createObjectives = () => {
+      if (document.querySelector(".kill-death .objectives")) return;
+      const kills = document.querySelector(".kill-death .kill");
+      const objectives = kills?.cloneNode(true);
+
+      if (!objectives) return;
+      objectives.classList.add("objectives");
+      objectives.classList.remove("kill");
+      objectives.style.display = "flex";
+      objectives.style.alignItems = "center";
+      objectives.style.gap = "0.25rem";
+
+      const svgEl = objectives.querySelector("svg");
+      const img = document.createElement("img");
+      img.src = `file://${__dirname}/../assets/img/flag.png`;
+      img.style.width = "1rem";
+      img.style.height = "1rem";
+      img.style.minWidth = "1rem";
+      img.style.flexShrink = "0";
+      img.style.marginLeft = ".5rem";
+      svgEl.replaceWith(img);
+
+      kills.parentElement.insertBefore(objectives, kills.parentElement.children[4]);
+
+      const achCont = document.querySelector(".ach-cont");
+      if (achCont) {
+        let lastTriggered = 0;
+
+        const observer = new MutationObserver((mutations) => {
+          for (const mutation of mutations) {
+            const animCont = mutation.target;
+            if (
+              mutation.attributeName === "class" &&
+              animCont.classList.contains("slide-fade-enter-active") &&
+              animCont.classList.contains("slide-fade-enter-to") &&
+              animCont.querySelector(".text")?.textContent.includes("POINT")
+            ) {
+              const now = Date.now();
+              if (now - lastTriggered < 200) continue;
+              lastTriggered = now;
+
+              objectivesCount++;
+              objectives.childNodes[0].nodeValue = objectivesCount;
+            }
+          }
+        });
+
+        observer.observe(achCont, {
+          subtree: true,
+          attributes: true,
+          attributeFilter: ["class"],
+        });
+      }
+    };
+
+    let headshotsCount = 0;
+
+    const createHeadshots = () => {
+      if (document.querySelector(".kill-death .hsp")) return;
+      const kills = document.querySelector(".kill-death .kill");
+      const hsp = kills?.cloneNode(true);
+
+      if (!hsp) return;
+      hsp.classList.add("hsp");
+      hsp.classList.remove("kill");
+      hsp.style.display = "flex";
+      hsp.style.alignItems = "center";
+      hsp.style.gap = "0.25rem";
+      hsp.innerHTML = `<span class="hs-percentage">0</span> <span class="text-hs" style="font-size: 0.75rem;">HS%</span>`;
+
+      kills.parentElement.insertBefore(hsp, kills.parentElement.children[5]);
+
+      const achCont = document.querySelector(".ach-cont");
+      if (achCont) {
+        let lastTriggered = 0;
+
+        const observer = new MutationObserver((mutations) => {
+          for (const mutation of mutations) {
+            const animCont = mutation.target;
+            if (
+              mutation.attributeName === "class" &&
+              animCont.classList.contains("slide-fade-enter-active") &&
+              animCont.classList.contains("slide-fade-enter-to") &&
+              animCont.querySelector(".text")?.textContent.includes("HEADSHOT") || animCont.querySelector(".text")?.textContent.includes("KILL")
+            ) {
+              const now = Date.now();
+              if (now - lastTriggered < 200) continue;
+              lastTriggered = now;
+
+              if (animCont.querySelector(".text")?.textContent.includes("HEADSHOT")) headshotsCount++;
+
+              const killsEl = document.querySelector(".kill-death .kill");
+
+              if (!killsEl || !hsp) return;
+
+              const killCount = parseFloat(killsEl.innerText);
+              const hsPercentage = (headshotsCount / killCount).toFixed(2) * 100;
+
+              const nextHtml = `<span class="hs-percentage">${hsPercentage}</span> <span class="text-hs" style="font-size: 0.75rem;">HS%</span>`;
+              if (hsp.innerHTML !== nextHtml) {
+                hsp.innerHTML = nextHtml;
+              }
+            }
+          }
+        });
+
+        observer.observe(achCont, {
+          subtree: true,
+          attributes: true,
+          attributeFilter: ["class"],
+        });
+      }
     };
 
     const customizations = JSON.parse(localStorage.getItem("juice-customizations"));
@@ -3589,35 +3711,29 @@ window.addEventListener("DOMContentLoaded", async () => {
       if (escPlayersList) escObserver.observe(escPlayersList, { subtree: false, childList: true });
     };
 
-    const kdVisibility = () => {
-      if (!document.querySelector(".kill-death .kd") && settings.kd_indicator) {
-        createKD();
-      } else if (document.querySelector(".kill-death .kd") && !settings.kd_indicator) {
-        document.querySelector(".kill-death .kd").remove();
-      }
-    };
+    const indicators = [
+      { key: "kd_indicator", selector: ".kd", create: createKD },
+      { key: "assists_indicator", selector: ".assists", create: createAssists },
+      { key: "points_indicator", selector: ".objectives", create: createObjectives },
+      { key: "hsp_indicator", selector: ".hsp", create: createHeadshots },
+    ];
 
-    document.addEventListener("juice-settings-changed", ({ detail }) => {
-      if (detail.setting === "kd_indicator") {
-        kdVisibility();
-      }
-    });
+    for (const { key, selector, create } of indicators) {
+      const toggle = () => {
+        const el = document.querySelector(`.kill-death ${selector}`);
+        if (settings[key] && !el) create();
+        else if (!settings[key] && el) el.remove();
+      };
 
-    const assistsVisibility = () => {
-      if (!document.querySelector(".kill-death .assists") && settings.assists_indicator) {
-        createAssists();
-      } else if (document.querySelector(".kill-death .assists") && !settings.assists_indicator) {
-        document.querySelector(".kill-death .assists").remove();
-      }
-    };
-    assistsVisibility();
+      toggle();
 
-    document.addEventListener("juice-settings-changed", ({ detail }) => {
-      if (detail.setting === "assists_indicator") {
-        settings.assists_indicator = detail.value;
-        assistsVisibility();
-      }
-    });
+      document.addEventListener("juice-settings-changed", ({ detail }) => {
+        if (detail.setting === key) {
+          settings[key] = detail.value;
+          toggle();
+        }
+      });
+    }
 
     const observers = new Map();
     let observingShortIds = false;
@@ -4568,7 +4684,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     const directSettings = [
       "weapon_offset_x", "weapon_offset_y", "weapon_offset_z",
       "weapon_size", "weapon_wireframe", "weapon_rgb", "weapon_color",
-      "include_arms", "kd_indicator", "customizations",
+      "include_arms", "customizations",
       "local_customizations", "map_backgrounds"
     ];
 

@@ -2638,3 +2638,20 @@ button:focus,
     -webkit-appearance: none;
     margin: 0;
 }
+
+.kill-death {
+    display: grid !important;
+    grid-template-columns: auto auto auto;
+    grid-template-rows: auto auto auto;
+    row-gap: .5rem;
+}
+
+.kill-death .assists,
+.kill-death .objectives,
+.kill-death .hsp {
+    grid-row: 2;
+}
+
+.team-players-state {
+    margin-top: 2rem;
+}

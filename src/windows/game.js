@@ -1,5 +1,6 @@
 const { BrowserWindow, ipcMain, app, shell, clipboard, dialog, net, session, protocol } = require("electron");
 const { default_settings, allowed_urls } = require("../util/defaults.json");
+const { initResourceSwapper } = require('../addons/swapper.js');
 const { registerShortcuts } = require("../util/shortcuts");
 const { applySwitches } = require("../util/switches");
 const { nativeImage } = require('electron');
@@ -454,22 +455,37 @@ const initGame = () => {
   protocol.registerBufferProtocol('dawn-patch', (request, callback) => {
     const urlParams = new URL(request.url);
     const targetScriptUrl = urlParams.searchParams.get('url');
-
-    fetchText(targetScriptUrl)
-      .then((code) => {
-        const target = "f5['a'][hF]";
-        if (code.includes(target)) {
-          code = code.replace(target, "(window.__f5=f5,window.__zoomInstance=this,f5['a'][hF])");
-        }
-        code += `\n//# sourceURL=${targetScriptUrl}`;
-        callback({ mimeType: 'text/javascript', data: Buffer.from(code) });
-      })
+    fetchText(targetScriptUrl).then((code) => {
+      const target = "f5['a'][hF]";
+      if (code.includes(target)) {
+        code = code.replace(target, "(window.__f5=f5,window.__zoomInstance=this,f5['a'][hF])");
+      }
+      code += `\n//# sourceURL=${targetScriptUrl}`;
+      callback({ mimeType: 'text/javascript', data: Buffer.from(code) });
+    });
   });
 
+  const swap = initResourceSwapper();
+
+  const bundleFilter = { urls: ['*://kirka.io/assets/js/app.*.js'] };
+  const allUrls = [...(swap.filter.urls.length ? swap.filter.urls : []), ...bundleFilter.urls];
+
   session.defaultSession.webRequest.onBeforeRequest(
-    { urls: ['*://kirka.io/assets/js/app.*.js'] },
+    { urls: allUrls },
     (details, callback) => {
-      callback({ redirectURL: 'dawn-patch://bundle/app.js?url=' + encodeURIComponent(details.url) });
+      if (/kirka\.io\/assets\/js\/app\.[^/]+\.js/.test(details.url)) {
+        return callback({ redirectURL: 'dawn-patch://bundle/app.js?url=' + encodeURIComponent(details.url) });
+      }
+
+      if (swap.filter.urls.length) {
+        const redirect =
+          'dawnclient://' +
+          (swap.files[details.url.replace(/https|http|(\?.*)|(#.*)|\_/gi, '')] ||
+            details.url);
+        return callback({ cancel: false, redirectURL: redirect });
+      }
+
+      callback({ cancel: false });
     }
   );
 

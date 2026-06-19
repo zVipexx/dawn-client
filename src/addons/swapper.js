@@ -87,6 +87,8 @@ const initResourceSwapper = () => {
       }
     );
   }
+
+  return swap;
 };
 
 module.exports = { initResourceSwapper };

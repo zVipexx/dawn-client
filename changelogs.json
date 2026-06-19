@@ -1,5 +1,15 @@
 [
   {
+    "version": "1.0.16",
+    "date": "19/6/2026",
+    "changelogs": [
+      "Added Points Indicator",
+      "Added Headshot kills % Indicator",
+      "Fixed Assists Indicator",
+      "Fixed Swappers"
+    ]
+  },
+  {
     "version": "1.0.15",
     "date": "18/6/2026",
     "changelogs": [
