@@ -3721,7 +3721,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     for (const { key, selector, create } of indicators) {
       const toggle = () => {
         const el = document.querySelector(`.kill-death ${selector}`);
-        if (settings[key] && !el) create();
+        if (settings[key]) create();
         else if (!settings[key] && el) el.remove();
       };
 
