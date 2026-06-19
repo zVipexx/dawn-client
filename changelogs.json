@@ -13,7 +13,7 @@
     "version": "1.0.15",
     "date": "18/6/2026",
     "changelogs": [
-      "Updated some of the inspects",
+      "Updated some of the inspects (still work in progress)",
       "Added per-Weapon customizations",
       "Added customizable Zoom strength (0ads)",
       "Added an Assists Indicator",
@@ -23,7 +23,7 @@
       "Added Command Abbreviations to the global chat",
       "Added a Dusk Theme",
       "Added clan gradients to my clan/clan lookup",
-      "Made the menu values manually editable by text",
+      "Made the kirka settings values manually editable by text",
       "Moved some stuff around in the Menu",
       "Fixed Clan lookup not working for clans with special characters",
       "Fixed Fanny and other skins not being affected by the Custom Skin Link",
