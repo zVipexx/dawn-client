@@ -60,6 +60,12 @@
     "preview": "https://ktiers.com/imgs/maps/Sandstorm.png"
   },
   {
+    "map": "Hydraulic",
+    "modes": ["Point 2v2", "Point 3v3"],
+    "code": "https://ktiers.com/maps/files/Hydraulic.txt",
+    "preview": "https://ktiers.com/imgs/maps/Hydraulic.png"
+  },
+  {
     "map": "Shipment",
     "modes": ["TDM 2v2"],
     "code": "https://ktiers.com/maps/files/Shipment.txt",
