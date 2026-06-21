@@ -1,7 +1,7 @@
 [
   {
     "version": "1.1.0",
-    "date": "/6/2026",
+    "date": "21/6/2026",
     "changelogs": [
       "Updated the version number to differentiate big updates from smaller changes",
       "Added Room Presets import/export",
