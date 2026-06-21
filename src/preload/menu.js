@@ -4,6 +4,7 @@ const path = require("path");
 const { version } = require("../../package.json");
 const { addOpenerList } = require("../addons/opener");
 const { initBrowser } = require("../addons/browser");
+const { clipboard } = require("electron");
 
 class Menu {
   constructor() {
@@ -210,9 +211,10 @@ class Menu {
     const universalCheckbox = weaponsContent.querySelector("#universal_settings");
     const universalSelector = sidebar.querySelector('[data-selector="universal"]');
     const mirrorArmCheckbox = armsContent.querySelector("#universal_arm_settings");
+    const resetWeaponSettingsBtn = weaponsContent.querySelector("#reset-weapon-settings");
+    const resetArmSettingsBtn = armsContent.querySelector("#reset-arm-settings");
 
-    if (!universalCheckbox) return;
-
+    const adsPowerInput = weaponsContent.querySelector("#ads_power");
     const weaponSizeInput = weaponsContent.querySelector("#weapon_size");
     const offsetXInput = weaponsContent.querySelector("#weapon_offset_x");
     const offsetYInput = weaponsContent.querySelector("#weapon_offset_y");
@@ -226,6 +228,8 @@ class Menu {
     const armColorHexInput = armsContent.querySelector(".arm-color .hex");
     const armColorPicker = armsContent.querySelector(".arm-color .color-picker");
     const armRgbCheckbox = armsContent.querySelector("#arm_rgb");
+
+    if (!universalCheckbox) return;
 
     const getActiveConfig = () => {
       return this.viewMode === "universal"
@@ -323,18 +327,21 @@ class Menu {
     };
 
     const loadWeaponToUI = (settings) => {
-      weaponSizeInput.value = settings.size;
-      offsetXInput.value = settings.offsetX;
-      offsetYInput.value = settings.offsetY;
-      offsetZInput.value = settings.offsetZ;
+      adsPowerInput.value = settings.adsPower ?? 1;
+      weaponSizeInput.value = settings.size ?? 1;
+      offsetXInput.value = settings.offsetX ?? 0;
+      offsetYInput.value = settings.offsetY ?? 0;
+      offsetZInput.value = settings.offsetZ ?? 0;
+      const adsVal = weaponsContent.querySelector(".ads-power-value");
+      if (adsVal) adsVal.value = settings.adsPower ?? 1;
       const sizeVal = weaponsContent.querySelector(".weapon-size-value");
-      if (sizeVal) sizeVal.value = settings.size;
+      if (sizeVal) sizeVal.value = settings.size ?? 1;
       const oxVal = weaponsContent.querySelector(".weapon-offset-x-value");
-      if (oxVal) oxVal.value = settings.offsetX;
+      if (oxVal) oxVal.value = settings.offsetX ?? 0;
       const oyVal = weaponsContent.querySelector(".weapon-offset-y-value");
-      if (oyVal) oyVal.value = settings.offsetY;
+      if (oyVal) oyVal.value = settings.offsetY ?? 0;
       const ozVal = weaponsContent.querySelector(".weapon-offset-z-value");
-      if (ozVal) ozVal.value = settings.offsetZ;
+      if (ozVal) ozVal.value = settings.offsetZ ?? 0;
     };
 
     const loadArmToUI = (armSettings) => {
@@ -359,6 +366,7 @@ class Menu {
 
     const saveCurrentWeaponUI = () => {
       const newSettings = {
+        adsPower: parseFloat(adsPowerInput.value),
         size: parseFloat(weaponSizeInput.value),
         offsetX: parseFloat(offsetXInput.value),
         offsetY: parseFloat(offsetYInput.value),
@@ -522,6 +530,62 @@ class Menu {
       });
     }
 
+    if (resetWeaponSettingsBtn) {
+      resetWeaponSettingsBtn.addEventListener("click", () => {
+        const weaponId = this.viewMode === "universal" ? "universal" : this.selectedWeapon;
+        const defaultWeaponSettings = {
+          adsPower: 1.0,
+          size: 1.0,
+          offsetX: 0,
+          offsetY: 0,
+          offsetZ: 0
+        };
+
+        if (this.viewMode === "universal") {
+          this.weaponSettings.universalSettings = {
+            ...this.weaponSettings.universalSettings,
+            ...defaultWeaponSettings
+          };
+        } else {
+          this.weaponSettings.settings[weaponId] = {
+            ...this.weaponSettings.settings[weaponId],
+            ...defaultWeaponSettings
+          };
+        }
+
+        this.saveWeaponSettings();
+        loadWeaponToUI(defaultWeaponSettings);
+      });
+    }
+
+    if (resetArmSettingsBtn) {
+      resetArmSettingsBtn.addEventListener("click", () => {
+        if (!this.selectedArm) return;
+        const defaultArmSettings = {
+          size: 1.0,
+          offsetX: 0,
+          offsetY: 0,
+          offsetZ: 0,
+          wireframe: false,
+          colorEnabled: false,
+          colorHex: "#FFFFFF",
+          rgb: false
+        };
+
+        setArmSettings(this.selectedWeapon, this.selectedArm, defaultArmSettings);
+        const mirror = getMirrorState();
+        if (mirror) {
+          const master = getMirrorMaster();
+          if (this.selectedArm === master) {
+            const other = master === 'left' ? 'right' : 'left';
+            setArmSettings(this.selectedWeapon, other, defaultArmSettings);
+          }
+        }
+
+        loadArmToUI(defaultArmSettings);
+      });
+    }
+
     const weaponInputs = weaponsContent.querySelectorAll("input");
     weaponInputs.forEach(input => {
       input.addEventListener("change", saveCurrentWeaponUI);
@@ -533,6 +597,99 @@ class Menu {
       input.addEventListener("change", saveCurrentArmUI);
       input.addEventListener("input", saveCurrentArmUI);
     });
+
+    const exportBtn = sidebar.querySelector(".export");
+    if (exportBtn) {
+      exportBtn.addEventListener("click", () => {
+        const exportData = {
+          universal: this.weaponSettings.universal,
+          settings: this.weaponSettings.settings,
+          universalSettings: this.weaponSettings.universalSettings,
+          universalModeActive: this.universalModeActive,
+          weaponWireframe: this.settings.weapon_wireframe || false,
+          weaponColorEnabled: this.settings.weapon_color || false,
+          weaponColorHex: localStorage.getItem("weapon_color_hex") || "#FFFFFF",
+          weaponRgb: this.settings.weapon_rgb || false,
+          inspectKeybind: this.settings.inspect_keybind || "KeyZ"
+        };
+        clipboard.writeText(JSON.stringify(exportData));
+        alert("Weapon Settings copied to clipboard!");
+      });
+    }
+
+    const importBtn = sidebar.querySelector(".import");
+    if (importBtn) {
+      importBtn.addEventListener("click", () => {
+        if (sidebar.querySelector(".import-weapon-settings")) {
+          sidebar.querySelector(".import-weapon-settings").remove();
+          return
+        };
+
+        const modal = document.createElement("div");
+        modal.classList.add("import-weapon-settings");
+        modal.innerHTML = `
+          <input class="import-input" type="text" placeholder="Paste settings" />
+          <i class="fas fa-check room-preset-action confirm"></i>
+        `;
+
+        sidebar.appendChild(modal);
+
+        modal.querySelector(".confirm").addEventListener("click", () => {
+          const input = modal.querySelector(".import-input").value;
+          if (input) {
+            try {
+              const parsed = JSON.parse(input);
+              if (parsed && parsed.settings) {
+                const fullConfig = {
+                  universal: parsed.universal || parsed.universalModeActive || false,
+                  settings: parsed.settings,
+                  universalSettings: parsed.universalSettings || this.weaponSettings.universalSettings
+                };
+                localStorage.setItem("dawn_weapon_config", JSON.stringify(fullConfig));
+                this.weaponSettings = this.loadWeaponSettings();
+                this.updateGlobalWeaponConfig();
+
+                if (parsed.universalModeActive !== undefined) {
+                  this.universalModeActive = parsed.universalModeActive;
+                  if (universalCheckbox) {
+                    universalCheckbox.checked = this.universalModeActive;
+                  }
+                }
+
+                if (parsed.weaponWireframe !== undefined) {
+                  this.settings.weapon_wireframe = parsed.weaponWireframe;
+                }
+
+                if (parsed.weaponColorEnabled !== undefined) {
+                  this.settings.weapon_color = parsed.weaponColorEnabled;
+                }
+
+                if (parsed.weaponColorHex) {
+                  localStorage.setItem("weapon_color_hex", parsed.weaponColorHex);
+                }
+
+                if (parsed.weaponRgb !== undefined) {
+                  this.settings.weapon_rgb = parsed.weaponRgb;
+                }
+
+                if (parsed.inspectKeybind) {
+                  this.settings.inspect_keybind = parsed.inspectKeybind;
+                }
+
+                ipcRenderer.send("update-settings", this.settings);
+
+                refreshUI();
+              } else {
+                alert("Invalid weapon settings JSON.");
+              }
+            } catch (err) {
+              alert("Invalid JSON format.");
+            }
+          }
+          modal.remove();
+        });
+      });
+    }
 
     this.universalModeActive = this.settings.universal_settings || false;
     this.viewMode = "weapon";
@@ -559,6 +716,7 @@ class Menu {
     };
 
     const defaultWeaponSettings = {
+      adsPower: 1.0,
       size: 1.0,
       offsetX: 0,
       offsetY: 0,
@@ -570,6 +728,7 @@ class Menu {
     };
 
     const defaultUniversalSettings = {
+      adsPower: 1.0,
       size: 1.0,
       offsetX: 0,
       offsetY: 0,
@@ -578,7 +737,7 @@ class Menu {
       colorEnabled: false,
       colorHex: "#FFFFFF",
       rgb: false,
-      inspectKeybind: "KeyI",
+      inspectKeybind: "KeyZ",
       leftArm: { ...defaultArmSettings },
       rightArm: { ...defaultArmSettings },
       mirrorArm: false,
@@ -594,17 +753,22 @@ class Menu {
       if (!config.settings[id]) {
         config.settings[id] = { ...defaultWeaponSettings };
         if (this.settings) {
+          config.settings[id].adsPower = this.settings.ads_power ?? 1.0;
           config.settings[id].size = this.settings.weapon_size ?? 1.0;
           config.settings[id].offsetX = this.settings.weapon_offset_x ?? 0;
           config.settings[id].offsetY = this.settings.weapon_offset_y ?? 0;
           config.settings[id].offsetZ = this.settings.weapon_offset_z ?? 0;
         }
+      } else {
+        if (config.settings[id].adsPower === undefined) config.settings[id].adsPower = 1.0;
       }
       if (!config.settings[id].leftArm) config.settings[id].leftArm = { ...defaultArmSettings };
       if (!config.settings[id].rightArm) config.settings[id].rightArm = { ...defaultArmSettings };
       if (config.settings[id].mirrorArm === undefined) config.settings[id].mirrorArm = false;
       if (!config.settings[id].mirrorMaster) config.settings[id].mirrorMaster = 'left';
     }
+    if (config.universalSettings.adsPower === undefined) config.universalSettings.adsPower = 1.0;
+
     localStorage.setItem("dawn_weapon_config", JSON.stringify(config));
     return config;
   }
@@ -822,7 +986,7 @@ class Menu {
         savedTransition = menu.style.transition;
         menu.style.transition = "none";
 
-        startMouseX = e.clientX;
+        startMouseX = e.clientҦ;
         startMouseY = e.clientY;
         startW = menu.offsetWidth;
         startH = menu.offsetHeight;

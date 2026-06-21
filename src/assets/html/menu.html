@@ -111,6 +111,13 @@
       </div>
       <div class="option-group">
         <div class="option">
+          <span>K/D Indicator</span>
+          <div class="checkbox">
+            <input type="checkbox" id="kd_indicator" data-setting="kd_indicator" />
+            <label for="kd_indicator"></label>
+          </div>
+        </div>
+        <div class="option">
           <span>Assists Indicator</span>
           <div class="checkbox">
             <input type="checkbox" id="assists_indicator" data-setting="assists_indicator" />
@@ -122,13 +129,6 @@
           <div class="checkbox">
             <input type="checkbox" id="points_indicator" data-setting="points_indicator" />
             <label for="points_indicator"></label>
-          </div>
-        </div>
-        <div class="option">
-          <span>K/D Indicator</span>
-          <div class="checkbox">
-            <input type="checkbox" id="kd_indicator" data-setting="kd_indicator" />
-            <label for="kd_indicator"></label>
           </div>
         </div>
         <div class="option">
@@ -382,6 +382,10 @@
             <div data-selector="leftarm" class="juice selector">Left Arm</div>
             <div data-selector="rightarm" class="juice selector">Right Arm</div>
           </div>
+          <div class="bottom">
+            <i class="fas fa-share bottom-btn export" title="Share Weapon Settings"></i>
+            <i class="fas fa-file-import bottom-btn import" title="Import Weapon Settings"></i>
+          </div>
         </div>
         <div class="content weapons">
           <div class="universal-only">
@@ -394,23 +398,6 @@
                 <div class="checkbox">
                   <input type="checkbox" id="universal_settings" data-setting="universal_settings" />
                   <label for="universal_settings"></label>
-                </div>
-              </div>
-            </div>
-            <div class="option-group">
-              <div class="option">
-                <div class="left">
-                  <span>ADS Power</span>
-                  <span class="description">Adjust the zoom strength</span>
-                </div>
-                <div class="right"
-                  style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
-                  <input type="text" class="ads-power-value" placeholder="1" style="flex-basis: 21.5%;" maxlength="3" />
-                  <div class="slider">
-                    <input type="range" id="ads_power" class="slider-value" data-setting="ads_power" min="0" step="0.05"
-                      max="1.5" />
-                    <label for="ads_power"></label>
-                  </div>
                 </div>
               </div>
             </div>
@@ -463,6 +450,21 @@
           </div>
           <div class="per-weapon-only">
             <div class="option-group">
+              <div class="option">
+                <div class="left">
+                  <span>ADS Power</span>
+                  <span class="description">Adjust the zoom strength</span>
+                </div>
+                <div class="right"
+                  style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
+                  <input type="text" class="ads-power-value" placeholder="1" style="flex-basis: 21.5%;" maxlength="3" />
+                  <div class="slider">
+                    <input type="range" id="ads_power" class="slider-value" data-setting="ads_power" min="0" step="0.05"
+                      max="1" />
+                    <label for="ads_power"></label>
+                  </div>
+                </div>
+              </div>
               <div class="option">
                 <span>Weapon size</span>
                 <div class="right"
@@ -523,6 +525,13 @@
                   </div>
                 </div>
               </div>
+              <div class="option">
+                <button id="reset-weapon-settings" class="juice-button large">
+                  <div class="text">Reset Weapon Settings</div>
+                  <span class="description"> This action cannot be undone</span>
+                  <div class="custom-border"></div>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -536,6 +545,41 @@
               <div class="checkbox">
                 <input type="checkbox" id="universal_arm_settings" data-setting="universal_arm_settings" />
                 <label for="universal_arm_settings"></label>
+              </div>
+            </div>
+          </div>
+          <div class="option-group">
+            <div class="option">
+              <span>Wireframe Arm</span>
+              <div class="checkbox">
+                <input type="checkbox" id="arm_wireframe" data-setting="arm_wireframe" />
+                <label for="arm_wireframe"></label>
+              </div>
+            </div>
+            <div class="option dropdown">
+              <div class="option top" style="width:100%">
+                <i class=" fas fa-angle-down"></i>
+                <span style="margin-right:auto">Arm Color</span>
+                <div class="checkbox">
+                  <input type="checkbox" id="arm_color" data-setting="arm_color" />
+                  <label for="arm_color"></label>
+                </div>
+              </div>
+              <div class="content">
+                <div class="option arm-color" style="justify-content: flex-end">
+                  <div class="color-input"
+                    style="display: flex; width: 38.4%; margin-top: 0.5rem; margin-bottom: 1.5rem;">
+                    <input type="text" class="hex" placeholder="#FFFFFF" maxlength="7" />
+                    <input type="color" class="color-picker" value="#FFFFFF" />
+                  </div>
+                </div>
+                <div class="option">
+                  <span>Rainbow</span>
+                  <div class="checkbox">
+                    <input type="checkbox" id="arm_rgb" data-setting="arm_rgb" />
+                    <label for="arm_rgb"></label>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -596,40 +640,12 @@
                 </div>
               </div>
             </div>
-          </div>
-          <div class="option-group">
             <div class="option">
-              <span>Wireframe Arm</span>
-              <div class="checkbox">
-                <input type="checkbox" id="arm_wireframe" data-setting="arm_wireframe" />
-                <label for="arm_wireframe"></label>
-              </div>
-            </div>
-            <div class="option dropdown">
-              <div class="option top" style="width:100%">
-                <i class=" fas fa-angle-down"></i>
-                <span style="margin-right:auto">Arm Color</span>
-                <div class="checkbox">
-                  <input type="checkbox" id="arm_color" data-setting="arm_color" />
-                  <label for="arm_color"></label>
-                </div>
-              </div>
-              <div class="content">
-                <div class="option arm-color" style="justify-content: flex-end">
-                  <div class="color-input"
-                    style="display: flex; width: 38.4%; margin-top: 0.5rem; margin-bottom: 1.5rem;">
-                    <input type="text" class="hex" placeholder="#FFFFFF" maxlength="7" />
-                    <input type="color" class="color-picker" value="#FFFFFF" />
-                  </div>
-                </div>
-                <div class="option">
-                  <span>Rainbow</span>
-                  <div class="checkbox">
-                    <input type="checkbox" id="arm_rgb" data-setting="arm_rgb" />
-                    <label for="arm_rgb"></label>
-                  </div>
-                </div>
-              </div>
+              <button id="reset-arm-settings" class="juice-button large">
+                <div class="text">Reset Arm Settings</div>
+                <span class="description"> This action cannot be undone</span>
+                <div class="custom-border"></div>
+              </button>
             </div>
           </div>
         </div>

@@ -20,6 +20,7 @@
     "interface_bounds": "2",
     "assists_indicator": false,
     "points_indicator": false,
+    "hsp_indicator": false,
     "kd_indicator": false,
     "ads_power": 1,
     "weapon_offset_x": 0,

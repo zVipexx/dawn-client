@@ -302,14 +302,22 @@ window.addEventListener("DOMContentLoaded", async () => {
   };
 
   const initRoomPresets = () => {
-    let presets = JSON.parse(localStorage.getItem("dawn-room-presets") || "[]");
+    let presets = (() => {
+      try {
+        const stored = localStorage.getItem("dawn-room-presets");
+        const p = JSON.parse(stored || "[]");
+        return Array.isArray(p) ? p : [];
+      } catch {
+        return [];
+      }
+    })();
 
     const savePresets = () => {
       localStorage.setItem("dawn-room-presets", JSON.stringify(presets));
     };
 
     const scrapeSettings = (modal) => {
-      const settings = { selects: {}, checkboxes: {}, inputs: {} };
+      const settings = { selects: {}, modes: {}, maps: {}, weapons: {}, inputs: {} };
 
       modal.querySelectorAll(".element").forEach(el => {
         const labelEl = el.querySelector(".label");
@@ -319,10 +327,22 @@ window.addEventListener("DOMContentLoaded", async () => {
         if (label && selected) settings.selects[label] = selected;
       });
 
-      modal.querySelectorAll(".custom-checkbox").forEach(cb => {
+      modal.querySelectorAll(".mods .custom-checkbox").forEach(cb => {
         const label = cb.querySelector("span")?.textContent.trim();
         const input = cb.querySelector("input");
-        if (label && input) settings.checkboxes[label] = input.checked;
+        if (label && input) settings.modes[label] = input.checked;
+      });
+
+      modal.querySelectorAll(".map .custom-checkbox").forEach(cb => {
+        const label = cb.querySelector("span")?.textContent.trim();
+        const input = cb.querySelector("input");
+        if (label && input) settings.maps[label] = input.checked;
+      });
+
+      modal.querySelectorAll(".weapons-cont .custom-checkbox").forEach(cb => {
+        const label = cb.querySelector("span")?.textContent.trim();
+        const input = cb.querySelector("input");
+        if (label && input) settings.weapons[label] = input.checked;
       });
 
       const mapInput = modal.querySelector(".keybind-input input");
@@ -370,13 +390,27 @@ window.addEventListener("DOMContentLoaded", async () => {
         }
       }
 
-      modal.querySelectorAll(".custom-checkbox").forEach(cb => {
+      modal.querySelectorAll(".mods .custom-checkbox").forEach(cb => {
         const label = cb.querySelector("span")?.textContent.trim();
-        const targetState = preset.settings.checkboxes[label];
+        const targetState = preset.settings.modes?.[label];
         const input = cb.querySelector("input");
-        if (label && targetState !== undefined && input.checked !== targetState) {
-          input.click();
-        }
+        if (label && targetState !== undefined && input.checked !== targetState) input.click();
+      });
+
+      await new Promise(resolve => setTimeout(resolve, 10));
+
+      modal.querySelectorAll(".map .custom-checkbox").forEach(cb => {
+        const label = cb.querySelector("span")?.textContent.trim();
+        const targetState = preset.settings.maps?.[label];
+        const input = cb.querySelector("input");
+        if (label && targetState !== undefined && input.checked !== targetState) input.click();
+      });
+
+      modal.querySelectorAll(".weapons-cont .custom-checkbox").forEach(cb => {
+        const label = cb.querySelector("span")?.textContent.trim();
+        const targetState = preset.settings.weapons?.[label];
+        const input = cb.querySelector("input");
+        if (label && targetState !== undefined && input.checked !== targetState) input.click();
       });
 
       const mapInput = modal.querySelector(".keybind-input input");
@@ -506,13 +540,58 @@ window.addEventListener("DOMContentLoaded", async () => {
       sidebar.className = "room-presets-sidebar";
       sidebar.innerHTML = `
         <div class="room-presets-header">
-          <div class="room-presets-title">PRESETS</div>
+          <div class="top">
+            <div class="room-presets-title">PRESETS</div>
+            <div class="right">
+              <i class="fas fa-share room-preset-action export" title="Share Presets"></i>
+              <i class="fas fa-file-import room-preset-action import" title="Import Presets"></i>
+            </div>
+          </div>
         </div>
         <div class="room-presets-list"></div>
         <div class="juice-button save-preset">
           SAVE CURRENT
         </div>
       `;
+
+      sidebar.querySelector(".export").onclick = () => {
+        clipboard.writeText(JSON.stringify(presets));
+        alert("Presets copied to clipboard!");
+      }
+
+      sidebar.querySelector(".import").onclick = () => {
+        if (sidebar.querySelector(".import-presets")) {
+          sidebar.querySelector(".import-presets").remove();
+          return;
+        };
+
+        const modal = document.createElement("div");
+        modal.classList.add("import-presets");
+        modal.innerHTML = `
+          <input class="import-input" type="text" placeholder="Paste preset settings" />
+          <i class="fas fa-check room-preset-action confirm"></i>
+        `;
+
+        sidebar.querySelector(".room-presets-header").appendChild(modal);
+
+        modal.querySelector(".confirm").onclick = () => {
+          const input = modal.querySelector(".import-input").value;
+          if (input) {
+            try {
+              const imported = JSON.parse(input);
+              if (Array.isArray(imported)) {
+                localStorage.setItem("dawn-room-presets", input);
+                presets = imported;
+                savePresets();
+                renderPresets(sidebar, container.querySelector(".vm--modal"));
+              }
+            } catch (e) {
+              alert("Invalid JSON format");
+            }
+          }
+          modal.remove();
+        };
+      }
 
       sidebar.querySelector(".save-preset").onclick = () => {
         const modal = container.querySelector(".vm--modal");
@@ -547,7 +626,7 @@ window.addEventListener("DOMContentLoaded", async () => {
               if (node.querySelector(".create-btn")) {
                 injectSidebar(node);
               }
-            }, 100);
+            }, 0);
           }
         }
       }
@@ -566,6 +645,8 @@ window.addEventListener("DOMContentLoaded", async () => {
   initSettingsSliderInputs = () => {
     function handleValues() {
       document.querySelectorAll(".settings .right").forEach((row) => {
+        if (row.dataset.sliderInit) return;
+
         const valueDiv = row.querySelector(".value");
         const slider = row.querySelector(".range");
         if (!valueDiv || !slider) return;
@@ -595,10 +676,6 @@ window.addEventListener("DOMContentLoaded", async () => {
           valueInput.value = slider.value;
         });
 
-        function commit() {
-
-        }
-
         valueInput.addEventListener("blur", () => {
           const raw = valueInput.value;
           const num = parseFloat(raw);
@@ -617,6 +694,8 @@ window.addEventListener("DOMContentLoaded", async () => {
             valueInput.blur();
           }
         });
+
+        row.dataset.sliderInit = "1";
       });
     }
 
@@ -625,8 +704,8 @@ window.addEventListener("DOMContentLoaded", async () => {
     document.querySelectorAll(".settings .tab").forEach((tab) => {
       tab.addEventListener("click", () => {
         handleValues();
-      })
-    })
+      });
+    });
   }
 
   observeForElement(".settings", initSettingsSliderInputs)
@@ -844,8 +923,17 @@ window.addEventListener("DOMContentLoaded", async () => {
           }
 
           if (ads) {
+            const weaponConfig = window.dawnWeaponConfig;
+            let adsPower = window.ads_power;
+
+            if (weaponConfig) {
+              const weaponId = weaponConfig.universalModeActive ? "universal" : (window.currentWeaponId || "vita");
+              const settings = weaponConfig.getSettings(weaponId);
+              adsPower = settings.adsPower ?? window.ads_power;
+            }
+
             const zoomDelta = Math.abs(defaultFov - v);
-            const curved = Math.pow(window.ads_power, 0.4);
+            const curved = Math.pow(adsPower, 0.4);
             const newFov = defaultFov - zoomDelta * curved;
             origSet.call(this, Math.max(1, Math.min(179, newFov)));
           } else {
@@ -888,17 +976,17 @@ window.addEventListener("DOMContentLoaded", async () => {
       let offsetZ, offsetX, spinX;
       if (t < 0.35) {
         const p = easeOut(t / 0.35);
-        offsetZ = p * -0.2;
-        offsetX = p * -0.15;
+        offsetZ = p * -0.3;
+        offsetX = p * -0.25;
         spinX = p * -0.25;
       } else if (t < 0.85) {
-        offsetZ = -0.2;
-        offsetX = -0.15;
+        offsetZ = -0.3;
+        offsetX = -0.25;
         spinX = - 0.25;
       } else {
         const p = easeIn((t - 0.85) / 0.15);
-        offsetZ = (1 - p) * -0.2;
-        offsetX = (1 - p) * -0.15;
+        offsetZ = (1 - p) * -0.3;
+        offsetX = (1 - p) * -0.25;
         spinX = (1 - easeOut(p)) * -0.25;
       }
 
@@ -1813,7 +1901,10 @@ window.addEventListener("DOMContentLoaded", async () => {
             }
             seenMatricesThisFrame.add(fp);
 
-            if (sigToWeaponId[sig]) currentFrameWeaponSig = sig;
+            if (sigToWeaponId[sig]) {
+              currentFrameWeaponSig = sig;
+              window.currentWeaponId = sigToWeaponId[sig];
+            }
 
             const currentWeaponId = sigToWeaponId[latchedWeaponSig] || "vita";
 
@@ -2293,39 +2384,34 @@ window.addEventListener("DOMContentLoaded", async () => {
     const mapImages = await fetch(
       "https://raw.githubusercontent.com/AwesomeSam9523/KirkaSkins/refs/heads/main/maps/full_mapimages.json"
     ).then((res) => res.json());
-    const mapImageKeys = Object.keys(mapImages);
-    for (let i = 0; i < mapImageKeys.length; i++) {
-      const item = mapImageKeys[i];
-      if (!mapImages[item].includes("https")) {
-        mapImages[item] =
-          "https://raw.githubusercontent.com/AwesomeSam9523/KirkaSkins/main" +
-          mapImages[item];
+
+    for (const key of Object.keys(mapImages)) {
+      if (!mapImages[key].includes("https")) {
+        mapImages[key] = "https://raw.githubusercontent.com/AwesomeSam9523/KirkaSkins/main" + mapImages[key];
       }
     }
 
-    const processedServers = new Set();
     const replaceMapImages = () => {
       if (!settings.map_backgrounds) return;
       const servers = document.querySelectorAll(".server");
-      for (let i = 0; i < servers.length; i++) {
-        const server = servers[i];
-        if (processedServers.has(server)) continue;
+      for (const server of servers) {
         const mapEl = server.querySelector(".map");
         if (!mapEl) continue;
-        let mapName = mapEl.textContent?.split("_").pop() || "";
+        const mapName = mapEl.textContent?.split("_").pop() || "";
         if (mapImages[mapName]) {
           server.style.backgroundImage = `url(${mapImages[mapName]})`;
           server.style.backgroundSize = "cover";
           server.style.backgroundPosition = "center";
-        } else server.style.backgroundImage = "none";
-        processedServers.add(server);
+        } else {
+          server.style.backgroundImage = "none";
+        }
       }
     };
 
     replaceMapImages();
 
     const observer = new MutationObserver(() => {
-      if (!window.location.href.startsWith(base_url + "servers/" || !settings.map_backgrounds)) {
+      if (!window.location.href.startsWith(base_url + "servers/") || !settings.map_backgrounds) {
         observer.disconnect();
         return;
       }
@@ -2755,7 +2841,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         if (textNode) textNode.textContent = entry.nickname;
       }
 
-      if (settings.customizations && userClan) {
+      if (settings.customizations) {
         const clan = profile.querySelector(".clan-tag");
         profile.querySelector(".you").style = "width: 100%";
         nickname.style.cssText +=
@@ -2787,21 +2873,24 @@ window.addEventListener("DOMContentLoaded", async () => {
 
         const customs = customizations.find((c) => c.shortId === shortId);
 
+        const currentUser = JSON.parse(localStorage.getItem("current-user"));
+        const isOwnProfile = currentUser && currentUser.shortId === shortId;
+
         const savedGradient = JSON.parse(localStorage.getItem("gradientSettings") || "null");
         const savedBadges = JSON.parse(localStorage.getItem("badgeSettings") || "null");
         const savedShadow = JSON.parse(localStorage.getItem("gradientShadowSettings") || "null");
 
-        const gradientData = customs?.gradient || (settings.local_customizations && savedGradient ? {
+        const gradientData = customs?.gradient || (settings.local_customizations && isOwnProfile && savedGradient ? {
           rot: `${savedGradient.rotation}deg`,
           stops: savedGradient.colors.map(c => c.hex),
           shadow: savedShadow ? (savedShadow.intensity > 0 ? `0px 0px ${savedShadow.intensity}px ${savedShadow.color}` : "none") : "none"
         } : null);
 
-        const badgesData = customs?.badges || (settings.local_customizations ? savedBadges : null) || [];
+        const badgesData = customs?.badges || (settings.local_customizations && isOwnProfile ? savedBadges : null) || [];
         const isAnimated = customs?.animated ?? false;
-        const bgUrl = customs?.["profile-background"] || (settings.local_customizations ? localStorage.getItem("backgroundSettings") : null);
+        const bgUrl = customs?.["profile-background"] || (settings.local_customizations && isOwnProfile ? localStorage.getItem("backgroundSettings") : null);
 
-        if (customs || savedGradient || savedBadges || bgUrl) {
+        if (customs || (isOwnProfile && (savedGradient || savedBadges || bgUrl))) {
           const span = nickname.querySelector(".nickname-span");
 
           if (gradientData && span) {
@@ -2974,6 +3063,9 @@ window.addEventListener("DOMContentLoaded", async () => {
       process(document.querySelectorAll(".desktop-game-interface .player-left-cont .player-cont"), red_players);
       process(document.querySelectorAll(".desktop-game-interface .player-right-cont .player-cont"), blue_players);
       process(document.querySelectorAll(".desktop-game-interface .tab-info .player-cont"), dm_players);
+
+      console.log(red_players);
+      console.log(blue_players)
     };
 
     const findPlayer = (name) => {
@@ -3424,7 +3516,7 @@ window.addEventListener("DOMContentLoaded", async () => {
               if (!killsEl || !hsp) return;
 
               const killCount = parseFloat(killsEl.innerText);
-              const hsPercentage = (headshotsCount / killCount).toFixed(2) * 100;
+              const hsPercentage = (headshotsCount / killCount * 100).toFixed(2);
 
               const nextHtml = `<span class="hs-percentage">${hsPercentage}</span> <span class="text-hs" style="font-size: 0.75rem;">HS%</span>`;
               if (hsp.innerHTML !== nextHtml) {
@@ -4377,7 +4469,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 
       const eyeDiv = document.createElement("div");
       eyeDiv.className = "spectate-eye";
-      eyeDiv.innerHTML = '<i class="fa - solid fa - eye"></i>';
+      eyeDiv.innerHTML = '<i class="fas fa-eye"></i>';
       div.insertAdjacentElement("afterend", eyeDiv);
 
       eyeDiv.addEventListener("click", (e) => {
@@ -4407,7 +4499,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       }
 
       document.querySelectorAll(".online").forEach((div) => {
-        if (div.textContent.trim().toLowerCase().includes("in game"))
+        if (div.textContent.includes("in game"))
           addSpectateButton(div);
         else
           div.querySelector(".spectate-eye")?.remove();
