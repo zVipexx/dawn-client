@@ -262,15 +262,12 @@
     "gradient": {
       "rot": "to right",
       "stops": [
-        "#F54545",
-        "#FE691E",
-        "#FF8A05",
-        "#FFA203",
-        "#F5BD25"
+        "#88B9E7",
+        "#88B9E7"
       ]
     },
     "badges": [
-      "https://i.imgur.com/tRJYLJF.png"
+      "https://i.imgur.com/ajLkfFo.png"
     ]
   },
   {
