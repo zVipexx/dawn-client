@@ -600,14 +600,14 @@
     "gradient": {
       "rot": "90deg",
       "stops": [
-        "#000000 0%",
-        "#2f2f2f 50%",
-        "#ffffff 100%"
-      ],
-      "shadow": "0px 0px 46px rgba(120, 90, 90, 0.8)"
+        "#00FF00 0%",
+        "#0000FF 50%",
+        "#FFFF00 100%"
+      ]
     },
     "badges": [
-      "https://i.imgur.com/vv6idrN.png"
+      "https://i.imgur.com/OGxRl68.png",
+      "https://i.imgur.com/kNCEePB.png"
     ]
   },
   {
