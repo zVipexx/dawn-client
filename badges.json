@@ -576,21 +576,6 @@
     ]
   },
   {
-    "shortId": "MURDER",
-    "gradient": {
-      "rot": "205deg",
-      "stops": [
-        "#000000 0%",
-        "#ffffff 33%",
-        "#ff0000 67%",
-        "#ffffff 100%"
-      ]
-    },
-    "badges": [
-      "https://i.imgur.com/rt8x0tL.png"
-    ]
-  },
-  {
     "shortId": "Q9ULUE",
     "profile-background": "https://i.imgur.com/C0rV13I.png"
   },
