@@ -478,7 +478,7 @@ Array.isArray = function (...args) {
   const customSkinLink = getCurrentSkinUrl();
   const isSkinTexture = (width === 64 || width === 42) &&
     (height === 64 || height === 42 || height === 32);
-  const ingame = !!document.querySelector(".loading-scene");
+  const ingame = !!document.querySelector(".desktop-game-interface");
 
   if (isSkinTexture && image.src !== muzzleImg && !image.src.includes(muzzleImg2)) {
     if (ingame && customSkinLink && !patchedTextures.has(texture)) {
