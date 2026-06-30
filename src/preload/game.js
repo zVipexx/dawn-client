@@ -2643,8 +2643,9 @@ window.addEventListener("DOMContentLoaded", async () => {
       }
     };
 
-    input.addEventListener("input", () => {
+    input.addEventListener("input", (e) => {
       if (!ipcRenderer.sendSync("get-settings").command_abbreviations) return;
+      if (e.inputType && e.inputType.startsWith("delete")) return;
       const text = input.value;
 
       const match = text.match(/^(\S*)(\s*)(\S*)(\s*)(.*)$/);
@@ -2832,6 +2833,8 @@ window.addEventListener("DOMContentLoaded", async () => {
       const userClan = profile.querySelector(".clan-tag")?.textContent.trim();
       const content = profile.querySelector(".profile > .content");
       const nickname = profile.querySelector(".nickname");
+
+      if (!nickname) return;
 
       const nicknames = JSON.parse(localStorage.getItem("nicknames") || "{}");
       const entry = nicknames[shortId];
@@ -3063,9 +3066,6 @@ window.addEventListener("DOMContentLoaded", async () => {
       process(document.querySelectorAll(".desktop-game-interface .player-left-cont .player-cont"), red_players);
       process(document.querySelectorAll(".desktop-game-interface .player-right-cont .player-cont"), blue_players);
       process(document.querySelectorAll(".desktop-game-interface .tab-info .player-cont"), dm_players);
-
-      console.log(red_players);
-      console.log(blue_players)
     };
 
     const findPlayer = (name) => {
@@ -3342,7 +3342,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 
       const killCount = parseFloat(kills.innerText);
       const deathCount = parseFloat(deaths.innerText) || 1;
-      const kdRatio = (killCount / deathCount).toFixed(2);
+      const kdRatio = parseFloat((killCount / deathCount).toFixed(2));
 
       const nextHtml = `<span class="kd-ratio">${kdRatio}</span> <span class="text-kd" style="font-size: 0.75rem;">K/D</span>`;
       if (kd.innerHTML !== nextHtml) {
@@ -3515,8 +3515,8 @@ window.addEventListener("DOMContentLoaded", async () => {
 
               if (!killsEl || !hsp) return;
 
-              const killCount = parseFloat(killsEl.innerText);
-              const hsPercentage = (headshotsCount / killCount * 100).toFixed(2);
+              const killCount = killsEl.innerText;
+              const hsPercentage = parseFloat((headshotsCount / killCount * 100)).toFixed(0);
 
               const nextHtml = `<span class="hs-percentage">${hsPercentage}</span> <span class="text-hs" style="font-size: 0.75rem;">HS%</span>`;
               if (hsp.innerHTML !== nextHtml) {
@@ -4004,6 +4004,9 @@ window.addEventListener("DOMContentLoaded", async () => {
           clearInterval(warmupInterval);
           red_players = [];
           blue_players = [];
+          assistsCount = 0;
+          headshotsCount = 0;
+          objectivesCount = 0;
           updatePlayerLists();
           updateMessages();
           updateTeammates();
@@ -4722,7 +4725,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     });
   };
 
-  const customNotification = (data) => {
+  window.customNotification = (data) => {
     const notifElement = document.createElement("div");
     notifElement.classList.add("vue-notification-wrapper");
     notifElement.style =
@@ -4847,6 +4850,8 @@ window.addEventListener("DOMContentLoaded", async () => {
     if (url === `${base_url}hub/market`) handleMarket();
     if (url === `${base_url}friends`) handleFriends();
     if (url === `${base_url}inventory`) handleInventory();
+
+    window.dispatchEvent(new CustomEvent("url-changed", { detail: url }));
   });
 
   const handleInitialLoad = () => {

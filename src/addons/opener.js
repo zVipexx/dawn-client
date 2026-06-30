@@ -173,7 +173,7 @@ async function executeCardScript(customcardlist) {
     elem.classList = "vue-notification-wrapper";
     elem.style =
       "transition-timing-function: ease; transition-delay: 0s; transition-property: all;";
-    elem.innerHTML = `<div data-v-3462d80a="" data-v-460e7e47="" class="alert-default"><span data-v-3462d80a="" class="text">${message}</span></div>`;
+    elem.innerHTML = `<div class="alert-default" style="display: flex; align-items: center; padding: .9rem 1.1rem; margin-bottom: .5rem; color: var(--white); cursor: pointer; box-shadow: 0 0 0.7rem rgba(0,0,0,.25); border-radius: .2rem; background: linear-gradient(262.54deg,#202639 9.46%,#223163 100.16%); margin-left: 1rem; border: solid .15rem var(--WwNnWwmM-1); font-family: 'Exo 2';"><span data-v-042f7c6a="" class="text">${message}</span></div>`;
     elem.onclick = function () {
       try {
         elem.remove();
@@ -194,7 +194,7 @@ async function executeCardScript(customcardlist) {
     end_elem.classList = "vue-notification-wrapper";
     end_elem.style =
       "transition-timing-function: ease; transition-delay: 0s; transition-property: all;";
-    end_elem.innerHTML = `<div data-v-3462d80a="" data-v-460e7e47="" class="alert-default"><span data-v-3462d80a="" class="text">Finished running, check console for more details</span></div>`;
+    end_elem.innerHTML = `<div class="alert-default" style="display: flex; align-items: center; padding: .9rem 1.1rem; margin-bottom: .5rem; color: var(--white); cursor: pointer; box-shadow: 0 0 0.7rem rgba(0,0,0,.25); border-radius: .2rem; background: linear-gradient(262.54deg,#202639 9.46%,#223163 100.16%); margin-left: 1rem; border: solid .15rem var(--WwNnWwmM-1); font-family: 'Exo 2';"><span data-v-042f7c6a="" class="text">Finished running, check console for more details</span></div>`;
     end_elem.onclick = function () {
       try {
         end_elem.remove();
@@ -226,7 +226,7 @@ async function executeCardScript(customcardlist) {
     elem.classList.add("vue-notification-wrapper");
     elem.style =
       "transition-timing-function: ease; transition-delay: 0s; transition-property: all;";
-    elem.innerHTML = `<div data-v-3462d80a="" data-v-460e7e47="" class="alert-default"><span data-v-3462d80a="" class="text" style="color:#${coloroutput[rarity.toUpperCase()] || coloroutput.DEFAULT
+    elem.innerHTML = `<div class="alert-default" style="display: flex; align-items: center; padding: .9rem 1.1rem; margin-bottom: .5rem; color: var(--white); cursor: pointer; box-shadow: 0 0 0.7rem rgba(0,0,0,.25); border-radius: .2rem; background: linear-gradient(262.54deg,#202639 9.46%,#223163 100.16%); margin-left: 1rem; border: solid .15rem var(--WwNnWwmM-1); font-family: 'Exo 2';"><span data-v-042f7c6a="" class="text" style="color:#${coloroutput[rarity.toUpperCase()] || coloroutput.DEFAULT
       }">${text}</span></div>`;
     elem.onclick = function () {
       try {
@@ -606,7 +606,7 @@ async function executeChestScript(customchestlist) {
     elem.classList = "vue-notification-wrapper";
     elem.style =
       "transition-timing-function: ease; transition-delay: 0s; transition-property: all;";
-    elem.innerHTML = `<div data-v-3462d80a="" data-v-460e7e47="" class="alert-default"><span data-v-3462d80a="" class="text">${message}</span></div>`;
+    elem.innerHTML = `<div class="alert-default" style="display: flex; align-items: center; padding: .9rem 1.1rem; margin-bottom: .5rem; color: var(--white); cursor: pointer; box-shadow: 0 0 0.7rem rgba(0,0,0,.25); border-radius: .2rem; background: linear-gradient(262.54deg,#202639 9.46%,#223163 100.16%); margin-left: 1rem; border: solid .15rem var(--WwNnWwmM-1); font-family: 'Exo 2';"><span data-v-042f7c6a="" class="text">${message}</span></div>`;
     elem.onclick = function () {
       try {
         elem.remove();
@@ -627,7 +627,7 @@ async function executeChestScript(customchestlist) {
     end_elem.classList = "vue-notification-wrapper";
     end_elem.style =
       "transition-timing-function: ease; transition-delay: 0s; transition-property: all;";
-    end_elem.innerHTML = `<div data-v-3462d80a="" data-v-460e7e47="" class="alert-default"><span data-v-3462d80a="" class="text">Finished running, check console for more details</span></div>`;
+    end_elem.innerHTML = `<div class="alert-default" style="display: flex; align-items: center; padding: .9rem 1.1rem; margin-bottom: .5rem; color: var(--white); cursor: pointer; box-shadow: 0 0 0.7rem rgba(0,0,0,.25); border-radius: .2rem; background: linear-gradient(262.54deg,#202639 9.46%,#223163 100.16%); margin-left: 1rem; border: solid .15rem var(--WwNnWwmM-1); font-family: 'Exo 2';"><span data-v-042f7c6a="" class="text">Finished running, check console for more details</span></div>`;
     end_elem.onclick = function () {
       try {
         end_elem.remove();
@@ -646,6 +646,7 @@ async function executeChestScript(customchestlist) {
   //This code displays the result of the container ingame + in the console
   function ingameShowcase(message, rarity, name) {
     rarity = translations[rarity];
+
     if (rarity == undefined) {
       rarity = rarity_backup(bvl, "Skin Name", "Rarity", name);
     }
@@ -658,7 +659,7 @@ async function executeChestScript(customchestlist) {
     elem.classList.add("vue-notification-wrapper");
     elem.style =
       "transition-timing-function: ease; transition-delay: 0s; transition-property: all;";
-    elem.innerHTML = `<div data-v-3462d80a="" data-v-460e7e47="" class="alert-default"><span data-v-3462d80a="" class="text" style="color:#${coloroutput[rarity.toUpperCase()] || coloroutput.DEFAULT
+    elem.innerHTML = `<div class="alert-default" style="display: flex; align-items: center; padding: .9rem 1.1rem; margin-bottom: .5rem; color: var(--white); cursor: pointer; box-shadow: 0 0 0.7rem rgba(0,0,0,.25); border-radius: .2rem; background: linear-gradient(262.54deg,#202639 9.46%,#223163 100.16%); margin-left: 1rem; border: solid .15rem var(--WwNnWwmM-1); font-family: 'Exo 2';"><span data-v-042f7c6a="" class="text" style="color:#${coloroutput[rarity.toUpperCase()] || coloroutput.DEFAULT
       }">${text}</span></div>`;
     elem.onclick = function () {
       try {

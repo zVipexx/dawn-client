@@ -453,52 +453,43 @@ const oldIsArr = Array.isArray;
 const muzzleImg = "https://kirka.io/assets/img/__shooting-fire__.effa20af.png";
 const muzzleImg2 = "shooting-fire";
 
-let patchedImages = new WeakSet();
+let patchedTextures = new Map();
 
 function getCurrentSkinUrl() {
-  if (localStorage.csl_enabled !== "true") {
-    return null;
-  }
-
-  let useurl = "";
-  if (localStorage.csl_url_or_base64 === "false") {
-    useurl = localStorage.csl_url;
-  } else {
+  if (localStorage.csl_enabled !== "true") return null;
+  let useurl;
+  if (localStorage.csl_url_or_base64 === "true") {
     useurl = localStorage.csl_colorpicker_inputurl;
+  } else {
+    useurl = localStorage.csl_url;
   }
-
-  if (!useurl || useurl === "") {
-    useurl = localStorage.csl_url || default_url;
-  }
-
-  return useurl;
+  return useurl || default_url;
 }
 
 Array.isArray = function (...args) {
   const arg = args[0];
-  if (!arg || !arg.map || !arg.map.image) {
-    return oldIsArr.apply(Array, args);
-  }
+  if (!arg || !arg.map || !arg.map.image) return oldIsArr.apply(Array, args);
 
-  const image = arg.map.image;
+  const texture = arg.map;
+  const image = texture.image;
   const width = image.width;
   const height = image.height;
-  const src = image.src;
 
   const customSkinLink = getCurrentSkinUrl();
-
   const isSkinTexture = (width === 64 || width === 42) &&
     (height === 64 || height === 42 || height === 32);
+  const ingame = !!document.querySelector(".loading-scene");
 
-  if (customSkinLink &&
-    isSkinTexture &&
-    src !== muzzleImg &&
-    src !== customSkinLink &&
-    !src.includes(muzzleImg2) &&
-    !patchedImages.has(image)) {
-
-    image.src = customSkinLink;
-    patchedImages.add(image);
+  if (isSkinTexture && image.src !== muzzleImg && !image.src.includes(muzzleImg2)) {
+    if (ingame && customSkinLink && !patchedTextures.has(texture)) {
+      patchedTextures.set(texture, image.src);
+      image.src = customSkinLink;
+      texture.needsUpdate = true;
+    } else if (!ingame && patchedTextures.has(texture)) {
+      image.src = patchedTextures.get(texture);
+      patchedTextures.delete(texture);
+      texture.needsUpdate = true;
+    }
   }
 
   return oldIsArr.apply(Array, args);

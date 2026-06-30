@@ -986,7 +986,7 @@ class Menu {
         savedTransition = menu.style.transition;
         menu.style.transition = "none";
 
-        startMouseX = e.clientҦ;
+        startMouseX = e.clientX;
         startMouseY = e.clientY;
         startW = menu.offsetWidth;
         startH = menu.offsetHeight;

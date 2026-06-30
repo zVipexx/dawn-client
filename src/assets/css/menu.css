@@ -548,10 +548,12 @@
 .menu .option.dropdown .content {
     height: 0;
     width: 100%;
+    opacity: 0;
 }
 
 .menu .option.dropdown.active .content {
     height: 100%;
+    opacity: 1;
 }
 
 .menu .option.dropdown i {
@@ -2278,6 +2280,14 @@ button:focus,
     display: block;
 }
 
+.menu canvas {
+    cursor: zoom-in;
+}
+
+#juice-lightbox * {
+    cursor: zoom-out;
+}
+
 .juice-lightbox-img {
     position: relative !important;
     max-width: 90vw !important;
@@ -2336,6 +2346,7 @@ button:focus,
     width: 100%;
     height: 100%;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     visibility: hidden;
@@ -2343,6 +2354,12 @@ button:focus,
     z-index: 999999999;
     pointer-events: none;
     transition: opacity 0.15s ease;
+}
+
+#juice-lightbox #info {
+    color: white;
+    z-index: 1;
+    padding: .5rem;
 }
 
 .juice-lightbox-backdrop {
@@ -2627,7 +2644,6 @@ button:focus,
 }
 
 .weapons-sidebar .bottom {
-    margin-top: .2rem;
     display: flex;
     justify-content: center;
     gap: 0.25rem;
@@ -2744,4 +2760,8 @@ button:focus,
 .fab,
 .fas {
     font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
+}
+
+.profile .stat-value {
+    white-space: nowrap;
 }

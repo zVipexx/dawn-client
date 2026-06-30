@@ -1,7 +1,19 @@
 [
   {
+    "version": "1.1.1",
+    "date": "30/6/2026",
+    "changelogs": [
+      "Added previews to gallery images",
+      "Added a Ctrl + C Keybind to previews to copy the image",
+      "Made the folders in the gallery into dropdowns",
+      "Made Custom Skin Link only apply while in-game",
+      "Fixed broken Pack/Chest Opener styling",
+      "Fixed stats not resetting when warmup ended"
+    ]
+  },
+  {
     "version": "1.1.0",
-    "date": "/6/2026",
+    "date": "21/6/2026",
     "changelogs": [
       "Updated the version number to differentiate big updates from smaller changes",
       "Added Room Presets import/export",
@@ -10,7 +22,6 @@
       "Screenshots made using F2 will now be saved into the local gallery",
       "Adjusted the maximum ADS Power setting to 1 (default)",
       "Changed the ADS Power setting to be per-weapon",
-      "Readded GLB swapping (note that this will break any weapon customizations)",
       "Fixed local Customizations applying to other profiles",
       "Fixed the ingame HS% Indicator sometimes showing extremely long decimals",
       "Fixed Font Awesome icons breaking when using css with custom fonts"

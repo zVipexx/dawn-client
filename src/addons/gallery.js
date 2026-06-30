@@ -18,6 +18,52 @@ const initGallery = () => {
     galleryFolderPath = await ipcRenderer.invoke("get-gallery-root");
   })();
 
+  function getSavedCategoryStates() {
+    try {
+      const saved = localStorage.getItem("gallery-category-states");
+      return saved ? JSON.parse(saved) : {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function saveCategoryState(categoryPath, isOpen) {
+    try {
+      const states = getSavedCategoryStates();
+      states[categoryPath] = isOpen;
+      localStorage.setItem("gallery-category-states", JSON.stringify(states));
+    } catch (e) {
+      console.error("Failed to save category state:", e);
+    }
+  }
+
+  let categoriesMeta = [];
+
+  function refreshOpenHeights() {
+    const savedStates = getSavedCategoryStates();
+    categoriesMeta.forEach(({ contentWrapper, arrowIcon, categoryPath }) => {
+      const isOpen = savedStates.hasOwnProperty(categoryPath)
+        ? savedStates[categoryPath]
+        : true;
+      if (isOpen) {
+        contentWrapper.style.maxHeight = contentWrapper.scrollHeight + "px";
+        contentWrapper.style.opacity = "1";
+        arrowIcon.style.transform = "rotate(0deg)";
+      } else {
+        contentWrapper.style.maxHeight = "0";
+        contentWrapper.style.opacity = "0";
+        arrowIcon.style.transform = "rotate(-90deg)";
+      }
+    });
+  }
+
+  const observer = new MutationObserver(() => {
+    if (galleryContainer.classList.contains("active")) {
+      refreshOpenHeights();
+    }
+  });
+  observer.observe(galleryContainer, { attributes: true, attributeFilter: ["class"] });
+
   async function handleEntry(entry, categoryPath) {
     const targetPath = path.join(categoryPath, entry.name);
 
@@ -79,6 +125,8 @@ const initGallery = () => {
 
   ipcRenderer.on("gallery-list", (event, categories) => {
     galleryContainer.innerHTML = "";
+    categoriesMeta = [];
+    const savedStates = getSavedCategoryStates();
 
     if (!categories.length) {
       galleryContainer.innerHTML = "<div>No content found in gallery. Drag and drop folders/files to import.</div>";
@@ -92,12 +140,20 @@ const initGallery = () => {
 
       const header = document.createElement("div");
       header.classList.add("header");
+      header.style.cursor = "pointer";
+      header.style.display = "flex";
+      header.style.alignItems = "center";
+      header.style.userSelect = "none";
       header.innerHTML = `
         <div class="divider"></div>
         <span>${category.name.toUpperCase()}</span>
+        <i class="fas fa-angle-down" style="transition: 0.2s ease;"></i>
         <div class="divider"></div>
       `;
-      categoryEl.appendChild(header);
+
+      const contentWrapper = document.createElement("div");
+      contentWrapper.classList.add("category-content");
+      contentWrapper.style.overflow = "hidden";
 
       const btnContainer = document.createElement("div");
       btnContainer.classList.add("category-buttons");
@@ -141,7 +197,7 @@ const initGallery = () => {
 
       btnContainer.appendChild(openFolderBtn);
       btnContainer.appendChild(importBtn);
-      categoryEl.appendChild(btnContainer);
+      contentWrapper.appendChild(btnContainer);
 
       const fileList = document.createElement("div");
       fileList.classList.add("option-group");
@@ -170,16 +226,23 @@ const initGallery = () => {
             imgPreview.style.height = "64px";
             imgPreview.style.marginRight = "10px";
 
-            ipcRenderer.invoke('get-file-preview', file.path).then(dataUrl => {
+            ipcRenderer.invoke("get-file-preview", file.path).then(dataUrl => {
               const img = new Image();
               img.onload = () => {
                 const ctx = imgPreview.getContext("2d");
-                const scale = Math.max(64 / img.width, 64 / img.height);
+                const scale = Math.min(64 / img.width, 64 / img.height);
                 const x = (64 - img.width * scale) / 2;
                 const y = (64 - img.height * scale) / 2;
                 ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
               };
               img.src = dataUrl;
+
+              imgPreview.addEventListener("click", (e) => {
+                e.stopPropagation();
+                ipcRenderer.invoke("get-file-preview", file.path).then(originalDataUrl => {
+                  openLightbox(originalDataUrl, 0);
+                });
+              });
             });
           }
 
@@ -230,9 +293,34 @@ const initGallery = () => {
         });
       }
 
-      categoryEl.appendChild(fileList);
+      contentWrapper.appendChild(fileList);
+      categoryEl.appendChild(header);
+      categoryEl.appendChild(contentWrapper);
+
+      const arrowIcon = header.querySelector(".fa-angle-down");
+      categoriesMeta.push({ contentWrapper, arrowIcon, categoryPath: category.path });
+
+      header.addEventListener("click", () => {
+        const currentlyOpen = contentWrapper.style.maxHeight !== "0px";
+        const newState = !currentlyOpen;
+
+        if (newState) {
+          contentWrapper.style.maxHeight = contentWrapper.scrollHeight + "px";
+          contentWrapper.style.opacity = "1";
+          arrowIcon.style.transform = "rotate(0deg)";
+        } else {
+          contentWrapper.style.maxHeight = "0";
+          contentWrapper.style.opacity = "0";
+          arrowIcon.style.transform = "rotate(-90deg)";
+        }
+
+        saveCategoryState(category.path, newState);
+      });
+
       galleryContainer.appendChild(categoryEl);
     });
+
+    requestAnimationFrame(() => refreshOpenHeights());
   });
 
   ipcRenderer.on("file-content-copied", () => {

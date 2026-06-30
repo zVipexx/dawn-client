@@ -310,7 +310,7 @@ const isInstalled = (type, item) => {
 let lightboxItems = [];
 let lightboxIndex = 0;
 
-const openLightbox = (urls, index = 0) => {
+window.openLightbox = (urls, index = 0) => {
   lightboxItems = Array.isArray(urls) ? urls : [urls];
   lightboxIndex = index;
 
@@ -321,6 +321,7 @@ const openLightbox = (urls, index = 0) => {
     overlay.innerHTML = `
       <div class="juice-lightbox-backdrop"></div>
       <img class="juice-lightbox-img" draggable="false" />
+      <span id="info">Ctrl+C to copy</span>
     `;
 
     document.body.appendChild(overlay);
@@ -332,14 +333,34 @@ const openLightbox = (urls, index = 0) => {
       overlay.classList.remove("active");
     };
 
-    overlay.addEventListener("click", () => {
-      overlay.addEventListener("click", close);
-    });
-
-    document.addEventListener("keydown", (e) => {
+    window.keyHandler = (e) => {
       if (e.key === "Escape" && overlay.classList.contains("active")) close();
-    });
-  }
+      if ((e.ctrlKey || e.metaKey) && e.key === "c" && overlay.classList.contains("active")) {
+        e.preventDefault();
+        const img = overlay.querySelector(".juice-lightbox-img");
+        if (img) {
+          const canvas = document.createElement("canvas");
+          canvas.width = img.naturalWidth;
+          canvas.height = img.naturalHeight;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0);
+          canvas.toBlob(blob => {
+            navigator.clipboard.write([
+              new ClipboardItem({ "image/png": blob })
+            ]);
+          });
+          overlay.querySelector("#info").textContent = "Copied to clipboard!"
+          customNotification({
+            message: "Image copied to clipboard!",
+            icon: img.src,
+          });
+        }
+      }
+    };
+
+    overlay.addEventListener("click", close);
+  } else overlay.querySelector("#info").textContent = "Ctrl+C to copy";
+  document.addEventListener("keydown", keyHandler);
 
   updateLightbox();
   overlay.classList.add("active");
@@ -378,9 +399,9 @@ const renderCards = (container, items, type, allRaw) => {
         previewHtml = `<img src="${item.previewUrl}" alt="${item.title}" draggable="false" class="card-img" />`;
         if (hasIngame) {
           previewHtml += `<div class="card-preview-dots">
-                <span class="preview-dot active"></span>
-                <span class="preview-dot"></span>
-               </div>`;
+                  <span class="preview-dot active"></span>
+                  <span class="preview-dot"></span>
+                </div>`;
         }
       }
     }
@@ -423,21 +444,21 @@ const renderCards = (container, items, type, allRaw) => {
     }
 
     card.innerHTML = `
-      ${showPreview ? `<div class="card-preview">${previewHtml}${item.label ? `<span class="card-label">${item.label}</span>` : ""}</div>` : ""}
-      <div class="card-info">
-        <div class="card-title">${item.title}</div>
-        ${item.description ? `<div class="card-desc">${item.description}</div>` : ""}
-        ${item.tags?.length ? `<div class="card-tags">${item.tags.map(t => `<span class="card-tag">${t}</span>`).join("")}</div>` : ""}
-        <div class="card-footer">
-          <span class="card-owner">${(item.owner && item.owner !== "Unknown") ? item.owner : ""}</span>
-          <div class="card-actions">
-            ${soundsPreviewBtn}
-            ${linkBtn}
-            ${btnHtml}
+        ${showPreview ? `<div class="card-preview">${previewHtml}${item.label ? `<span class="card-label">${item.label}</span>` : ""}</div>` : ""}
+        <div class="card-info">
+          <div class="card-title">${item.title}</div>
+          ${item.description ? `<div class="card-desc">${item.description}</div>` : ""}
+          ${item.tags?.length ? `<div class="card-tags">${item.tags.map(t => `<span class="card-tag">${t}</span>`).join("")}</div>` : ""}
+          <div class="card-footer">
+            <span class="card-owner">${(item.owner && item.owner !== "Unknown") ? item.owner : ""}</span>
+            <div class="card-actions">
+              ${soundsPreviewBtn}
+              ${linkBtn}
+              ${btnHtml}
+            </div>
           </div>
         </div>
-      </div>
-    `;
+      `;
 
     if (showPreview && item.previewUrl) {
       const previewDiv = card.querySelector(".card-preview");
@@ -598,6 +619,18 @@ const initBrowser = (menu) => {
 
   let currentKey = "css";
   let currentItems = [];
+
+  menu.addEventListener("click", (e) => {
+    if (e.target.closest(".fas")) return;
+
+    if (e.target.tagName.toLowerCase() === "img") {
+      e.stopPropagation();
+      openLightbox(e.target.src, 0);
+    } else if (e.target.tagName.toLowerCase() === "canvas") {
+      e.stopPropagation();
+      openLightbox(e.target.toDataURL(), 0)
+    }
+  });
 
   const loadSection = async (key) => {
     currentKey = key;
