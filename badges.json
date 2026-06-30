@@ -262,15 +262,12 @@
     "gradient": {
       "rot": "to right",
       "stops": [
-        "#F54545",
-        "#FE691E",
-        "#FF8A05",
-        "#FFA203",
-        "#F5BD25"
+        "#88B9E7",
+        "#88B9E7"
       ]
     },
     "badges": [
-      "https://i.imgur.com/tRJYLJF.png"
+      "https://i.imgur.com/ajLkfFo.png"
     ]
   },
   {
@@ -579,21 +576,6 @@
     ]
   },
   {
-    "shortId": "MURDER",
-    "gradient": {
-      "rot": "205deg",
-      "stops": [
-        "#000000 0%",
-        "#ffffff 33%",
-        "#ff0000 67%",
-        "#ffffff 100%"
-      ]
-    },
-    "badges": [
-      "https://i.imgur.com/rt8x0tL.png"
-    ]
-  },
-  {
     "shortId": "Q9ULUE",
     "profile-background": "https://i.imgur.com/C0rV13I.png"
   },
@@ -603,14 +585,14 @@
     "gradient": {
       "rot": "90deg",
       "stops": [
-        "#000000 0%",
-        "#2f2f2f 50%",
-        "#ffffff 100%"
-      ],
-      "shadow": "0px 0px 46px rgba(120, 90, 90, 0.8)"
+        "#00FF00 0%",
+        "#0000FF 50%",
+        "#FFFF00 100%"
+      ]
     },
     "badges": [
-      "https://i.imgur.com/vv6idrN.png"
+      "https://i.imgur.com/OGxRl68.png",
+      "https://i.imgur.com/kNCEePB.png"
     ]
   },
   {
@@ -649,7 +631,9 @@
   {
     "shortId": "52326P",
     "badges": [
-      "https://i.imgur.com/9BVPsBp.png"
+      "https://i.imgur.com/9BVPsBp.png",
+      "https://i.imgur.com/681O4TX.png",
+      "https://i.imgur.com/514mqin.png"
     ]
   },
   {
