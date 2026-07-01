@@ -551,6 +551,10 @@
     opacity: 0;
 }
 
+.menu .option.dropdown .option {
+    margin-top: .5rem;
+}
+
 .menu .option.dropdown.active .content {
     height: 100%;
     opacity: 1;
@@ -644,9 +648,20 @@
     color: rgba(var(--red));
 }
 
+.menu .experimental,
 .menu .requires-restart,
 .menu .requires-refresh {
     position: relative;
+}
+
+.menu .experimental>span:not(.description):after {
+    content: "EXPERIMENTAL";
+    color: rgba(var(--green));
+    font-size: 0.75rem;
+    padding: 0.15rem 0.3rem;
+    background: rgba(var(--green), 0.1);
+    border-radius: 0.25rem;
+    margin-left: 0.25rem;
 }
 
 .menu .requires-restart>span:not(.description):after {
@@ -2764,4 +2779,13 @@ button:focus,
 
 .profile .stat-value {
     white-space: nowrap;
+}
+
+#quickjoin-btn {
+    border-top: 3px solid var(--blue-5);
+    border-bottom: 3px solid var(--blue-6);
+    width: 384px;
+    padding-top: calc(.9em - 3px);
+    padding-bottom: calc(.9em - 3px);
+    border-radius: 2px;
 }

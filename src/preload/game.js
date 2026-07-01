@@ -829,6 +829,22 @@ window.addEventListener("DOMContentLoaded", async () => {
         styles.push("#juice-keybind-reminder { display: none; }");
       if (!settings.spectate_button)
         styles.push(".spectate-eye { display: none !important; }");
+      if (!settings.info_region)
+        styles.push("#region { display: none !important; }");
+      if (!settings.info_version)
+        styles.push("#version { display: none !important; }");
+      if (!settings.info_triangles)
+        styles.push("#triangles { display: none !important; }");
+      if (!settings.info_fpsavg)
+        styles.push("#fpsAvg { display: none !important; }");
+      if (!settings.info_fps)
+        styles.push("#fps { display: none !important; }");
+      if (!settings.info_ping)
+        styles.push("#ping { display: none !important; }");
+      if (!settings.info_tick)
+        styles.push("#tickTime { display: none !important; }");
+      if (!settings.info_input)
+        styles.push("#inputDelay { display: none !important; }");
 
       addedStyles.innerHTML = styles.join("");
     };
@@ -853,6 +869,14 @@ window.addEventListener("DOMContentLoaded", async () => {
         "show_trade_buttons",
         "accept_on_click",
         "lobby_keybind_reminder",
+        "info_region",
+        "info_version",
+        "info_triangles",
+        "info_fpsavg",
+        "info_fps",
+        "info_ping",
+        "info_tick",
+        "info_input",
       ];
       if (relevantSettings.includes(e.detail.setting)) updateUIFeatures();
     });
@@ -2146,6 +2170,58 @@ window.addEventListener("DOMContentLoaded", async () => {
       lobbyNews(settings);
       juiceDiscordButton();
 
+      window.createQuickJoin = () => {
+        if (!settings.quickjoin_button) return;
+        const playContent = document.querySelector(".play-content")
+        const playContentUp = playContent.querySelector(".play-content-up");
+
+        const quickJoin = playContentUp.cloneNode(true);
+        quickJoin.classList.add("quickjoin-container")
+        quickJoin.querySelector(".create-btn")?.remove();
+        quickJoin.style.marginBottom = ".5rem";
+
+        const quickJoinBtn = quickJoin.querySelector(".join-btn");
+        quickJoinBtn.id = "quickjoin-btn";
+        quickJoinBtn.textContent = "QUICKJOIN";
+        quickJoinBtn.title = "Join the lobby/game link from your clipboard";
+
+        if (quickJoinBtn.dataset.listenerAttached) return;
+        quickJoinBtn.dataset.listenerAttached = "true";
+
+        quickJoinBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+
+          playContentUp.querySelector(".join-btn")?.click();
+
+          const observer = new MutationObserver(() => {
+            const input = document.querySelector("#join-modal-modal .input");
+            if (input) {
+              navigator.clipboard.readText().then((text) => {
+                input.value = text;
+                input.dispatchEvent(new Event("input", { bubbles: true }));
+                document.querySelector(".btn")?.click();
+              });
+              observer.disconnect();
+            }
+          });
+
+          observer.observe(document.body, { childList: true, subtree: true });
+        });
+
+        playContent.insertBefore(quickJoin, playContentUp);
+      }
+
+      document.addEventListener("juice-settings-changed", ({ detail }) => {
+        if (detail.setting === "quickjoin_button") {
+          settings.quickjoin_button = detail.value;
+          const el = document.querySelector(".quickjoin-container")
+          if (el) el.remove();
+          else createQuickJoin();
+        }
+      });
+
+      createQuickJoin();
+
       const customizations = JSON.parse(
         localStorage.getItem("juice-customizations")
       );
@@ -2231,7 +2307,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         const clancustomizations = JSON.parse(localStorage.getItem("juice-clans"));
         const clan = document.querySelector(".team-section .heads .clan-tag");
         if (!clan) return;
-        if (!settings.clancustomizations) return;
+        if (!settings.customizations) return;
 
         const userClan = clan.textContent.trim();
         const customs = clancustomizations.find((c) => c.clan === userClan);
@@ -2282,7 +2358,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       }
 
       if (settings.customizations) applyUserCustomizations();
-      if (settings.clancustomizations) applyClanCustomizations();
+      if (settings.customizations) applyClanCustomizations();
 
       const formatMoney = (money) => {
         if (!money.dataset.formatted) {
@@ -2919,15 +2995,6 @@ window.addEventListener("DOMContentLoaded", async () => {
               box-shadow: inset 0 1px 0 5px rgba(0, 0, 0, 0.5),
                           inset 0 6px 0 -5px rgba(0, 0, 0, 0.5);
             `;
-            document.querySelector(".profile-cont .head-right .nickname").style.cssText = `
-              padding: 0 5px 5px 5px;
-              border-radius: 5px;
-              box-shadow: 0 0 15px rgba(0, 0, 0, 1), inset 0 0 30px black;
-            `
-            document.querySelector(".profile-cont .clan-tag").style.cssText = `
-              z-index: 1;
-              transform: translate(15px, -2px)
-            `;
             document.querySelectorAll(".profile-cont .card").forEach(card => {
               card.style.cssText = `
                 background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1));
@@ -2955,7 +3022,7 @@ window.addEventListener("DOMContentLoaded", async () => {
           }
         }
 
-        if (clancustomizations.find((c) => c.clan === userClan) && settings.clancustomizations) {
+        if (clancustomizations.find((c) => c.clan === userClan) && settings.customizations) {
           const customs = clancustomizations.find((c) => c.clan === userClan);
 
           if (customs.gradient) {
@@ -3260,16 +3327,102 @@ window.addEventListener("DOMContentLoaded", async () => {
     };
 
     const updateDeathCont = () => {
-      const nickname = document.querySelector(".death-cont .nickname");
-      const shortId = document.querySelector(".death-cont .short-id")?.textContent.trim().split("#")[1];
+      const deathCont = document.querySelector(".death-cont")
+      if (!deathCont) return;
+
+      const nickname = deathCont.querySelector(".nickname");
+      const textNode = [...nickname.childNodes].find(n => n.nodeType === Node.TEXT_NODE);
+      console.log(textNode.textContent)
+      const userClan = deathCont.querySelector(".killer-clan")?.textContent.trim();
+      const shortIdElem = deathCont.querySelector(".short-id");
+      const shortId = deathCont.querySelector(".short-id")?.textContent.trim().split("#")[1];
       const entry = nicknames[shortId];
 
       if (entry?.nickname && nickname) {
-        const textNode = [...nickname.childNodes].find(n => n.nodeType === Node.TEXT_NODE);
         if (textNode && textNode.textContent !== entry.nickname) {
           textNode.textContent = entry.nickname;
         }
       }
+
+      const applyCustomizations = () => {
+        if (!settings.customizations) return;
+
+        const customizations = JSON.parse(localStorage.getItem("juice-customizations") || "[]");
+        const clancustomizations = JSON.parse(localStorage.getItem("juice-clans") || "[]");
+
+        const customs = customizations?.find((c) => c.shortId === shortId);
+        const clanCustoms = clancustomizations?.find((c) => c.clan === userClan);
+
+        if (customs) {
+          nickname.querySelector(".juice-badges")?.remove();
+
+          const badgesElem = document.createElement("div");
+          badgesElem.style = "display: flex; gap: 0.25rem; align-items: center;";
+          badgesElem.className = "juice-badges";
+
+          if (customs.gradient) {
+            nickname.style.display = "flex";
+            nickname.style.alignItems = "flex-end";
+            nickname.style.gap = "0.25rem";
+            nickname.style.background = `linear-gradient(${customs.gradient.rot}, ${customs.gradient.stops.join(", ")})`;
+            nickname.style.backgroundClip = "text";
+            nickname.style.webkitBackgroundClip = "text";
+            nickname.style.color = "transparent";
+            nickname.style.fontWeight = "700";
+            nickname.style.textShadow = customs.gradient.shadow || "0 0 0 transparent";
+
+            shortIdElem.style.background = "none";
+            shortIdElem.style.webkitBackgroundClip = "unset";
+            shortIdElem.style.backgroundClip = "unset";
+            shortIdElem.style.color = "white";
+            shortIdElem.style.textShadow = "-1px -1px 0 #0f0f0f, 1px -1px 0 #0f0f0f, -1px 1px 0 #0f0f0f, 1px 1px 0 #0f0f0f";
+
+            if (settings.animations && customs.animated) {
+              nickname.style.backgroundSize = "200% 200%";
+              nickname.style.animation = "animated-gradient 3s linear infinite";
+            }
+          }
+
+          const badgeStyle = "height: 24px; width: auto;";
+
+          if (customs.badges?.length) {
+            customs.badges.forEach((badge) => {
+              const img = document.createElement("img");
+              if (badge.startsWith("/") || badge.match(/^[A-Za-z]:\\/)) {
+                const filePath = badge.replace(/\\/g, "/");
+                img.src = `file://${filePath.startsWith("/") ? "" : "/"}${filePath}`;
+              } else {
+                img.src = badge;
+              }
+              img.style.cssText = badgeStyle;
+              badgesElem.appendChild(img);
+            });
+          }
+
+          nickname.insertBefore(badgesElem, shortIdElem);
+        } else {
+          nickname.style = "";
+          nickname.querySelector(".juice-badges")?.remove();
+        }
+
+        const clanElem = deathCont.querySelector(".killer-clan");
+        if (clanElem && clanCustoms?.gradient) {
+          clanElem.style.display = "flex";
+          clanElem.style.background = `linear-gradient(${clanCustoms.gradient.rot}, ${clanCustoms.gradient.stops.join(", ")})`;
+          clanElem.style.backgroundClip = "text";
+          clanElem.style.webkitBackgroundClip = "text";
+          clanElem.style.color = "transparent";
+          clanElem.style.fontWeight = "700";
+          clanElem.style.textShadow = clanCustoms.gradient.shadow || "0 0 0 transparent";
+
+          if (settings.animations && clanCustoms.animated) {
+            clanElem.style.backgroundSize = "200% 200%";
+            clanElem.style.animation = "animated-gradient 3s linear infinite";
+          }
+        }
+      };
+
+      applyCustomizations();
     };
 
     const spectatingObservers = [];
@@ -3715,7 +3868,7 @@ window.addEventListener("DOMContentLoaded", async () => {
                   shortIdElem.style.webkitBackgroundClip = "unset";
                   shortIdElem.style.backgroundClip = "unset";
                   shortIdElem.style.color = "";
-                  shortIdElem.style.textShadow = "none";
+                  shortIdElem.style.textShadow = "-1px -1px 0 #0f0f0f, 1px -1px 0 #0f0f0f, -1px 1px 0 #0f0f0f, 1px 1px 0 #0f0f0f";
                 }
 
                 if (settings.animations && customs.animated) {
@@ -3759,7 +3912,7 @@ window.addEventListener("DOMContentLoaded", async () => {
           });
         }
 
-        if (settings.clancustomizations) {
+        if (settings.customizations) {
           escplayers.forEach((player) => {
             const playerIds = player.querySelector(".player-name");
             const clanElem = playerIds?.querySelector(".label");

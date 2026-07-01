@@ -157,6 +157,70 @@
             <label for="colored_killfeed"></label>
           </div>
         </div>
+        <div class="option dropdown">
+          <div class="option top">
+            <i class=" fas fa-angle-down"></i>
+            <span>Info Overlay</span>
+          </div>
+          <div class="content">
+            <div class="option">
+              <span>Region</span>
+              <div class="checkbox">
+                <input type="checkbox" id="info_region" data-setting="info_region" />
+                <label for="info_region"></label>
+              </div>
+            </div>
+            <div class="option">
+              <span>Version</span>
+              <div class="checkbox">
+                <input type="checkbox" id="info_version" data-setting="info_version" />
+                <label for="info_version"></label>
+              </div>
+            </div>
+            <div class="option">
+              <span>Triangles</span>
+              <div class="checkbox">
+                <input type="checkbox" id="info_triangles" data-setting="info_triangles" />
+                <label for="info_triangles"></label>
+              </div>
+            </div>
+            <div class="option">
+              <span>FPS Average</span>
+              <div class="checkbox">
+                <input type="checkbox" id="info_fpsavg" data-setting="info_fpsavg" />
+                <label for="info_fpsavg"></label>
+              </div>
+            </div>
+            <div class="option">
+              <span>FPS</span>
+              <div class="checkbox">
+                <input type="checkbox" id="info_fps" data-setting="info_fps" />
+                <label for="info_fps"></label>
+              </div>
+            </div>
+            <div class="option">
+              <span>Ping</span>
+              <div class="checkbox">
+                <input type="checkbox" id="info_ping" data-setting="info_ping" />
+                <label for="info_ping"></label>
+              </div>
+            </div>
+            <div class="option">
+              <span>Tick Time</span>
+              <div class="checkbox">
+                <input type="checkbox" id="info_tick" data-setting="info_tick" />
+                <label for="info_tick"></label>
+              </div>
+            </div>
+            <div class="option">
+              <span>Input Delay</span>
+              <div class="checkbox">
+                <input type="checkbox" id="info_input" data-setting="info_input" />
+                <label for="info_input"></label>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="option-group">
         <div class="option">
@@ -239,22 +303,12 @@
       <div class="option-group">
         <div class="option">
           <div class="left">
-            <span>Badges, Gradient Names and Nicknames</span>
-            <div class="description">Display user customizations and nicknames</div>
+            <span>Badges and Gradient Names</span>
+            <div class="description">Display user customizations</div>
           </div>
           <div class="checkbox">
             <input type="checkbox" id="customizations" data-setting="customizations" />
             <label for="customizations"></label>
-          </div>
-        </div>
-        <div class="option">
-          <div class="left">
-            <span>Clan Gradients</span>
-            <div class="description">Display clan customizations</div>
-          </div>
-          <div class="checkbox">
-            <input type="checkbox" id="clancustomizations" data-setting="clancustomizations" />
-            <label for="clancustomizations"></label>
           </div>
         </div>
         <div class="option">
@@ -281,6 +335,18 @@
         </div>
       </div>
       <div id="visual-options" class="juice options inner">
+        <div class="option-group">
+          <div class="option">
+            <div class="left">
+              <span>Show Quick Join Button</span>
+              <div class="description">Show Quick Join Button that joins the lobby/game link from your clipboard</div>
+            </div>
+            <div class="checkbox">
+              <input type="checkbox" id="quickjoin_button" data-setting="quickjoin_button" />
+              <label for="quickjoin_button"></label>
+            </div>
+          </div>
+        </div>
         <div class="option-group">
           <div class="option">
             <div class="left">
@@ -403,10 +469,10 @@
             </div>
             <div class="option-group">
               <div class="option custom">
-                <div class="left">
+                <div class="left experimental">
                   <span>Custom Inspect Keybind</span>
                   <span class="description">
-                    EXPERIMENTAL, animations are subject to change
+                    animations are subject to change
                   </span>
                 </div>
                 <button class="juice change-keybind inspect"></button>
@@ -431,8 +497,7 @@
                 </div>
                 <div class="content">
                   <div class="option weapon-color" style="justify-content: flex-end">
-                    <div class="color-input"
-                      style="display: flex; width: 38.4%; margin-top: 0.5rem; margin-bottom: 1.5rem;">
+                    <div class="color-input" style="display: flex; width: 38.4%">
                       <input type="text" class="hex" placeholder="#FFFFFF" maxlength="7" />
                       <input type="color" class="color-picker" value="#FFFFFF" />
                     </div>
