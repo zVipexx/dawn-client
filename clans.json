@@ -4,9 +4,9 @@
     "gradient": {
       "rot": "90deg",
       "stops": [
-        "#DBA100 0%",
-        "#FFF9A3 80%",
-        "#DBA100 100%"
+        "#F1E8C7 0%",
+        "#9CA764 80%",
+        "#F1E8C7 100%"
       ]
     },
     "animated": true
