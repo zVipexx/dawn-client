@@ -1513,10 +1513,15 @@
 
 .in-lobby .clan-tag {
     color: #e24f4f !important;
+    text-shadow: -1px -1px 0 #0f0f0f, 1px -1px 0 #0f0f0f, -1px 1px 0 #0f0f0f, 1px 1px 0 #0f0f0f !important;
 }
 
 .in-lobby .clan-tag.is-ready {
     color: #1cce6c !important;
+}
+
+.in-lobby .nickname {
+    overflow: visible !important;
 }
 
 .esc-interface .player-left {
@@ -2699,7 +2704,6 @@ button:focus,
     top: 4px;
     right: 4px;
     padding: 3px 4px 4px 4px;
-    border: 1px solid rgba(255, 255, 255, .17);
     transition: 0.3s ease;
     border-radius: 16px;
 }
@@ -2713,8 +2717,7 @@ button:focus,
 }
 
 .favorite-btn:hover {
-    border: 1px solid rgba(255, 255, 0, 0.5);
-    transition: 0.3s ease;
+    filter: drop-shadow(0 0 4px black);
     cursor: pointer;
 }
 

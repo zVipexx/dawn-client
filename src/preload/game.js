@@ -4788,6 +4788,8 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   const handleInventory = () => {
     const STORAGE_KEY = "inventory_favorites";
+    let observer = null;
+    let tabsBound = false;
 
     function getFavorites() {
       return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
@@ -4808,8 +4810,18 @@ window.addEventListener("DOMContentLoaded", async () => {
       const container = document.querySelector(".inventory .subjects");
       if (!container) return;
       const items = [...container.children];
-      items.sort((a, b) => b.classList.contains("favorite") - a.classList.contains("favorite"));
-      items.forEach(item => container.appendChild(item));
+      const sorted = [...items].sort((a, b) => b.classList.contains("favorite") - a.classList.contains("favorite"));
+      let changed = false;
+      for (let i = 0; i < sorted.length; i++) {
+        if (sorted[i] !== items[i]) {
+          changed = true;
+          break;
+        }
+      }
+      if (!changed) return;
+      if (observer) observer.disconnect();
+      sorted.forEach(item => container.appendChild(item));
+      if (observer) observer.observe(container, { childList: true, subtree: false });
     }
 
     function applyFavorites() {
@@ -4818,20 +4830,20 @@ window.addEventListener("DOMContentLoaded", async () => {
         const id = subject.textContent.trim();
         if (favorites.includes(id)) {
           subject.classList.add("favorite");
-
-          subject.removeEventListener("click", favoriteClickHandler);
-          subject.addEventListener("click", favoriteClickHandler, true);
+          if (subject.dataset.favoriteBound) return;
+          subject.dataset.favoriteBound = "1";
+          subject.addEventListener("click", (e) => {
+            if (!ipcRenderer.sendSync("get-settings").prevent_selling_favorites) return;
+            const sellBtn = e.target.closest(".sell-btn");
+            if (sellBtn) {
+              e.stopImmediatePropagation();
+              return false;
+            }
+          }, true);
+        } else {
+          delete subject.dataset.favoriteBound;
         }
       });
-    }
-
-    function favoriteClickHandler(e) {
-      if (!ipcRenderer.sendSync("get-settings").prevent_selling_favorites) return;
-      const sellBtn = e.target.closest(".sell-btn");
-      if (sellBtn) {
-        e.stopImmediatePropagation();
-        return false;
-      }
     }
 
     function addFavoriteButtons() {
@@ -4840,84 +4852,55 @@ window.addEventListener("DOMContentLoaded", async () => {
         const toggleFavorite = document.createElement("div");
         toggleFavorite.classList.add("favorite-btn");
         toggleFavorite.innerHTML = '<i class="fas fa-star"></i>';
-
         toggleFavorite.addEventListener("click", () => {
           subject.classList.toggle("favorite");
           const isFavorite = subject.classList.contains("favorite");
           saveFavorite(subject.textContent.trim(), isFavorite);
           sortInventory();
         });
-
         toggleFavorite.addEventListener("mouseenter", () => {
           subject.querySelectorAll(".bottom-inv").forEach(button => button.style.visibility = "hidden");
-          subject.querySelector(".hover-bg").style.visibility = "hidden";
+          const hoverBg = subject.querySelector(".hover-bg");
+          if (hoverBg) hoverBg.style.visibility = "hidden";
         });
-
         toggleFavorite.addEventListener("mouseleave", () => {
           subject.querySelectorAll(".bottom-inv").forEach(button => button.style.visibility = "visible");
-          subject.querySelector(".hover-bg").style.visibility = "visible";
+          const hoverBg = subject.querySelector(".hover-bg");
+          if (hoverBg) hoverBg.style.visibility = "visible";
         });
-
         subject.appendChild(toggleFavorite);
       });
     }
 
-    let inventoryObserver = null;
-    let tabClickHandlers = new Map();
-
-    function cleanupInventory() {
-      if (inventoryObserver) {
-        inventoryObserver.disconnect();
-        inventoryObserver = null;
-      }
-
+    if (!tabsBound) {
+      tabsBound = true;
       document.querySelectorAll(".inventory .tab").forEach((tab) => {
-        const handler = tabClickHandlers.get(tab);
-        if (handler) {
-          tab.removeEventListener("click", handler);
-          tabClickHandlers.delete(tab);
-        }
-      });
-    }
-
-    function setupInventory() {
-      cleanupInventory();
-
-      document.querySelectorAll(".inventory .tab").forEach((tab) => {
-        const handler = () => {
+        tab.addEventListener("click", () => {
           applyFavorites();
           addFavoriteButtons();
           sortInventory();
-        };
-        tabClickHandlers.set(tab, handler);
-        tab.addEventListener("click", handler);
+        });
       });
+    }
 
+    observeForElement(".inventory .gun", () => {
       applyFavorites();
       addFavoriteButtons();
       sortInventory();
 
       const container = document.querySelector(".inventory .subjects");
-      if (container && !inventoryObserver) {
-        inventoryObserver = new MutationObserver(() => {
-          applyFavorites();
-          addFavoriteButtons();
-          sortInventory();
-        });
+      if (!container) return;
 
-        inventoryObserver.observe(container, { childList: true, subtree: false });
-      }
-    }
+      if (observer) observer.disconnect();
 
-    const gunObserver = observeForElement(".inventory .gun", () => {
-      setupInventory();
-    });
-
-    window.addEventListener("url-changed", (e) => {
-      if (!e.detail.includes("inventory")) {
-        cleanupInventory();
-        if (gunObserver) gunObserver.disconnect();
-      }
+      observer = new MutationObserver(() => {
+        observer.disconnect();
+        applyFavorites();
+        addFavoriteButtons();
+        sortInventory();
+        observer.observe(container, { childList: true, subtree: false });
+      });
+      observer.observe(container, { childList: true, subtree: false });
     });
   };
 

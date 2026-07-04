@@ -1,5 +1,12 @@
 [
   {
+    "version": "1.1.5",
+    "date": "4/7/2026",
+    "changelogs": [
+      "Fixed favorites not working when closing/reopening the inventory"
+    ]
+  },
+  {
     "version": "1.1.4",
     "date": "4/7/2026",
     "changelogs": [
