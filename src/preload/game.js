@@ -2180,7 +2180,9 @@ window.addEventListener("DOMContentLoaded", async () => {
         quickJoin.querySelector(".create-btn")?.remove();
         quickJoin.style.marginBottom = ".5rem";
 
-        const quickJoinBtn = quickJoin.querySelector(".join-btn");
+        const quickJoinBtn = quickJoin.childNodes[0];
+        quickJoinBtn.classList.remove("join-btn");
+        quickJoinBtn.classList.add("quickjoin-btn");
         quickJoinBtn.id = "quickjoin-btn";
         quickJoinBtn.textContent = "QUICKJOIN";
         quickJoinBtn.title = "Join the lobby/game link from your clipboard";
@@ -2191,21 +2193,27 @@ window.addEventListener("DOMContentLoaded", async () => {
         quickJoinBtn.addEventListener("click", (e) => {
           e.stopPropagation();
 
-          playContentUp.querySelector(".join-btn")?.click();
+          navigator.clipboard.readText().then((text) => {
+            if (!text.startsWith("https://kirka.io/")) {
+              customNotification({
+                message: `<span style="color: gray;">${text}</span> is not a valid lobby/game link!`,
+              });
+              return;
+            };
+            playContentUp.querySelector(".join-btn")?.click();
 
-          const observer = new MutationObserver(() => {
-            const input = document.querySelector("#join-modal-modal .input");
-            if (input) {
-              navigator.clipboard.readText().then((text) => {
+            const observer = new MutationObserver(() => {
+              const input = document.querySelector("#join-modal-modal .input");
+              if (input) {
                 input.value = text;
                 input.dispatchEvent(new Event("input", { bubbles: true }));
                 document.querySelector(".btn")?.click();
-              });
-              observer.disconnect();
-            }
-          });
+                observer.disconnect();
+              }
+            });
 
-          observer.observe(document.body, { childList: true, subtree: true });
+            observer.observe(document.body, { childList: true, subtree: true });
+          });
         });
 
         playContent.insertBefore(quickJoin, playContentUp);
@@ -2764,7 +2772,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       if (!profile || !shortId) return;
       const nicknameDiv = document.createElement("div");
       nicknameDiv.className = "edit-nickname";
-      nicknameDiv.innerHTML = '<i class="fa-solid fa-pen-to-square"></i> Edit Nickname';
+      nicknameDiv.innerHTML = '<i class="fas fa-pen-to-square"></i> Edit Nickname';
       nicknameDiv.addEventListener("click", (e) => {
         const nickname = profile.querySelector(".nickname");
 
@@ -4356,6 +4364,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     document.querySelectorAll(".champions-list .item").forEach((clan) => {
       clan.addEventListener("click", () => {
         const clanName = clan.childNodes[0].textContent.trim();
+        if (clanName === "~") return;
         addClanPage(clanName);
       });
     });
@@ -4806,20 +4815,23 @@ window.addEventListener("DOMContentLoaded", async () => {
     function applyFavorites() {
       const favorites = getFavorites();
       document.querySelectorAll(".inventory .subject").forEach((subject) => {
-        const id = subject.textContent.trim();;
+        const id = subject.textContent.trim();
         if (favorites.includes(id)) {
           subject.classList.add("favorite");
 
-          subject.addEventListener("click", (e) => {
-            if (!ipcRenderer.sendSync("get-settings").prevent_selling_favorites) return;
-            const sellBtn = e.target.closest(".sell-btn");
-            if (sellBtn) {
-              e.stopImmediatePropagation();
-              return false;
-            }
-          }, true);
+          subject.removeEventListener("click", favoriteClickHandler);
+          subject.addEventListener("click", favoriteClickHandler, true);
         }
       });
+    }
+
+    function favoriteClickHandler(e) {
+      if (!ipcRenderer.sendSync("get-settings").prevent_selling_favorites) return;
+      const sellBtn = e.target.closest(".sell-btn");
+      if (sellBtn) {
+        e.stopImmediatePropagation();
+        return false;
+      }
     }
 
     function addFavoriteButtons() {
@@ -4836,45 +4848,76 @@ window.addEventListener("DOMContentLoaded", async () => {
           sortInventory();
         });
 
-        toggleFavorite.addEventListener("mouseenter", (e) => {
+        toggleFavorite.addEventListener("mouseenter", () => {
           subject.querySelectorAll(".bottom-inv").forEach(button => button.style.visibility = "hidden");
           subject.querySelector(".hover-bg").style.visibility = "hidden";
-        })
+        });
+
         toggleFavorite.addEventListener("mouseleave", () => {
           subject.querySelectorAll(".bottom-inv").forEach(button => button.style.visibility = "visible");
           subject.querySelector(".hover-bg").style.visibility = "visible";
-        })
+        });
 
         subject.appendChild(toggleFavorite);
       });
     }
 
-    document.querySelectorAll(".inventory .tab").forEach((tab) => {
-      tab.addEventListener("click", () => {
-        applyFavorites();
-        addFavoriteButtons();
-        sortInventory();
+    let inventoryObserver = null;
+    let tabClickHandlers = new Map();
+
+    function cleanupInventory() {
+      if (inventoryObserver) {
+        inventoryObserver.disconnect();
+        inventoryObserver = null;
+      }
+
+      document.querySelectorAll(".inventory .tab").forEach((tab) => {
+        const handler = tabClickHandlers.get(tab);
+        if (handler) {
+          tab.removeEventListener("click", handler);
+          tabClickHandlers.delete(tab);
+        }
       });
-    });
+    }
 
-    let observer;
+    function setupInventory() {
+      cleanupInventory();
 
-    observeForElement(".inventory .gun", () => {
+      document.querySelectorAll(".inventory .tab").forEach((tab) => {
+        const handler = () => {
+          applyFavorites();
+          addFavoriteButtons();
+          sortInventory();
+        };
+        tabClickHandlers.set(tab, handler);
+        tab.addEventListener("click", handler);
+      });
+
       applyFavorites();
       addFavoriteButtons();
       sortInventory();
 
       const container = document.querySelector(".inventory .subjects");
+      if (container && !inventoryObserver) {
+        inventoryObserver = new MutationObserver(() => {
+          applyFavorites();
+          addFavoriteButtons();
+          sortInventory();
+        });
 
-      observer = new MutationObserver(() => {
-        observer.disconnect();
-        applyFavorites();
-        addFavoriteButtons();
-        sortInventory();
-        observer.observe(container, { childList: true, subtree: false });
-      });
+        inventoryObserver.observe(container, { childList: true, subtree: false });
+      }
+    }
 
-      observer.observe(container, { childList: true, subtree: false });
+    const gunObserver = observeForElement(".inventory .gun", () => {
+      setupInventory();
+    });
+
+    window.addEventListener("url-changed", (e) => {
+      if (!e.detail.includes("inventory")) {
+        cleanupInventory();
+        if (gunObserver) gunObserver.disconnect();
+      }
     });
   };
 

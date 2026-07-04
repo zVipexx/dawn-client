@@ -1683,14 +1683,14 @@
 }
 
 .room-presets-sidebar {
-    position: absolute;
-    left: 100%;
+    position: fixed;
+    right: 15%;
     top: 50%;
     transform: translateY(-50%);
     margin-left: 25px;
     display: flex;
     flex-direction: column;
-    width: 300px;
+    width: 15.625%;
     background: #2f3957;
     border: 3px solid rgb(3, 4, 5);
     padding: 0;
@@ -1867,7 +1867,7 @@
     cursor: pointer;
     transition: all 0.3s ease;
     text-shadow: -1px -1px 0 #0f0f0f, 1px -1px 0 #0f0f0f, -1px 1px 0 #0f0f0f, 1px 1px 0 #0f0f0f, 0 0.13rem 1px rgba(0, 0, 0, 0.486);
-    box-shadow: 0 4px 0 rgba(0, 0, 0, .5) !important;
+    box-shadow: 0 4px 0 rgba(0, 0, 0, .5);
     font-family: Rowdies;
     -webkit-text-stroke: 0.1px black;
 }
@@ -1883,10 +1883,6 @@
 .vm--container {
     display: flex !important;
     justify-content: center !important;
-}
-
-.vm--modal {
-    width: auto !important;
 }
 
 .room-preset-item {
@@ -2788,4 +2784,6 @@ button:focus,
     padding-top: calc(.9em - 3px);
     padding-bottom: calc(.9em - 3px);
     border-radius: 2px;
+    font-size: 18px;
+    float: right;
 }

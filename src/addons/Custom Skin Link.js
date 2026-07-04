@@ -454,7 +454,6 @@ const muzzleImg = "https://kirka.io/assets/img/__shooting-fire__.effa20af.png";
 const muzzleImg2 = "shooting-fire";
 
 let patchedTextures = new Map();
-let textureUpdateQueue = new Set();
 
 function getCurrentSkinUrl() {
   if (localStorage.csl_enabled !== "true") return null;
@@ -482,20 +481,15 @@ Array.isArray = function (...args) {
   const ingame = !!document.querySelector(".desktop-game-interface");
 
   if (isSkinTexture && image.src !== muzzleImg && !image.src.includes(muzzleImg2)) {
-    if (ingame && customSkinLink) {
-      if (!patchedTextures.has(texture)) {
-        patchedTextures.set(texture, image.src);
-        image.src = customSkinLink;
-        texture.needsUpdate = true;
-      }
-    } else if (!ingame) {
-      if (patchedTextures.has(texture)) {
-        image.src = patchedTextures.get(texture);
-        patchedTextures.delete(texture);
-        texture.needsUpdate = true;
-      }
+    if (ingame && customSkinLink && !patchedTextures.has(texture)) {
+      patchedTextures.set(texture, image.src);
+      image.src = customSkinLink;
+      texture.needsUpdate = true;
+    } else if (!ingame && patchedTextures.has(texture)) {
+      image.src = patchedTextures.get(texture);
+      patchedTextures.delete(texture);
+      texture.needsUpdate = true;
     }
   }
-
   return oldIsArr.apply(Array, args);
-};
+}
