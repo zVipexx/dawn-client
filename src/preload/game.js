@@ -2556,7 +2556,10 @@ window.addEventListener("DOMContentLoaded", async () => {
         if (e.shiftKey && e.target.classList.contains("author-name")) {
           setTimeout(() => {
             navigator.clipboard.readText().then((text) => {
-              window.location.href = `${base_url}profile/${text.replace("#", "")}`;
+              const url = `${base_url}profile/${text.replace("#", "")}`;
+              window.history.pushState({}, "", url);
+              window.dispatchEvent(new PopStateEvent("popstate"));
+
               const username = e.target.innerText.replace(":", "");
               customNotification({
                 message: `Loading ${username}${text}'s profile...`,
@@ -4273,7 +4276,9 @@ window.addEventListener("DOMContentLoaded", async () => {
       container.querySelectorAll(".name[data-shortid]").forEach((el) => {
         el.style.cursor = "pointer";
         el.addEventListener("click", () => {
-          window.location.href = `https://kirka.io/profile/${el.dataset.shortid}`;
+          const url = `/profile/${el.dataset.shortid}`;
+          window.history.pushState({}, "", url);
+          window.dispatchEvent(new PopStateEvent("popstate"));
         });
       });
 
@@ -4570,57 +4575,52 @@ window.addEventListener("DOMContentLoaded", async () => {
       searchFriends.innerHTML = `
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: .5rem; width: 100%;">
           <span class="search-text">Search</span>
-          <span>Press Enter to search</span>
         </div>
         <input type="text" placeholder="ENTER USERNAME OR ID" class="search-input" style="border: .125rem solid #202639; outline: none; background: #2f3957; width: 100%; height: 2.875rem; padding-left: .5rem; box-sizing: border-box; font-weight: 600; font-size: 1rem; color: #f2f2f2; box-shadow: 0 1px 2px rgba(0,0,0,.4), inset 0 0 8px rgba(0,0,0,.4); border-radius: .25rem; transition: border-color 0.2s;"/>
-        <span class="lookup-toggle" style="margin-top: 0.25rem; font-size: 0.75rem; color: rgba(255,255,255,0.4); cursor: pointer; user-select: none; transition: color 0.15s ease; text-decoration: underline;">Player Lookup</span>
       `;
       addFriends.appendChild(searchFriends);
 
       const input = searchFriends.querySelector(".search-input");
-      const toggle = searchFriends.querySelector(".lookup-toggle");
-      let lookupMode = false;
-
-      const lookup = () => {
-        const id = input.value.trim().replace(/^#/, "").toUpperCase();
-        if (id.length === 6) {
-          window.location.href = `https://kirka.io/profile/${id}`;
-        } else {
-          input.style.borderColor = "rgba(255, 0, 0, 0.4)";
-          setTimeout(() => (input.style.borderColor = "rgba(76, 175, 138, 0.4)"), 1000);
-        }
-      };
-
-      toggle.addEventListener("click", () => {
-        lookupMode = !lookupMode;
-        toggle.style.color = lookupMode ? "#4caf8a" : "rgba(255,255,255,0.4)";
-        input.style.borderColor = lookupMode ? "rgba(76, 175, 138, 0.4)" : "#202639";
-        input.placeholder = lookupMode ? "ENTER PLAYER ID..." : "ENTER USERNAME OR ID";
-
-        if (lookupMode) {
-          document.querySelectorAll(".friend").forEach((f) => (f.style.display = "flex"));
-        } else {
-          const query = input.value.toLowerCase();
-          document.querySelectorAll(".friend").forEach((friend) => {
-            const nickname = friend.querySelector(".nickname")?.innerText.toLowerCase() || "";
-            const shortId = friend.querySelector(".friend-id")?.innerText.toLowerCase() || "";
-            friend.style.display = nickname.includes(query) || shortId.includes(query) ? "flex" : "none";
-          });
-        }
-      });
-
-      input.addEventListener("keydown", (e) => {
-        if (lookupMode && e.key === "Enter") lookup();
-      });
 
       input.addEventListener("input", (e) => {
-        if (lookupMode) return;
         const query = e.target.value.toLowerCase();
         document.querySelectorAll(".friend").forEach((friend) => {
           const nickname = friend.querySelector(".nickname")?.innerText.toLowerCase() || "";
           const shortId = friend.querySelector(".friend-id")?.innerText.toLowerCase() || "";
           friend.style.display = nickname.includes(query) || shortId.includes(query) ? "flex" : "none";
         });
+      });
+    }
+
+    function createPlayerLookup() {
+      const playerLookup = document.createElement("div");
+      playerLookup.className = "player-lookup";
+      playerLookup.style = `display: flex; flex-direction: column; align-items: flex-start; margin-top: 1.5rem; padding: 0 1rem;`;
+      playerLookup.innerHTML = `
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: .5rem; width: 100%;">
+          <span class="search-text">Player Lookup</span>
+          <span>Press Enter to search</span>
+        </div>
+        <input type="text" placeholder="ENTER PLAYER ID..." class="lookup-input" style="border: .125rem solid #202639; outline: none; background: #2f3957; width: 100%; height: 2.875rem; padding-left: .5rem; box-sizing: border-box; font-weight: 600; font-size: 1rem; color: #f2f2f2; box-shadow: 0 1px 2px rgba(0,0,0,.4), inset 0 0 8px rgba(0,0,0,.4); border-radius: .25rem; transition: border-color 0.2s;"/>
+      `;
+      addFriends.appendChild(playerLookup);
+
+      const input = playerLookup.querySelector(".lookup-input");
+
+      const lookup = () => {
+        const id = input.value.trim().replace(/^#/, "").toUpperCase();
+        if (id.length === 6) {
+          const url = `/profile/${id}`;
+          window.history.pushState({}, "", url);
+          window.dispatchEvent(new PopStateEvent("popstate"));
+        } else {
+          input.style.borderColor = "rgba(255, 0, 0, 0.4)";
+          setTimeout(() => (input.style.borderColor = "#202639"), 1000);
+        }
+      };
+
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") lookup();
       });
     }
 
@@ -4671,6 +4671,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       });
 
       if (!addFriends.querySelector(".search-friends")) createSearch();
+      if (!addFriends.querySelector(".player-lookup")) createPlayerLookup();
     }, 250);
 
     const applyCustomizations = () => {

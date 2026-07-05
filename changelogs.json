@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.1.6",
+    "date": "5/7/2026",
+    "changelogs": [
+      "Made redirect links not reload the entire client",
+      "Added a toggle for ingame only Custom Skin Link"
+    ]
+  },
+  {
     "version": "1.1.5",
     "date": "4/7/2026",
     "changelogs": [

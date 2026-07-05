@@ -20,7 +20,7 @@
     "colored_killfeed": true,
     "map_backgrounds": true,
     "prevent_selling_favorites": true,
-    "quickjoin_button": false,
+    "quickjoin_button": true,
     "spectate_full_games": true,
     "lobby_keybind_reminder": true,
     "skip_loading": false,

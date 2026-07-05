@@ -40,6 +40,10 @@ let csl_enabled = document.createElement("div");
 csl_enabled.className = "option";
 csl_enabled.innerHTML =
   '<div class="left"><span>Enabled</span></div><div class="checkbox"><input type="checkbox" id="csl_enabled"><label for="csl_enabled"></label></div>';
+let csl_ingame_only = document.createElement("div");
+csl_ingame_only.className = "option";
+csl_ingame_only.innerHTML =
+  '<div class="left"><span>Only swap ingame</span></div><div class="checkbox"><input type="checkbox" id="csl_ingame_only"><label for="csl_ingame_only"></label></div>';
 let output_container = document.createElement("div");
 output_container.className = "option";
 let csl_url_or_base64 = document.createElement("div");
@@ -148,6 +152,7 @@ tooltip_container.appendChild(tooltip_text);
 option_group.appendChild(style);
 option_group.appendChild(tooltip_container);
 option_group.appendChild(csl_enabled);
+option_group.appendChild(csl_ingame_only);
 option_group.appendChild(option);
 output_container.appendChild(colorpicker_output);
 output_container.appendChild(csl_url_or_base64);
@@ -326,6 +331,17 @@ function startfunction() {
         fixLocalStorage();
       }
     });
+    let d_csl_ingame_only = document.getElementById("csl_ingame_only");
+    if (localStorage.csl_ingame_only == undefined) {
+      localStorage.csl_ingame_only = "true";
+    }
+    if (localStorage.csl_ingame_only == "true") {
+      d_csl_ingame_only.checked = true;
+    }
+    d_csl_ingame_only.addEventListener("change", function (event) {
+      localStorage.csl_ingame_only = d_csl_ingame_only.checked;
+    });
+
     let img_display = new Image();
     let img = new Image();
     img.src = default_url;
@@ -479,13 +495,15 @@ Array.isArray = function (...args) {
   const isSkinTexture = (width === 64 || width === 42) &&
     (height === 64 || height === 42 || height === 32);
   const ingame = !!document.querySelector(".desktop-game-interface");
+  const ingameOnly = localStorage.csl_ingame_only !== "false";
+  const canSwap = ingameOnly ? ingame : true;
 
   if (isSkinTexture && image.src !== muzzleImg && !image.src.includes(muzzleImg2)) {
-    if (ingame && customSkinLink && !patchedTextures.has(texture)) {
+    if (canSwap && customSkinLink && !patchedTextures.has(texture)) {
       patchedTextures.set(texture, image.src);
       image.src = customSkinLink;
       texture.needsUpdate = true;
-    } else if (!ingame && patchedTextures.has(texture)) {
+    } else if (!canSwap && patchedTextures.has(texture)) {
       image.src = patchedTextures.get(texture);
       patchedTextures.delete(texture);
       texture.needsUpdate = true;
