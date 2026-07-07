@@ -8,5 +8,15 @@
     "link": "",
     "updatedAt": 1783432680784,
     "live": false
+  },
+  {
+    "category": "event",
+    "title": "test2",
+    "content": "testing purposes, ignore",
+    "img": "",
+    "imgType": "",
+    "link": "",
+    "updatedAt": 1783432680785,
+    "live": false
   }
 ]
