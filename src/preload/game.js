@@ -77,7 +77,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   initGallery();
 
   const fetchAll = async () => {
-    const [customizations, clan, weapons] = await Promise.all([
+    const [customizations, clan] = await Promise.all([
       fetch(
         "https://raw.githubusercontent.com/zVipexx/dawn-client/refs/heads/main/badges.json"
       ).then((r) => r.json()),
@@ -85,6 +85,19 @@ window.addEventListener("DOMContentLoaded", async () => {
         "https://raw.githubusercontent.com/zVipexx/dawn-client/refs/heads/main/clans.json"
       ).then((r) => r.json()),
     ])
+
+    const shortId = localStorage.getItem("user-id");
+    const existingLocal = JSON.parse(localStorage.getItem("juice-customizations") || "[]");
+    const localEntry = existingLocal.find(c => c.shortId === shortId);
+
+    if (localEntry && settings.local_customizations) {
+      const globalEntryIndex = customizations.findIndex(c => c.shortId === shortId);
+      if (globalEntryIndex >= 0) {
+        customizations[globalEntryIndex] = { ...customizations[globalEntryIndex], ...localEntry };
+      } else {
+        customizations.push(localEntry);
+      }
+    }
 
     localStorage.setItem("juice-customizations", JSON.stringify(customizations))
     localStorage.setItem("juice-clans", JSON.stringify(clan))
@@ -1626,100 +1639,18 @@ window.addEventListener("DOMContentLoaded", async () => {
     const armKeyframes_knife = armKeyframes_disabled;
     const armKeyframes_tomahawk = armKeyframes_disabled;
 
-    const sigToWeaponId = {
-      "0.11,0.11,0.11": "vita",
-      "0.59,0.89,0.60": "scar",
-      "0.17,0.17,0.17": "rev",
-      "0.73,0.64,0.73": "ar9",
-      "0.77,0.77,0.77": "mac10",
-      "0.11,0.10,0.10": "m60",
-      "0.84,0.84,0.84": "weatie",
-      "0.77,1.01,0.77": "lar",
-      "0.01,0.01,0.01": "shark",
-      "1.27,1.05,1.62": "bayonet",
-      "1.45,1.26,1.29": "bayonet",
-      "1.46,1.25,1.28": "bayonet",
-      "1.48,1.24,1.28": "bayonet",
-      "1.48,1.24,1.27": "bayonet",
-      "1.49,1.23,1.27": "bayonet",
-      "1.49,1.23,1.28": "bayonet",
-      "1.47,1.23,1.29": "bayonet",
-      "1.46,1.23,1.32": "bayonet",
-      "1.43,1.23,1.34": "bayonet",
-      "1.39,1.24,1.38": "bayonet",
-      "1.35,1.25,1.41": "bayonet",
-      "1.31,1.26,1.43": "bayonet",
-      "1.28,1.27,1.45": "bayonet",
-      "1.26,1.28,1.46": "bayonet",
-      "1.27,1.29,1.44": "bayonet",
-      "1.29,1.31,1.41": "bayonet",
-      "1.33,1.31,1.37": "bayonet",
-      "1.37,1.32,1.32": "bayonet",
-      "1.41,1.32,1.28": "bayonet",
-      "1.42,1.31,1.27": "bayonet",
-      "1.41,1.29,1.30": "bayonet",
-      "1.38,1.27,1.36": "bayonet",
-      "1.33,1.24,1.43": "bayonet",
-      "1.29,1.21,1.50": "bayonet",
-      "1.27,1.17,1.54": "bayonet",
-      "1.29,1.14,1.55": "bayonet",
-      "1.35,1.11,1.52": "bayonet",
-      "1.44,1.08,1.45": "bayonet",
-      "1.54,1.06,1.37": "bayonet",
-      "1.60,1.05,1.30": "bayonet",
-      "1.62,1.05,1.27": "bayonet",
-      "1.59,1.05,1.31": "bayonet",
-      "1.51,1.05,1.40": "bayonet",
-      "1.41,1.05,1.50": "bayonet",
-      "1.54,0.92,2.24": "tomahawk"
-    };
-
-    const weaponKeyframeMap = {
-      "0.11,0.11,0.11": inspectKeyframes_vita,
-      "0.17,0.17,0.17": inspectKeyframes_rev,
-      "0.77,0.77,0.77": inspectKeyframes_mac10,
-      "0.73,0.64,0.73": inspectKeyframes_ar9,
-      "0.11,0.10,0.10": inspectKeyframes_m60,
-      "0.84,0.84,0.84": inspectKeyframes_vita,
-      "0.77,1.01,0.77": inspectKeyframes_lar,
-      "0.59,0.89,0.60": inspectKeyframes_scar,
-      "0.01,0.01,0.01": inspectKeyframes_shark,
-      "1.27,1.05,1.62": inspectKeyframes_knife,
-      "1.45,1.26,1.29": inspectKeyframes_knife,
-      "1.46,1.25,1.28": inspectKeyframes_knife,
-      "1.48,1.24,1.28": inspectKeyframes_knife,
-      "1.48,1.24,1.27": inspectKeyframes_knife,
-      "1.49,1.23,1.27": inspectKeyframes_knife,
-      "1.49,1.23,1.28": inspectKeyframes_knife,
-      "1.47,1.23,1.29": inspectKeyframes_knife,
-      "1.46,1.23,1.32": inspectKeyframes_knife,
-      "1.43,1.23,1.34": inspectKeyframes_knife,
-      "1.39,1.24,1.38": inspectKeyframes_knife,
-      "1.35,1.25,1.41": inspectKeyframes_knife,
-      "1.31,1.26,1.43": inspectKeyframes_knife,
-      "1.28,1.27,1.45": inspectKeyframes_knife,
-      "1.26,1.28,1.46": inspectKeyframes_knife,
-      "1.27,1.29,1.44": inspectKeyframes_knife,
-      "1.29,1.31,1.41": inspectKeyframes_knife,
-      "1.33,1.31,1.37": inspectKeyframes_knife,
-      "1.37,1.32,1.32": inspectKeyframes_knife,
-      "1.41,1.32,1.28": inspectKeyframes_knife,
-      "1.42,1.31,1.27": inspectKeyframes_knife,
-      "1.41,1.29,1.30": inspectKeyframes_knife,
-      "1.38,1.27,1.36": inspectKeyframes_knife,
-      "1.33,1.24,1.43": inspectKeyframes_knife,
-      "1.29,1.21,1.50": inspectKeyframes_knife,
-      "1.27,1.17,1.54": inspectKeyframes_knife,
-      "1.29,1.14,1.55": inspectKeyframes_knife,
-      "1.35,1.11,1.52": inspectKeyframes_knife,
-      "1.44,1.08,1.45": inspectKeyframes_knife,
-      "1.54,1.06,1.37": inspectKeyframes_knife,
-      "1.60,1.05,1.30": inspectKeyframes_knife,
-      "1.62,1.05,1.27": inspectKeyframes_knife,
-      "1.59,1.05,1.31": inspectKeyframes_knife,
-      "1.51,1.05,1.40": inspectKeyframes_knife,
-      "1.41,1.05,1.50": inspectKeyframes_knife,
-      "1.54,0.92,2.24": inspectKeyframes_tomahawk,
+    const weaponIdToInspectKeyframes = {
+      vita: inspectKeyframes_vita,
+      scar: inspectKeyframes_scar,
+      rev: inspectKeyframes_rev,
+      ar9: inspectKeyframes_ar9,
+      mac10: inspectKeyframes_mac10,
+      m60: inspectKeyframes_m60,
+      weatie: inspectKeyframes_vita,
+      lar: inspectKeyframes_lar,
+      shark: inspectKeyframes_shark,
+      bayonet: inspectKeyframes_knife,
+      tomahawk: inspectKeyframes_tomahawk,
     };
 
     const armSigs = new Set([
@@ -1756,6 +1687,78 @@ window.addEventListener("DOMContentLoaded", async () => {
       rev_right: armKeyframes_rev,
       shark_right: armKeyframes_shark,
     };
+
+    const weaponNameToId = {
+      vita: "vita",
+      scar: "scar",
+      rev: "rev",
+      ar9: "ar9",
+      mac10: "mac10",
+      m60: "m60",
+      weatie: "weatie",
+      lar: "lar",
+      shark: "shark",
+      bayonet: "bayonet",
+      tomahawk: "tomahawk",
+    };
+
+    const normalizeWeaponName = (raw) =>
+      raw ? raw.trim().toLowerCase().replace(/[\s\-_]/g, "") : null;
+
+    let domWeaponId = null;
+
+    const readSelectedWeaponFromDom = () => {
+      const selected = document.querySelector(".weapon-cont .bottom.is-selected");
+      if (!selected) return null;
+      const nameEl = selected.parentElement?.querySelector(".weapon-name");
+      const id = weaponNameToId[normalizeWeaponName(nameEl?.textContent)];
+      return id || null;
+    };
+
+    const updateDomWeaponId = () => {
+      const id = readSelectedWeaponFromDom();
+      if (id) {
+        domWeaponId = id;
+        window.currentWeaponId = id;
+      }
+    };
+
+    updateDomWeaponId();
+
+    const weaponMutationObserver = new MutationObserver((mutations) => {
+      for (const m of mutations) {
+        if (m.type === "attributes" && m.attributeName === "class") {
+          if (m.target instanceof HTMLElement && m.target.classList.contains("bottom")) {
+            updateDomWeaponId();
+            return;
+          }
+        } else if (m.type === "childList") {
+          for (const node of m.addedNodes) {
+            if (
+              node instanceof HTMLElement &&
+              (node.classList?.contains("weapon-cont") || node.querySelector?.(".weapon-cont"))
+            ) {
+              updateDomWeaponId();
+              return;
+            }
+          }
+        }
+      }
+    });
+
+    weaponMutationObserver.observe(document.body, {
+      attributes: true,
+      attributeFilter: ["class"],
+      childList: true,
+      subtree: true,
+    });
+
+    let globalFrameId = 0;
+    const bumpGlobalFrame = () => {
+      globalFrameId++;
+      requestAnimationFrame(bumpGlobalFrame);
+    };
+    requestAnimationFrame(bumpGlobalFrame);
 
     const applyZSpin = (mat, angle) => {
       const cos = Math.cos(angle), sin = Math.sin(angle);
@@ -1809,7 +1812,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       if (inputName === currentInspectKeybind) {
         if (document.querySelector(".chat input[type='text']:focus")) return;
         inspectStart = performance.now();
-        inspectingWeaponId = sigToWeaponId[latchedWeaponSig] || null;
+        inspectingWeaponId = domWeaponId || null;
         e.preventDefault();
       }
     };
@@ -1871,7 +1874,9 @@ window.addEventListener("DOMContentLoaded", async () => {
       let lastBoundTexture = null;
       let seenMatricesThisFrame = new Set();
       let lastFrameTime = -1;
-      let currentFrameWeaponSig = null;
+      let tomahawkSigCount = 0;
+
+      let lastTomahawkFrameId = -1;
 
       let lastClearMask = 0;
 
@@ -1892,8 +1897,12 @@ window.addEventListener("DOMContentLoaded", async () => {
         const now = performance.now();
         if (now !== lastFrameTime) {
           seenMatricesThisFrame.clear();
-          currentFrameWeaponSig = null;
           lastFrameTime = now;
+        }
+
+        if (globalFrameId !== lastTomahawkFrameId) {
+          tomahawkSigCount = 0;
+          lastTomahawkFrameId = globalFrameId;
         }
 
         if (data && data.length >= 16) {
@@ -1914,7 +1923,16 @@ window.addEventListener("DOMContentLoaded", async () => {
           const s0 = colMag(slice, 0), s1 = colMag(slice, 4), s2 = colMag(slice, 8);
           const sig = `${s0.toFixed(2)},${s1.toFixed(2)},${s2.toFixed(2)}`;
 
-          if (sig in weaponKeyframeMap) {
+          const isCollidingSig = sig === "1.54,0.92,2.24";
+          let treatAsArm;
+          if (isCollidingSig) {
+            tomahawkSigCount++;
+            treatAsArm = tomahawkSigCount > 1;
+          } else {
+            treatAsArm = armSigs.has(sig);
+          }
+
+          if (!treatAsArm) {
             if (lastClearMask !== 256) {
               return origUniformMatrix4fv(location, transpose, data, srcOffset, srcLength);
             }
@@ -1925,12 +1943,8 @@ window.addEventListener("DOMContentLoaded", async () => {
             }
             seenMatricesThisFrame.add(fp);
 
-            if (sigToWeaponId[sig]) {
-              currentFrameWeaponSig = sig;
-              window.currentWeaponId = sigToWeaponId[sig];
-            }
-
-            const currentWeaponId = sigToWeaponId[latchedWeaponSig] || "vita";
+            const currentWeaponId = domWeaponId || "vita";
+            window.currentWeaponId = currentWeaponId;
 
             if (inspectStart !== null && inspectingWeaponId !== null && inspectingWeaponId !== currentWeaponId) {
               inspectStart = null;
@@ -1963,9 +1977,7 @@ window.addEventListener("DOMContentLoaded", async () => {
               origBindTexture(gl.TEXTURE_2D, lastBoundTexture);
             }
 
-            if (sigToWeaponId[sig] && sig !== latchedWeaponSig) {
-              latchedWeaponSig = sig;
-            }
+            latchedWeaponSig = sig;
             if (sig !== settlerSig) {
               settlerSig = sig;
               settlerSince = now;
@@ -1987,9 +1999,8 @@ window.addEventListener("DOMContentLoaded", async () => {
             }
 
             if (inspectStart !== null && inspectingWeaponId === currentWeaponId) {
-              const animFn = weaponKeyframeMap[sig];
-              const weaponId = sigToWeaponId[sig] || currentWeaponId;
-              const inspectDuration = INSPECT_DURATIONS[weaponId] ?? 1000;
+              const animFn = weaponIdToInspectKeyframes[currentWeaponId];
+              const inspectDuration = INSPECT_DURATIONS[currentWeaponId] ?? 1000;
               if (animFn) {
                 const elapsed = now - inspectStart;
                 const t = Math.min(elapsed / inspectDuration, 1.0);
@@ -2028,7 +2039,7 @@ window.addEventListener("DOMContentLoaded", async () => {
             return origUniformMatrix4fv(location, transpose, matBuf, 0, 16);
           }
 
-          if (armSigs.has(sig)) {
+          if (treatAsArm) {
             if (lastClearMask !== 256) {
               return origUniformMatrix4fv(location, transpose, data, srcOffset, srcLength);
             }
@@ -2039,7 +2050,7 @@ window.addEventListener("DOMContentLoaded", async () => {
             }
             seenMatricesThisFrame.add(fp);
 
-            const currentWeaponId = sigToWeaponId[currentFrameWeaponSig] || sigToWeaponId[latchedWeaponSig] || "vita";
+            const currentWeaponId = domWeaponId || "vita";
 
             const armSigToType = {
               "1.40,1.40,1.40": "right",
@@ -2056,6 +2067,9 @@ window.addEventListener("DOMContentLoaded", async () => {
             };
 
             let armType = armSigToType[sig] || "left";
+            if (sig === "1.40,1.40,1.40" && window.currentWeaponId === "tomahawk") {
+              armType = slice[12] > 0 ? "right" : "left";
+            }
 
             if (armType === null) {
               return origUniformMatrix4fv(location, transpose, data, srcOffset, srcLength);
@@ -2552,35 +2566,76 @@ window.addEventListener("DOMContentLoaded", async () => {
     if (!window.servers) {
       window.servers = true;
 
+      let isKeyPressed = false;
+      let hoveredAuthorEl = null;
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Shift" || e.key === "Control") {
+          isKeyPressed = true;
+          if (hoveredAuthorEl) {
+            hoveredAuthorEl.style.textDecoration = "underline";
+          }
+        }
+      });
+
+      document.addEventListener("keyup", (e) => {
+        if (e.key === "Shift" || e.key === "Control") {
+          isKeyPressed = false;
+          if (hoveredAuthorEl) {
+            hoveredAuthorEl.style.textDecoration = "none";;
+          }
+        }
+      });
+
+      window.addEventListener("blur", () => {
+        isKeyPressed = false;
+        if (hoveredAuthorEl) {
+          hoveredAuthorEl.style.textDecoration = "none";
+        }
+      });
+
+      document.addEventListener("mouseover", (e) => {
+        const target = e.target.closest(".author-name");
+        if (target) {
+          hoveredAuthorEl = target;
+          if (isKeyPressed) {
+            target.style.textDecoration = "underline";
+          }
+        }
+      });
+
+      document.addEventListener("mouseout", (e) => {
+        const target = e.target.closest(".author-name");
+        if (target && target === hoveredAuthorEl) {
+          target.style.textDecoration = "none";
+          hoveredAuthorEl = null;
+        }
+      });
+
       document.addEventListener("click", (e) => {
         if (e.shiftKey && e.target.classList.contains("author-name")) {
-          setTimeout(() => {
-            navigator.clipboard.readText().then((text) => {
-              const url = `${base_url}profile/${text.replace("#", "")}`;
-              window.history.pushState({}, "", url);
-              window.dispatchEvent(new PopStateEvent("popstate"));
+          navigator.clipboard.readText().then((text) => {
+            const url = `${base_url}profile/${text.replace("#", "")}`;
+            window.history.pushState({}, "", url);
+            window.dispatchEvent(new PopStateEvent("popstate"));
 
-              const username = e.target.innerText.replace(":", "");
-              customNotification({
-                message: `Loading ${username}${text}'s profile...`,
-              });
+            const username = e.target.innerText.replace(":", "");
+            customNotification({
+              message: `Loading ${username}${text}'s profile...`,
             });
-          }, 250);
+          });
         }
       });
 
       document.addEventListener("click", (e) => {
         if (e.ctrlKey && e.target.classList.contains("author-name")) {
-          setTimeout(() => {
-            const shortId = navigator.clipboard.readText();
-            const username = e.target.innerText.replace(":", "");
-            navigator.clipboard.readText().then((text) => {
-              customNotification({
-                message: `"${username}${text}" copied to clipboard!`,
-              });
-              clipboard.writeText(username + text);
+          const username = e.target.innerText.replace(":", "");
+          navigator.clipboard.readText().then((text) => {
+            customNotification({
+              message: `"${username}${text}" copied to clipboard!`,
             });
-          }, 250);
+            clipboard.writeText(username + text);
+          });
         }
       });
     }
@@ -4380,23 +4435,114 @@ window.addEventListener("DOMContentLoaded", async () => {
 
       const clanLookup = document.createElement("div");
       clanLookup.classList.add("clan-lookup");
-      clanLookup.style = `display: flex; flex-direction: column; align-items: flex-start; margin-top: 1.5rem; margin-bottom: 30%; padding: 0 1rem;`;
+      clanLookup.style = `display: flex; flex-direction: column; align-items: flex-start; margin-top: 1.5rem; margin-bottom: 30%; padding: 0 1rem; position: relative;`;
       clanLookup.innerHTML = `
         <div style="display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: .5rem; width: 100%; font-size: 0.85rem;">
           <span class="lookup-text">Lookup</span>
           <span>Press Enter to lookup</span>
         </div>
         <input type="text" placeholder="ENTER CLAN NAME" class="lookup-input" style="border: .125rem solid #202639; outline: none; background: #2f3957; width: 100%; height: 2.875rem; padding-left: .5rem; box-sizing: border-box; font-weight: 600; font-size: 1rem; color: #f2f2f2; box-shadow: 0 1px 2px rgba(0,0,0,.4), inset 0 0 8px rgba(0,0,0,.4); border-radius: .25rem; transition: border-color 0.2s;"/>
+        <div class="lookup-history-wrap" style="display: none; flex-direction: column; width: calc(100% - 2rem); margin-top: .5rem; position: absolute; top: 100%; left: 1rem; padding: .5rem; border-radius: .25rem; box-sizing: border-box;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: .5rem; width: 100%;">
+            <span>History</span>
+            <span class="clear-text" style="cursor: pointer; color: #f2f2f2; opacity: .7;">Clear all</span>
+          </div>
+          <div class="lookup-history" style="display: flex; flex-direction: column; width: 100%; gap: .25rem;"></div>
+        </div>
       `;
 
       const input = clanLookup.querySelector(".lookup-input");
+      const historyWrap = clanLookup.querySelector(".lookup-history-wrap");
+      const historyEl = clanLookup.querySelector(".lookup-history");
+      const clearText = clanLookup.querySelector(".clear-text");
+
+      clearText.addEventListener("mouseenter", () => {
+        clearText.style.textDecoration = "underline";
+      });
+      clearText.addEventListener("mouseleave", () => {
+        clearText.style.textDecoration = "none";
+      });
+
+      let history = JSON.parse(localStorage.getItem("clanLookupHistory") || "[]");
+
+      const saveHistory = () => {
+        localStorage.setItem("clanLookupHistory", JSON.stringify(history));
+      };
+
+      const renderHistory = () => {
+        if (history.length === 0) {
+          historyWrap.style.display = "none";
+          return;
+        }
+
+        historyWrap.style.display = "flex";
+
+        historyEl.innerHTML = "";
+        history.forEach((clanName) => {
+          const entry = document.createElement("div");
+          entry.style = `display: flex; align-items: center; justify-content: space-between; cursor: pointer; padding: .4rem .5rem; background: #2f3957; border-radius: .25rem; font-size: .875rem; color: #f2f2f2; box-sizing: border-box;`;
+          entry.innerHTML = `
+            <span>${clanName}</span>
+            <span class="remove-entry" style="display: none; color: #f2f2f2; opacity: .7; padding-left: .5rem; transition: .2s">✕</span>
+          `;
+
+          entry.addEventListener("mouseenter", () => {
+            entry.querySelector(".remove-entry").style.display = "inline";
+          });
+          entry.addEventListener("mouseleave", () => {
+            entry.querySelector(".remove-entry").style.display = "none";
+          });
+
+          entry.addEventListener("click", () => {
+            input.value = clanName;
+            lookup();
+          });
+
+          entry.querySelector(".remove-entry").addEventListener("click", (e) => {
+            e.stopPropagation();
+            history = history.filter((h) => h !== clanName);
+            saveHistory();
+            renderHistory();
+          });
+
+          entry.querySelector(".remove-entry").addEventListener("mouseenter", () => {
+            entry.querySelector(".remove-entry").style.color = "#e24f4f";
+          });
+          entry.querySelector(".remove-entry").addEventListener("mouseleave", () => {
+            entry.querySelector(".remove-entry").style.color = "#f2f2f2";
+          });
+
+          historyEl.appendChild(entry);
+        });
+      };
+
+      const addToHistory = (clanName) => {
+        history = history.filter((h) => h !== clanName);
+        history.unshift(clanName);
+        history = history.slice(0, 4);
+        saveHistory();
+        renderHistory();
+      };
+
+      clearText.addEventListener("click", () => {
+        history = [];
+        saveHistory();
+        renderHistory();
+      });
+
+      const lookup = () => {
+        const clanName = input.value.trim();
+        if (clanName) {
+          addClanPage(clanName);
+          addToHistory(clanName);
+        }
+      };
 
       input.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-          const clanName = input.value.trim();
-          if (clanName) addClanPage(clanName);
-        }
+        if (e.key === "Enter") lookup();
       });
+
+      renderHistory();
 
       awardsCont.prepend(clanLookup);
     }
@@ -4598,14 +4744,98 @@ window.addEventListener("DOMContentLoaded", async () => {
       playerLookup.style = `display: flex; flex-direction: column; align-items: flex-start; margin-top: 1.5rem; padding: 0 1rem;`;
       playerLookup.innerHTML = `
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: .5rem; width: 100%;">
-          <span class="search-text">Player Lookup</span>
-          <span>Press Enter to search</span>
+          <span class="search-text">View Profile</span>
+          <span class="hint-text">Press Enter to search</span>
         </div>
         <input type="text" placeholder="ENTER PLAYER ID..." class="lookup-input" style="border: .125rem solid #202639; outline: none; background: #2f3957; width: 100%; height: 2.875rem; padding-left: .5rem; box-sizing: border-box; font-weight: 600; font-size: 1rem; color: #f2f2f2; box-shadow: 0 1px 2px rgba(0,0,0,.4), inset 0 0 8px rgba(0,0,0,.4); border-radius: .25rem; transition: border-color 0.2s;"/>
+        <div class="lookup-history-wrap" style="display: none; flex-direction: column; width: 100%; margin-top: .75rem;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: .5rem; width: 100%;">
+            <span>History</span>
+            <span class="clear-text" style="cursor: pointer; color: #f2f2f2; opacity: .7;">Clear all</span>
+          </div>
+          <div class="lookup-history" style="display: flex; flex-direction: column; width: 100%; gap: .25rem;"></div>
+        </div>
       `;
       addFriends.appendChild(playerLookup);
 
       const input = playerLookup.querySelector(".lookup-input");
+      const historyWrap = playerLookup.querySelector(".lookup-history-wrap");
+      const historyEl = playerLookup.querySelector(".lookup-history");
+      const clearText = playerLookup.querySelector(".clear-text");
+
+      clearText.addEventListener("mouseenter", () => {
+        clearText.style.textDecoration = "underline";
+      });
+      clearText.addEventListener("mouseleave", () => {
+        clearText.style.textDecoration = "none";
+      });
+
+      let history = JSON.parse(localStorage.getItem("playerLookupHistory") || "[]");
+
+      const saveHistory = () => {
+        localStorage.setItem("playerLookupHistory", JSON.stringify(history));
+      };
+
+      const renderHistory = () => {
+        if (history.length === 0) {
+          historyWrap.style.display = "none";
+          return;
+        }
+
+        historyWrap.style.display = "flex";
+
+        historyEl.innerHTML = "";
+        history.forEach((id) => {
+          const entry = document.createElement("div");
+          entry.style = `display: flex; align-items: center; justify-content: space-between; cursor: pointer; padding: .4rem .5rem; background: #2f3957; border-radius: .25rem; font-size: .875rem; color: #f2f2f2; box-sizing: border-box;`;
+          entry.innerHTML = `
+            <span>#${id}</span>
+            <span class="remove-entry" style="display: none; color: #f2f2f2; opacity: .7; padding-left: .5rem; transition: .2s">✕</span>
+          `;
+
+          entry.addEventListener("mouseenter", () => {
+            entry.querySelector(".remove-entry").style.display = "inline";
+          });
+          entry.addEventListener("mouseleave", () => {
+            entry.querySelector(".remove-entry").style.display = "none";
+          });
+
+          entry.addEventListener("click", () => {
+            input.value = id;
+            lookup();
+          });
+
+          entry.querySelector(".remove-entry").addEventListener("click", (e) => {
+            e.stopPropagation();
+            history = history.filter((h) => h !== id);
+            saveHistory();
+            renderHistory();
+          });
+
+          entry.querySelector(".remove-entry").addEventListener("mouseenter", () => {
+            entry.querySelector(".remove-entry").style.color = "#e24f4f";
+          });
+          entry.querySelector(".remove-entry").addEventListener("mouseleave", () => {
+            entry.querySelector(".remove-entry").style.color = "#f2f2f2";
+          });
+
+          historyEl.appendChild(entry);
+        });
+      };
+
+      const addToHistory = (id) => {
+        history = history.filter((h) => h !== id);
+        history.unshift(id);
+        history = history.slice(0, 10);
+        saveHistory();
+        renderHistory();
+      };
+
+      clearText.addEventListener("click", () => {
+        history = [];
+        saveHistory();
+        renderHistory();
+      });
 
       const lookup = () => {
         const id = input.value.trim().replace(/^#/, "").toUpperCase();
@@ -4613,6 +4843,7 @@ window.addEventListener("DOMContentLoaded", async () => {
           const url = `/profile/${id}`;
           window.history.pushState({}, "", url);
           window.dispatchEvent(new PopStateEvent("popstate"));
+          addToHistory(id);
         } else {
           input.style.borderColor = "rgba(255, 0, 0, 0.4)";
           setTimeout(() => (input.style.borderColor = "#202639"), 1000);
@@ -4622,6 +4853,8 @@ window.addEventListener("DOMContentLoaded", async () => {
       input.addEventListener("keydown", (e) => {
         if (e.key === "Enter") lookup();
       });
+
+      renderHistory();
     }
 
     function addSpectateButton(div) {

@@ -229,6 +229,13 @@ const editResourceSwapper = () => {
     showSoundPreview(soundfile);
   });
 
+  ipcRenderer.on("save-sound-success", () => {
+    alert("Sound saved!");
+  });
+  ipcRenderer.on("save-sound-error", (event, err) => {
+    alert("Error saving sound: " + err);
+  });
+
   document.getElementById("save-sound")?.addEventListener("click", () => {
     if (soundFilePath) {
       const volume = document.getElementById("sound-volume").value;
@@ -236,13 +243,6 @@ const editResourceSwapper = () => {
     } else {
       alert("Please upload a sound file first.");
     }
-
-    ipcRenderer.on("save-sound-success", () => {
-      alert("Sound saved!");
-    });
-    ipcRenderer.on("save-sound-error", (event, err) => {
-      alert("Error saving sound: " + err);
-    });
   });
 
   document.getElementById("sound-select")?.addEventListener("change", (event) => {
@@ -269,7 +269,7 @@ const editResourceSwapper = () => {
       soundname = "__wound2__.6d084558.mp3";
     } else if (gunsound == "userevolver") {
       soundname = "__use__.cbf719c0.mp3";
-    } else if (gunsound == "useknife") {
+    } else if (gunsound == "usebayonet") {
       soundname = "__use__.fd944232.mp3";
     } else if (gunsound == "usevita") {
       soundname = "__use__.5421e46b.mp3";

@@ -1,9 +1,19 @@
 [
   {
+    "version": "1.1.7",
+    "date": "7/7/2026",
+    "changelogs": [
+      "Added a player/clan lookup history",
+      "Fixed local customizations sometimes not initializing",
+      "Fixed bayonet not getting recognized during pullout",
+      "Fixed Bayonet/Tomahawk sound swapper"
+    ]
+  },
+  {
     "version": "1.1.6",
     "date": "5/7/2026",
     "changelogs": [
-      "Made redirect links not reload the entire client",
+      "Made redirect buttons way faster and not reload the entire client",
       "Added a toggle for ingame only Custom Skin Link"
     ]
   },

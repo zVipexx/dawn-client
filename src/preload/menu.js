@@ -1183,7 +1183,8 @@ class Menu {
           <b style="color:#fff; display:block; margin-bottom:6px;">How to use</b>
           - You will need 2 colors at minimum<br>
           - The colors have to be ordered correctly according to their position from top (0%) to bottom (100%)<br>
-          - Leave positions blank to distribute them automatically
+          - Leave positions blank to distribute them automatically<br>
+          - For a smooth animated gradient put your starting color at the end aswell
         </div>
       `;
       infoWrapper.querySelector(".info-btn").onmouseenter = () => infoWrapper.querySelector(".info-tooltip").style.display = "block";
@@ -1408,37 +1409,44 @@ class Menu {
         saveToCustomizations();
       }
 
-      function saveToCustomizations() {
-        if (!self.settings.local_customizations) return;
-        const customizations = JSON.parse(localStorage.getItem("juice-customizations") || "[]");
+      function mergeLocalCustomizations(globalCustomizations) {
         const shortId = localStorage.getItem("user-id");
-        const stops = getStops().map(s => s.hex);
-        const badges = [...document.querySelectorAll(".badge-input")].map(input => input.querySelector(".badge-url")?.value.trim()).filter(Boolean);
-        const intensity = shadowSlider.value || 0;
-        const color = shadowColorPicker.value || "#FFFFFF";
+        if (!shortId) return globalCustomizations;
 
-        const existingIndex = customizations.findIndex(c => c.shortId === shortId);
-        const existing = existingIndex >= 0 ? customizations[existingIndex] : {};
+        const localStops = getStops().map(s => s.hex);
+        const localBadges = [...document.querySelectorAll(".badge-input")].map(input => input.querySelector(".badge-url")?.value.trim()).filter(Boolean);
+        const localIntensity = shadowSlider.value || 0;
+        const localColor = shadowColorPicker.value || "#FFFFFF";
+        const localBackground = localStorage.getItem("backgroundSettings") || "";
 
-        const userData = {
-          ...existing,
+        const existingIndex = globalCustomizations.findIndex(c => c.shortId === shortId);
+        const localData = {
           shortId,
           gradient: {
             rot: `${rotationSlider.value || 90}deg`,
-            stops,
-            shadow: intensity > 0 ? `0px 0px ${intensity}px ${color}` : "none"
+            stops: localStops,
+            shadow: localIntensity > 0 ? `0px 0px ${localIntensity}px ${localColor}` : "none"
           },
           animated: self.settings.local_animated_gradient,
-          badges
+          badges: localBadges,
+          "profile-background": localBackground || null
         };
 
         if (existingIndex >= 0) {
-          customizations[existingIndex] = userData;
-        } else {
-          customizations.push(userData);
+          globalCustomizations[existingIndex] = { ...globalCustomizations[existingIndex], ...localData };
+        } else if (localStops.length > 0 || localBadges.length > 0 || localBackground) {
+          globalCustomizations.push(localData);
         }
 
-        localStorage.setItem("juice-customizations", JSON.stringify(customizations));
+        return globalCustomizations;
+      }
+
+      function saveToCustomizations() {
+        if (!self.settings.local_customizations) return;
+        const globalCustomizations = JSON.parse(localStorage.getItem("juice-customizations") || "[]");
+        const merged = mergeLocalCustomizations(globalCustomizations);
+        localStorage.setItem("juice-customizations", JSON.stringify(merged));
+        if (self.applyCustomizations) self.applyCustomizations();
       }
 
       function loadGradient() {
@@ -1505,9 +1513,18 @@ class Menu {
         updateTextShadow();
       });
 
+      const style = document.createElement("style");
+      style.textContent = `
+        @keyframes animated-gradient {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+      `;
+      document.head.appendChild(style);
+
       loadGradient();
       loadShadowSettings();
-      if (self.applyCustomizations) self.applyCustomizations();
     }, 250);
   }
 
@@ -1557,6 +1574,25 @@ class Menu {
       return div;
     }
 
+    function mergeLocalBadges(globalCustomizations) {
+      const shortId = localStorage.getItem("user-id");
+      if (!shortId) return globalCustomizations;
+
+      const badges = [...badgesContent.querySelectorAll(".badge-input")]
+        .map(input => input.querySelector(".badge-url").value.trim())
+        .filter(Boolean);
+
+      const existingIndex = globalCustomizations.findIndex(c => c.shortId === shortId);
+
+      if (existingIndex >= 0) {
+        globalCustomizations[existingIndex].badges = badges;
+      } else if (badges.length > 0) {
+        globalCustomizations.push({ shortId, badges });
+      }
+
+      return globalCustomizations;
+    }
+
     function saveBadges() {
       const badges = [...badgesContent.querySelectorAll(".badge-input")]
         .map(input => input.querySelector(".badge-url").value.trim())
@@ -1566,20 +1602,10 @@ class Menu {
 
       if (!self.settings.local_customizations) return;
 
-      const customizations = JSON.parse(localStorage.getItem("juice-customizations") || "[]");
-      const shortId = localStorage.getItem("user-id");
-      const existingIndex = customizations.findIndex(c => c.shortId === shortId);
-      const existing = existingIndex >= 0 ? customizations[existingIndex] : {};
-
-      const userData = { ...existing, shortId, badges };
-
-      if (existingIndex >= 0) {
-        customizations[existingIndex] = userData;
-      } else {
-        customizations.push(userData);
-      }
-
-      localStorage.setItem("juice-customizations", JSON.stringify(customizations));
+      const globalCustomizations = JSON.parse(localStorage.getItem("juice-customizations") || "[]");
+      const merged = mergeLocalBadges(globalCustomizations);
+      localStorage.setItem("juice-customizations", JSON.stringify(merged));
+      if (self.applyCustomizations) self.applyCustomizations();
     }
 
     function loadBadges() {
@@ -1588,6 +1614,7 @@ class Menu {
       JSON.parse(saved).forEach(url => {
         badgesContent.insertBefore(createBadgeInput(url), addButton);
       });
+      saveBadges();
     }
 
     let dragSrcEl = null;
@@ -1633,7 +1660,6 @@ class Menu {
     });
 
     loadBadges();
-    if (self.applyCustomizations) self.applyCustomizations();
   }
 
   setLocalProfileBackground() {
@@ -1642,6 +1668,23 @@ class Menu {
     const trash = document.querySelector(".custom_profile_background .remove-background");
     const preview = document.querySelector(".custom_profile_background .background-preview");
 
+    function mergeLocalBackground(globalCustomizations) {
+      const shortId = localStorage.getItem("user-id");
+      if (!shortId) return globalCustomizations;
+
+      const url = urlInput.value.trim();
+
+      const existingIndex = globalCustomizations.findIndex(c => c.shortId === shortId);
+
+      if (existingIndex >= 0) {
+        globalCustomizations[existingIndex]["profile-background"] = url || null;
+      } else if (url) {
+        globalCustomizations.push({ shortId, "profile-background": url });
+      }
+
+      return globalCustomizations;
+    }
+
     function saveBackground() {
       const url = urlInput.value.trim();
 
@@ -1649,17 +1692,10 @@ class Menu {
 
       if (!self.settings.local_customizations) return;
 
-      const customizations = JSON.parse(localStorage.getItem("juice-customizations") || "[]");
-      const shortId = localStorage.getItem("user-id");
-      const idx = customizations.findIndex(c => c.shortId === shortId);
-
-      if (idx >= 0) {
-        customizations[idx]["profile-background"] = url || null;
-      } else {
-        customizations.push({ shortId, "profile-background": url || null });
-      }
-
-      localStorage.setItem("juice-customizations", JSON.stringify(customizations));
+      const globalCustomizations = JSON.parse(localStorage.getItem("juice-customizations") || "[]");
+      const merged = mergeLocalBackground(globalCustomizations);
+      localStorage.setItem("juice-customizations", JSON.stringify(merged));
+      if (self.applyCustomizations) self.applyCustomizations();
     }
 
     function setUrl(url) {

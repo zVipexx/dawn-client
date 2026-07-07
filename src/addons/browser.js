@@ -623,10 +623,10 @@ const initBrowser = (menu) => {
   menu.addEventListener("click", (e) => {
     if (e.target.closest(".fas")) return;
 
-    if (e.target.tagName.toLowerCase() === "img") {
+    if (e.target.tagName.toLowerCase() === "img" && e.target.closest("#community-options, #gallery-options")) {
       e.stopPropagation();
       openLightbox(e.target.src, 0);
-    } else if (e.target.tagName.toLowerCase() === "canvas") {
+    } else if (e.target.tagName.toLowerCase() === "canvas" && e.target.closest("#community-options, #gallery-options")) {
       e.stopPropagation();
       openLightbox(e.target.toDataURL(), 0)
     }
