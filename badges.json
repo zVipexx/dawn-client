@@ -649,8 +649,9 @@
     "gradient": {
       "rot": "90deg",
       "stops": [
-        "#DBA100",
-        "#FFF9A3"
+        "#DBA100 0%",
+        "#FFF9A3 80%",
+        "#DBA100 100%"
       ]
     }
   }
