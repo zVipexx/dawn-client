@@ -1691,7 +1691,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     const weaponNameToId = {
       vita: "vita",
       scar: "scar",
-      rev: "rev",
+      revolver: "rev",
       ar9: "ar9",
       mac10: "mac10",
       m60: "m60",
