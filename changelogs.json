@@ -7,6 +7,8 @@
       "Added Bolt Values into the Inventory",
       "Added Weapon Rotations",
       "Removed ADS Power because its now built into kirka",
+      "Replaced Command Abbreviations with a Command Helper",
+      "",
       "Fixed several bugs caused by the new update:",
       "- Moved Room Creation Presets into the Match Settings",
       "- Profiles not getting recognized",
