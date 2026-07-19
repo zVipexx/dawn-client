@@ -185,13 +185,16 @@ class Menu {
 
       getArmSettings: function (weaponId, arm) {
         const weapon = this.getSettings(weaponId);
-        const armKey = arm === 'left' ? 'leftArm' : 'rightArm';
+        const armKey = arm === "left" ? "leftArm" : "rightArm";
         const armData = weapon[armKey] || {};
         return {
           size: armData.size ?? 1.0,
           offsetX: armData.offsetX ?? 0,
           offsetY: armData.offsetY ?? 0,
           offsetZ: armData.offsetZ ?? 0,
+          rotationX: armData.rotationX ?? 0,
+          rotationY: armData.rotationY ?? 0,
+          rotationZ: armData.rotationZ ?? 0,
           wireframe: armData.wireframe ?? false,
           colorEnabled: armData.colorEnabled ?? false,
           colorHex: armData.colorHex ?? "#FFFFFF",
@@ -214,15 +217,27 @@ class Menu {
     const resetWeaponSettingsBtn = weaponsContent.querySelector("#reset-weapon-settings");
     const resetArmSettingsBtn = armsContent.querySelector("#reset-arm-settings");
 
-    const adsPowerInput = weaponsContent.querySelector("#ads_power");
     const weaponSizeInput = weaponsContent.querySelector("#weapon_size");
     const offsetXInput = weaponsContent.querySelector("#weapon_offset_x");
     const offsetYInput = weaponsContent.querySelector("#weapon_offset_y");
     const offsetZInput = weaponsContent.querySelector("#weapon_offset_z");
+    const weaponRotationXSlider = weaponsContent.querySelector("#weapon_rotation_x");
+    const weaponRotationXInput = weaponsContent.querySelector(".weapon-rotation-x-value");
+    const weaponRotationYSlider = weaponsContent.querySelector("#weapon_rotation_y");
+    const weaponRotationYInput = weaponsContent.querySelector(".weapon-rotation-y-value");
+    const weaponRotationZSlider = weaponsContent.querySelector("#weapon_rotation_z");
+    const weaponRotationZInput = weaponsContent.querySelector(".weapon-rotation-z-value");
+
     const armSizeInput = armsContent.querySelector("#arm_size");
     const armOffsetXInput = armsContent.querySelector("#arm_offset_x");
     const armOffsetYInput = armsContent.querySelector("#arm_offset_y");
     const armOffsetZInput = armsContent.querySelector("#arm_offset_z");
+    const armRotationXSlider = armsContent.querySelector("#arm_rotation_x");
+    const armRotationXInput = armsContent.querySelector(".arm-rotation-x-value");
+    const armRotationYSlider = armsContent.querySelector("#arm_rotation_y");
+    const armRotationYInput = armsContent.querySelector(".arm-rotation-y-value");
+    const armRotationZSlider = armsContent.querySelector("#arm_rotation_z");
+    const armRotationZInput = armsContent.querySelector(".arm-rotation-z-value");
     const armWireframeCheckbox = armsContent.querySelector("#arm_wireframe");
     const armColorCheckbox = armsContent.querySelector("#arm_color");
     const armColorHexInput = armsContent.querySelector(".arm-color .hex");
@@ -253,12 +268,15 @@ class Menu {
 
     const getArmSettings = (weaponId, arm) => {
       const weapon = getWeaponConfig(weaponId);
-      const armKey = arm === 'left' ? 'leftArm' : 'rightArm';
+      const armKey = arm === "left" ? "leftArm" : "rightArm";
       return weapon[armKey] || {
         size: 1.0,
         offsetX: 0,
         offsetY: 0,
         offsetZ: 0,
+        rotationX: 0,
+        rotationY: 0,
+        rotationZ: 0,
         wireframe: false,
         colorEnabled: false,
         colorHex: "#FFFFFF",
@@ -267,7 +285,7 @@ class Menu {
     };
 
     const setArmSettings = (weaponId, arm, settings) => {
-      const armKey = arm === 'left' ? 'leftArm' : 'rightArm';
+      const armKey = arm === "left" ? "leftArm" : "rightArm";
       const weapon = getWeaponConfig(weaponId);
       if (!weapon[armKey]) weapon[armKey] = {};
       weapon[armKey] = { ...weapon[armKey], ...settings };
@@ -281,7 +299,7 @@ class Menu {
 
     const getMirrorMaster = () => {
       const config = getActiveConfig();
-      return config.mirrorMaster || 'left';
+      return config.mirrorMaster || "left";
     };
 
     const setMirrorState = (enabled, master) => {
@@ -307,7 +325,7 @@ class Menu {
 
       if (mirror) {
         const master = getMirrorMaster();
-        if (master === 'left') {
+        if (master === "left") {
           leftArmSelector.style.opacity = "1";
           leftArmSelector.style.pointerEvents = "";
           rightArmSelector.style.opacity = "0.3";
@@ -327,13 +345,17 @@ class Menu {
     };
 
     const loadWeaponToUI = (settings) => {
-      adsPowerInput.value = settings.adsPower ?? 1;
       weaponSizeInput.value = settings.size ?? 1;
       offsetXInput.value = settings.offsetX ?? 0;
       offsetYInput.value = settings.offsetY ?? 0;
       offsetZInput.value = settings.offsetZ ?? 0;
-      const adsVal = weaponsContent.querySelector(".ads-power-value");
-      if (adsVal) adsVal.value = settings.adsPower ?? 1;
+      weaponRotationXSlider.value = settings.rotationX ?? 0;
+      weaponRotationXInput.value = settings.rotationX ?? 0;
+      weaponRotationYSlider.value = settings.rotationY ?? 0;
+      weaponRotationYInput.value = settings.rotationY ?? 0;
+      weaponRotationZSlider.value = settings.rotationZ ?? 0;
+      weaponRotationZInput.value = settings.rotationZ ?? 0;
+
       const sizeVal = weaponsContent.querySelector(".weapon-size-value");
       if (sizeVal) sizeVal.value = settings.size ?? 1;
       const oxVal = weaponsContent.querySelector(".weapon-offset-x-value");
@@ -349,6 +371,12 @@ class Menu {
       armOffsetXInput.value = armSettings.offsetX;
       armOffsetYInput.value = armSettings.offsetY;
       armOffsetZInput.value = armSettings.offsetZ;
+      armRotationXSlider.value = armSettings.rotationX ?? 0;
+      armRotationXInput.value = armSettings.rotationX ?? 0;
+      armRotationYSlider.value = armSettings.rotationY ?? 0;
+      armRotationYInput.value = armSettings.rotationY ?? 0;
+      armRotationZSlider.value = armSettings.rotationZ ?? 0;
+      armRotationZInput.value = armSettings.rotationZ ?? 0;
       if (armWireframeCheckbox) armWireframeCheckbox.checked = armSettings.wireframe || false;
       if (armColorCheckbox) armColorCheckbox.checked = armSettings.colorEnabled || false;
       if (armColorHexInput) armColorHexInput.value = armSettings.colorHex || "#FFFFFF";
@@ -366,11 +394,13 @@ class Menu {
 
     const saveCurrentWeaponUI = () => {
       const newSettings = {
-        adsPower: parseFloat(adsPowerInput.value),
         size: parseFloat(weaponSizeInput.value),
         offsetX: parseFloat(offsetXInput.value),
         offsetY: parseFloat(offsetYInput.value),
         offsetZ: parseFloat(offsetZInput.value),
+        rotationX: parseFloat(weaponRotationXSlider.value),
+        rotationY: parseFloat(weaponRotationYSlider.value),
+        rotationZ: parseFloat(weaponRotationZSlider.value),
       };
       const weaponId = this.viewMode === "universal" ? "universal" : this.selectedWeapon;
       setWeaponConfig(weaponId, newSettings);
@@ -384,6 +414,9 @@ class Menu {
         offsetX: parseFloat(armOffsetXInput.value),
         offsetY: parseFloat(armOffsetYInput.value),
         offsetZ: parseFloat(armOffsetZInput.value),
+        rotationX: parseFloat(armRotationXSlider.value),
+        rotationY: parseFloat(armRotationYSlider.value),
+        rotationZ: parseFloat(armRotationZSlider.value),
         wireframe: armWireframeCheckbox ? armWireframeCheckbox.checked : false,
         colorEnabled: armColorCheckbox ? armColorCheckbox.checked : false,
         colorHex: armColorHexInput ? armColorHexInput.value : "#FFFFFF",
@@ -394,7 +427,7 @@ class Menu {
       if (mirror) {
         const master = getMirrorMaster();
         if (this.selectedArm === master) {
-          const other = master === 'left' ? 'right' : 'left';
+          const other = master === "left" ? "right" : "left";
           setArmSettings(this.selectedWeapon, other, newSettings);
         }
       }
@@ -492,15 +525,15 @@ class Menu {
         rightArmSelector.classList.remove("active");
       } else {
         this.selectedArm = arm;
-        leftArmSelector.classList.toggle("active", arm === 'left');
-        rightArmSelector.classList.toggle("active", arm === 'right');
+        leftArmSelector.classList.toggle("active", arm === "left");
+        rightArmSelector.classList.toggle("active", arm === "right");
       }
       refreshUI();
       this.saveWeaponSelectionState();
     };
 
-    leftArmSelector.addEventListener("click", () => selectArm('left'));
-    rightArmSelector.addEventListener("click", () => selectArm('right'));
+    leftArmSelector.addEventListener("click", () => selectArm("left"));
+    rightArmSelector.addEventListener("click", () => selectArm("right"));
 
     universalCheckbox.addEventListener("change", (e) => {
       this.universalModeActive = e.target.checked;
@@ -522,7 +555,7 @@ class Menu {
             master = getMirrorMaster();
           }
           const masterSettings = getArmSettings(this.selectedWeapon, master);
-          const other = master === 'left' ? 'right' : 'left';
+          const other = master === "left" ? "right" : "left";
           setArmSettings(this.selectedWeapon, other, masterSettings);
         }
         setMirrorState(enabled, master);
@@ -534,11 +567,13 @@ class Menu {
       resetWeaponSettingsBtn.addEventListener("click", () => {
         const weaponId = this.viewMode === "universal" ? "universal" : this.selectedWeapon;
         const defaultWeaponSettings = {
-          adsPower: 1.0,
           size: 1.0,
           offsetX: 0,
           offsetY: 0,
-          offsetZ: 0
+          offsetZ: 0,
+          rotationX: 0,
+          rotationY: 0,
+          rotationZ: 0
         };
 
         if (this.viewMode === "universal") {
@@ -566,6 +601,9 @@ class Menu {
           offsetX: 0,
           offsetY: 0,
           offsetZ: 0,
+          rotationX: 0,
+          rotationY: 0,
+          rotationZ: 0,
           wireframe: false,
           colorEnabled: false,
           colorHex: "#FFFFFF",
@@ -577,7 +615,7 @@ class Menu {
         if (mirror) {
           const master = getMirrorMaster();
           if (this.selectedArm === master) {
-            const other = master === 'left' ? 'right' : 'left';
+            const other = master === "left" ? "right" : "left";
             setArmSettings(this.selectedWeapon, other, defaultArmSettings);
           }
         }
@@ -597,6 +635,42 @@ class Menu {
       input.addEventListener("change", saveCurrentArmUI);
       input.addEventListener("input", saveCurrentArmUI);
     });
+
+    const syncRotationInput = (slider, input) => {
+      slider.addEventListener("input", () => {
+        input.value = slider.value;
+        saveCurrentWeaponUI();
+      });
+      input.addEventListener("input", () => {
+        const val = parseFloat(input.value);
+        if (!isNaN(val)) {
+          slider.value = Math.min(180, Math.max(-180, val));
+          saveCurrentWeaponUI();
+        }
+      });
+    };
+
+    const syncArmRotationInput = (slider, input) => {
+      slider.addEventListener("input", () => {
+        input.value = slider.value;
+        saveCurrentArmUI();
+      });
+      input.addEventListener("input", () => {
+        const val = parseFloat(input.value);
+        if (!isNaN(val)) {
+          slider.value = Math.min(180, Math.max(-180, val));
+          saveCurrentArmUI();
+        }
+      });
+    };
+
+    if (weaponRotationXSlider && weaponRotationXInput) syncRotationInput(weaponRotationXSlider, weaponRotationXInput);
+    if (weaponRotationYSlider && weaponRotationYInput) syncRotationInput(weaponRotationYSlider, weaponRotationYInput);
+    if (weaponRotationZSlider && weaponRotationZInput) syncRotationInput(weaponRotationZSlider, weaponRotationZInput);
+
+    if (armRotationXSlider && armRotationXInput) syncArmRotationInput(armRotationXSlider, armRotationXInput);
+    if (armRotationYSlider && armRotationYInput) syncArmRotationInput(armRotationYSlider, armRotationYInput);
+    if (armRotationZSlider && armRotationZInput) syncArmRotationInput(armRotationZSlider, armRotationZInput);
 
     const exportBtn = sidebar.querySelector(".export");
     if (exportBtn) {
@@ -709,6 +783,9 @@ class Menu {
       offsetX: 0,
       offsetY: 0,
       offsetZ: 0,
+      rotationX: 0,
+      rotationY: 0,
+      rotationZ: 0,
       wireframe: false,
       colorEnabled: false,
       colorHex: "#FFFFFF",
@@ -716,23 +793,27 @@ class Menu {
     };
 
     const defaultWeaponSettings = {
-      adsPower: 1.0,
       size: 1.0,
       offsetX: 0,
       offsetY: 0,
       offsetZ: 0,
+      rotationX: 0,
+      rotationY: 0,
+      rotationZ: 0,
       leftArm: { ...defaultArmSettings },
       rightArm: { ...defaultArmSettings },
       mirrorArm: false,
-      mirrorMaster: 'left'
+      mirrorMaster: "left"
     };
 
     const defaultUniversalSettings = {
-      adsPower: 1.0,
       size: 1.0,
       offsetX: 0,
       offsetY: 0,
       offsetZ: 0,
+      rotationX: 0,
+      rotationY: 0,
+      rotationZ: 0,
       wireframe: false,
       colorEnabled: false,
       colorHex: "#FFFFFF",
@@ -741,7 +822,7 @@ class Menu {
       leftArm: { ...defaultArmSettings },
       rightArm: { ...defaultArmSettings },
       mirrorArm: false,
-      mirrorMaster: 'left'
+      mirrorMaster: "left"
     };
 
     let stored = localStorage.getItem("dawn_weapon_config");
@@ -753,21 +834,20 @@ class Menu {
       if (!config.settings[id]) {
         config.settings[id] = { ...defaultWeaponSettings };
         if (this.settings) {
-          config.settings[id].adsPower = this.settings.ads_power ?? 1.0;
           config.settings[id].size = this.settings.weapon_size ?? 1.0;
           config.settings[id].offsetX = this.settings.weapon_offset_x ?? 0;
           config.settings[id].offsetY = this.settings.weapon_offset_y ?? 0;
           config.settings[id].offsetZ = this.settings.weapon_offset_z ?? 0;
         }
-      } else {
-        if (config.settings[id].adsPower === undefined) config.settings[id].adsPower = 1.0;
       }
+      if (config.settings[id].rotationX === undefined) config.settings[id].rotationX = 0;
+      if (config.settings[id].rotationY === undefined) config.settings[id].rotationY = 0;
+      if (config.settings[id].rotationZ === undefined) config.settings[id].rotationZ = 0;
       if (!config.settings[id].leftArm) config.settings[id].leftArm = { ...defaultArmSettings };
       if (!config.settings[id].rightArm) config.settings[id].rightArm = { ...defaultArmSettings };
       if (config.settings[id].mirrorArm === undefined) config.settings[id].mirrorArm = false;
-      if (!config.settings[id].mirrorMaster) config.settings[id].mirrorMaster = 'left';
+      if (!config.settings[id].mirrorMaster) config.settings[id].mirrorMaster = "left";
     }
-    if (config.universalSettings.adsPower === undefined) config.universalSettings.adsPower = 1.0;
 
     localStorage.setItem("dawn_weapon_config", JSON.stringify(config));
     return config;
@@ -1877,10 +1957,6 @@ class Menu {
   handleSliderInputs() {
     const sliderMap = [
       {
-        slider: document.getElementById("ads_power"),
-        input: document.querySelector(".ads-power-value"),
-      },
-      {
         slider: document.getElementById("weapon_size"),
         input: document.querySelector(".weapon-size-value"),
       },
@@ -1895,6 +1971,18 @@ class Menu {
       {
         slider: document.getElementById("weapon_offset_z"),
         input: document.querySelector(".weapon-offset-z-value"),
+      },
+      {
+        slider: document.getElementById("weapon_rotation_x"),
+        input: document.querySelector(".weapon-rotation-x-value"),
+      },
+      {
+        slider: document.getElementById("weapon_rotation_y"),
+        input: document.querySelector(".weapon-rotation-y-value"),
+      },
+      {
+        slider: document.getElementById("weapon_rotation_z"),
+        input: document.querySelector(".weapon-rotation-z-value"),
       },
       {
         slider: document.getElementById("corner_roundness"),
@@ -1925,8 +2013,16 @@ class Menu {
         input: document.querySelector(".arm-offset-z-value"),
       },
       {
-        slider: document.getElementById("arm_offset_z"),
-        input: document.querySelector(".arm-offset-z-value"),
+        slider: document.getElementById("arm_rotation_x"),
+        input: document.querySelector(".arm-rotation-x-value"),
+      },
+      {
+        slider: document.getElementById("arm_rotation_y"),
+        input: document.querySelector(".arm-rotation-y-value"),
+      },
+      {
+        slider: document.getElementById("arm_rotation_z"),
+        input: document.querySelector(".arm-rotation-z-value"),
       },
     ];
 

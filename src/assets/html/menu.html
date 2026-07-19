@@ -368,6 +368,13 @@
         </div>
         <div class="option-group">
           <div class="option">
+            <span>Inventory Item Values</span>
+            <div class="checkbox">
+              <input type="checkbox" id="inventory_item_values" data-setting="inventory_item_values" />
+              <label for="inventory_item_values"></label>
+            </div>
+          </div>
+          <div class="option">
             <div class="left">
               <span>Prevent Selling Favorites</span>
               <span class="description">Disables the sell button for favorited items inside of the inventory</span>
@@ -381,26 +388,14 @@
         <div class="option-group">
           <div class="option">
             <div class="left">
-              <span>Command Abbreviations</span>
-              <span class="description">e.g. /t > /trade | /trade o > /trade offer | etc.</span>
+              <span>Command Helper</span>
+              <span class="description">Show Command Helper in Server chat</span>
             </div>
             <div class="checkbox">
               <input type="checkbox" id="command_abbreviations" data-setting="command_abbreviations" />
               <label for="command_abbreviations"></label>
             </div>
           </div>
-          <div class="option">
-            <div class="left">
-              <span>Wait for confirmation</span>
-              <span class="description">Only replace the abbreviation after space is pressed</span>
-            </div>
-            <div class="checkbox">
-              <input type="checkbox" id="abbreviation_confirmation" data-setting="abbreviation_confirmation" />
-              <label for="abbreviation_confirmation"></label>
-            </div>
-          </div>
-        </div>
-        <div class="option-group">
           <div class="option">
             <div class="left requires-refresh">
               <span>Show Trade Buttons</span>
@@ -468,9 +463,7 @@
               <div class="option custom">
                 <div class="left experimental">
                   <span>Custom Inspect Keybind</span>
-                  <span class="description">
-                    animations are subject to change
-                  </span>
+                  <span class="description">animations are subject to change</span>
                 </div>
                 <button class="juice change-keybind inspect"></button>
               </div>
@@ -513,21 +506,6 @@
           <div class="per-weapon-only">
             <div class="option-group">
               <div class="option">
-                <div class="left">
-                  <span>ADS Power</span>
-                  <span class="description">Adjust the zoom strength</span>
-                </div>
-                <div class="right"
-                  style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
-                  <input type="text" class="ads-power-value" placeholder="1" style="flex-basis: 21.5%;" maxlength="3" />
-                  <div class="slider">
-                    <input type="range" id="ads_power" class="slider-value" data-setting="ads_power" min="0" step="0.05"
-                      max="1" />
-                    <label for="ads_power"></label>
-                  </div>
-                </div>
-              </div>
-              <div class="option">
                 <span>Weapon size</span>
                 <div class="right"
                   style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
@@ -546,8 +524,7 @@
                   <span>Weapon Offset</span>
                 </div>
                 <div class="content" style="display:flex; flex-direction:column; gap:8px">
-                  <div class="option">
-                    X
+                  <div class="option">X
                     <div class="right"
                       style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
                       <input type="text" class="weapon-offset-x-value" placeholder="0" style="width: 21.5%"
@@ -559,8 +536,7 @@
                       </div>
                     </div>
                   </div>
-                  <div class="option">
-                    Y
+                  <div class="option">Y
                     <div class="right"
                       style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
                       <input type="text" class="weapon-offset-y-value" placeholder="0" style="width: 21.5%"
@@ -572,8 +548,7 @@
                       </div>
                     </div>
                   </div>
-                  <div class="option">
-                    Z
+                  <div class="option">Z
                     <div class="right"
                       style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
                       <input type="text" class="weapon-offset-z-value" placeholder="0" style="width: 21.5%"
@@ -582,6 +557,47 @@
                         <input type="range" id="weapon_offset_z" class="slider-value" data-setting="weapon_offset_z"
                           min="-0.5" step="0.01" max="0.5" />
                         <label for="weapon_offset_z"></label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="option dropdown">
+                <div class="top">
+                  <i class="fas fa-angle-down"></i>
+                  <span>Weapon Rotation</span>
+                </div>
+                <div class="content" style="display:flex; flex-direction:column; gap:8px">
+                  <div class="option">X
+                    <div class="right"
+                      style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
+                      <input type="text" class="weapon-rotation-x-value" placeholder="0" style="width: 21.5%"
+                        maxlength="5" />
+                      <div class="slider">
+                        <input type="range" id="weapon_rotation_x" class="slider-value" min="-180" step="1" max="180" />
+                        <label for="weapon_rotation_x"></label>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="option">Y
+                    <div class="right"
+                      style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
+                      <input type="text" class="weapon-rotation-y-value" placeholder="0" style="width: 21.5%"
+                        maxlength="5" />
+                      <div class="slider">
+                        <input type="range" id="weapon_rotation_y" class="slider-value" min="-180" step="1" max="180" />
+                        <label for="weapon_rotation_y"></label>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="option">Z
+                    <div class="right"
+                      style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
+                      <input type="text" class="weapon-rotation-z-value" placeholder="0" style="width: 21.5%"
+                        maxlength="5" />
+                      <div class="slider">
+                        <input type="range" id="weapon_rotation_z" class="slider-value" min="-180" step="1" max="180" />
+                        <label for="weapon_rotation_z"></label>
                       </div>
                     </div>
                   </div>
@@ -664,8 +680,7 @@
                 <span>Arm Offset</span>
               </div>
               <div class="content" style="display:flex; flex-direction:column; gap:8px">
-                <div class="option">
-                  X
+                <div class="option">X
                   <div class="right"
                     style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
                     <input type="text" class="arm-offset-x-value" placeholder="0" style="width: 21.5%" maxlength="5" />
@@ -676,8 +691,7 @@
                     </div>
                   </div>
                 </div>
-                <div class="option">
-                  Y
+                <div class="option">Y
                   <div class="right"
                     style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
                     <input type="text" class="arm-offset-y-value" placeholder="0" style="width: 21.5%" maxlength="5" />
@@ -688,8 +702,7 @@
                     </div>
                   </div>
                 </div>
-                <div class="option">
-                  Z
+                <div class="option">Z
                   <div class="right"
                     style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
                     <input type="text" class="arm-offset-z-value" placeholder="0" style="width: 21.5%" maxlength="5" />
@@ -697,6 +710,47 @@
                       <input type="range" id="arm_offset_z" class="slider-value" data-setting="arm_offset_z" min="-0.5"
                         step="0.01" max="0.5" />
                       <label for="arm_offset_z"></label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="option dropdown">
+              <div class="top">
+                <i class="fas fa-angle-down"></i>
+                <span>Arm Rotation</span>
+              </div>
+              <div class="content" style="display:flex; flex-direction:column; gap:8px">
+                <div class="option">X
+                  <div class="right"
+                    style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
+                    <input type="text" class="arm-rotation-x-value" placeholder="0" style="width: 21.5%"
+                      maxlength="5" />
+                    <div class="slider">
+                      <input type="range" id="arm_rotation_x" class="slider-value" min="-180" step="1" max="180" />
+                      <label for="arm_rotation_x"></label>
+                    </div>
+                  </div>
+                </div>
+                <div class="option">Y
+                  <div class="right"
+                    style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
+                    <input type="text" class="arm-rotation-y-value" placeholder="0" style="width: 21.5%"
+                      maxlength="5" />
+                    <div class="slider">
+                      <input type="range" id="arm_rotation_y" class="slider-value" min="-180" step="1" max="180" />
+                      <label for="arm_rotation_y"></label>
+                    </div>
+                  </div>
+                </div>
+                <div class="option">Z
+                  <div class="right"
+                    style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
+                    <input type="text" class="arm-rotation-z-value" placeholder="0" style="width: 21.5%"
+                      maxlength="5" />
+                    <div class="slider">
+                      <input type="range" id="arm_rotation_z" class="slider-value" min="-180" step="1" max="180" />
+                      <label for="arm_rotation_z"></label>
                     </div>
                   </div>
                 </div>

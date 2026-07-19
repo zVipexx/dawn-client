@@ -329,8 +329,18 @@ window.addEventListener("DOMContentLoaded", async () => {
       localStorage.setItem("dawn-room-presets", JSON.stringify(presets));
     };
 
+    let collapsed = localStorage.getItem("dawn-room-presets-collapsed") === "true";
+
+    const saveCollapsed = () => {
+      localStorage.setItem("dawn-room-presets-collapsed", String(collapsed));
+    };
+
+    const isMultiSelectEnabled = (modal) => {
+      return !!modal.querySelector(".mods") || !!modal.querySelector(".maps");
+    };
+
     const scrapeSettings = (modal) => {
-      const settings = { selects: {}, modes: {}, maps: {}, weapons: {}, inputs: {} };
+      const settings = { selects: {}, modes: {}, maps: {}, weapons: {}, inputs: {}, sliders: {}, multiSelect: isMultiSelectEnabled(modal) };
 
       modal.querySelectorAll(".element").forEach(el => {
         const labelEl = el.querySelector(".label");
@@ -340,13 +350,16 @@ window.addEventListener("DOMContentLoaded", async () => {
         if (label && selected) settings.selects[label] = selected;
       });
 
+      const modePicker = modal.querySelector(".single-picker .selected");
+      if (modePicker) settings.selects["Mode"] = modePicker.textContent.trim();
+
       modal.querySelectorAll(".mods .custom-checkbox").forEach(cb => {
         const label = cb.querySelector("span")?.textContent.trim();
         const input = cb.querySelector("input");
         if (label && input) settings.modes[label] = input.checked;
       });
 
-      modal.querySelectorAll(".map .custom-checkbox").forEach(cb => {
+      modal.querySelectorAll(".maps .custom-checkbox").forEach(cb => {
         const label = cb.querySelector("span")?.textContent.trim();
         const input = cb.querySelector("input");
         if (label && input) settings.maps[label] = input.checked;
@@ -364,67 +377,93 @@ window.addEventListener("DOMContentLoaded", async () => {
       const nameInput = modal.querySelector(".server-name-input input");
       if (nameInput) settings.inputs.serverName = nameInput.value;
 
+      const botsSlider = modal.querySelector(".bots-right .bots-range");
+      if (botsSlider) settings.sliders.bots = botsSlider.value;
+
+      const teamSlider = modal.querySelector(".team-row .bots-range");
+      if (teamSlider) settings.sliders.team = teamSlider.value;
+
+      const momentumRow = Array.from(modal.querySelectorAll(".element")).find(el =>
+        el.querySelector(".label")?.textContent.trim().startsWith("Momentum")
+      );
+      const momentumSlider = momentumRow?.querySelector(".bots-range");
+      if (momentumSlider) settings.sliders.momentum = momentumSlider.value;
+
       return settings;
     };
 
-    const applyPreset = async (modal, preset) => {
-      const elements = Array.from(modal.querySelectorAll(".element"));
+    const setSelectValue = async (el, targetVal) => {
+      const scope = el.querySelector(".right") || el;
+      const clickTarget = scope.querySelector(".input") || scope;
+      const selectedEl = scope.querySelector(".selected");
+      if (!selectedEl || selectedEl.textContent.trim() === targetVal) return;
 
+      clickTarget.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+      clickTarget.click();
+
+      await new Promise(resolve => setTimeout(resolve, 0));
+
+      let options = Array.from(scope.querySelectorAll(".items div"));
+      if (options.length === 0) options = Array.from(document.querySelectorAll(".items div"));
+
+      for (const opt of options) {
+        if (opt.textContent.trim() === targetVal) {
+          opt.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+          opt.click();
+          opt.dispatchEvent(new MouseEvent("mouseup", { bubbles: true }));
+          break;
+        }
+      }
+
+      await new Promise(resolve => setTimeout(resolve, 0));
+    };
+
+    const setSliderValue = (slider, value) => {
+      if (!slider || value === undefined) return;
+      const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+      nativeSetter.call(slider, value);
+      slider.dispatchEvent(new Event("input", { bubbles: true }));
+      slider.dispatchEvent(new Event("change", { bubbles: true }));
+    };
+
+    const setCheckboxGroup = (modal, containerSelector, targetStates) => {
+      modal.querySelectorAll(`${containerSelector} .custom-checkbox`).forEach(cb => {
+        const label = cb.querySelector("span")?.textContent.trim();
+        const input = cb.querySelector("input");
+        if (!label || !input) return;
+        const targetState = targetStates?.[label] === true;
+        if (input.checked !== targetState) input.click();
+      });
+    };
+
+    const applyPreset = async (modal, preset) => {
+      const multiSelect = isMultiSelectEnabled(modal);
+      const toggleBtn = modal.querySelector(".toggle-multi-row .select-all");
+
+      if (toggleBtn && preset.settings.multiSelect !== undefined && preset.settings.multiSelect !== multiSelect) {
+        toggleBtn.click();
+        await new Promise(resolve => setTimeout(resolve, 0));
+      }
+
+      const elements = Array.from(modal.querySelectorAll(".element"));
       for (const el of elements) {
         const labelEl = el.querySelector(".label");
         if (!labelEl) continue;
         const label = labelEl.textContent.trim().split(" ")[0].split("\n")[0];
+        if (label === "Tier") continue;
         const targetVal = preset.settings.selects[label];
-
-        if (targetVal) {
-          const rightPart = el.querySelector(".right");
-          const selectedEl = rightPart?.querySelector(".selected");
-
-          if (selectedEl && selectedEl.textContent.trim() !== targetVal) {
-            rightPart.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
-            rightPart.click();
-
-            await new Promise(resolve => setTimeout(resolve, 0));
-
-            let options = Array.from(el.querySelectorAll(".items div"));
-            if (options.length === 0) options = Array.from(document.querySelectorAll(".items div"));
-
-            for (const opt of options) {
-              if (opt.textContent.trim() === targetVal) {
-                opt.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
-                opt.click();
-                opt.dispatchEvent(new MouseEvent("mouseup", { bubbles: true }));
-                break;
-              }
-            }
-
-            await new Promise(resolve => setTimeout(resolve, 0));
-          }
-        }
+        if (targetVal) await setSelectValue(el, targetVal);
       }
 
-      modal.querySelectorAll(".mods .custom-checkbox").forEach(cb => {
-        const label = cb.querySelector("span")?.textContent.trim();
-        const targetState = preset.settings.modes?.[label];
-        const input = cb.querySelector("input");
-        if (label && targetState !== undefined && input.checked !== targetState) input.click();
-      });
+      const singlePicker = modal.querySelector(".single-picker");
+      if (singlePicker && preset.settings.selects["Mode"]) {
+        await setSelectValue(singlePicker, preset.settings.selects["Mode"]);
+      }
 
+      setCheckboxGroup(modal, ".mods", preset.settings.modes);
       await new Promise(resolve => setTimeout(resolve, 10));
-
-      modal.querySelectorAll(".map .custom-checkbox").forEach(cb => {
-        const label = cb.querySelector("span")?.textContent.trim();
-        const targetState = preset.settings.maps?.[label];
-        const input = cb.querySelector("input");
-        if (label && targetState !== undefined && input.checked !== targetState) input.click();
-      });
-
-      modal.querySelectorAll(".weapons-cont .custom-checkbox").forEach(cb => {
-        const label = cb.querySelector("span")?.textContent.trim();
-        const targetState = preset.settings.weapons?.[label];
-        const input = cb.querySelector("input");
-        if (label && targetState !== undefined && input.checked !== targetState) input.click();
-      });
+      setCheckboxGroup(modal, ".maps", preset.settings.maps);
+      setCheckboxGroup(modal, ".weapons-cont", preset.settings.weapons);
 
       const mapInput = modal.querySelector(".keybind-input input");
       if (mapInput) {
@@ -437,10 +476,29 @@ window.addEventListener("DOMContentLoaded", async () => {
         nameInput.value = preset.settings.inputs.serverName || "";
         nameInput.dispatchEvent(new Event("input", { bubbles: true }));
       }
+
+      const botsSlider = modal.querySelector(".bots-right .bots-range");
+      setSliderValue(botsSlider, preset.settings.sliders?.bots);
+
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      const tierEl = Array.from(modal.querySelectorAll(".element")).find(el =>
+        el.querySelector(".label")?.textContent.trim().startsWith("Tier")
+      );
+      const tierTargetVal = preset.settings.selects["Tier"];
+      if (tierEl && tierTargetVal) await setSelectValue(tierEl, tierTargetVal);
+
+      const teamSlider = modal.querySelector(".team-row .bots-range");
+      setSliderValue(teamSlider, preset.settings.sliders?.team);
+
+      const momentumRow = Array.from(modal.querySelectorAll(".element")).find(el =>
+        el.querySelector(".label")?.textContent.trim().startsWith("Momentum")
+      );
+      setSliderValue(momentumRow?.querySelector(".bots-range"), preset.settings.sliders?.momentum);
     };
 
-    const renderPresets = (container, modal) => {
-      const list = container.querySelector(".room-presets-list");
+    const renderPresets = (panel, modal) => {
+      const list = panel.querySelector(".room-presets-list");
       list.innerHTML = "";
 
       if (presets.length === 0) {
@@ -491,7 +549,7 @@ window.addEventListener("DOMContentLoaded", async () => {
           const [moved] = presets.splice(dragSrcIndex, 1);
           presets.splice(index, 0, moved);
           savePresets();
-          renderPresets(container, modal);
+          renderPresets(panel, modal);
         });
 
         const nameInput = item.querySelector(".room-preset-name-input");
@@ -537,58 +595,79 @@ window.addEventListener("DOMContentLoaded", async () => {
           e.stopPropagation();
           presets.splice(index, 1);
           savePresets();
-          renderPresets(container, modal);
+          renderPresets(panel, modal);
         };
 
         list.appendChild(item);
       });
     };
 
-    const injectSidebar = (container) => {
-      if (container.querySelector(".room-presets-sidebar")) return;
+    const injectPresetsPanel = (container) => {
+      if (container.querySelector(".presets")) return;
 
-      container.querySelector(".vm--modal").style.overflow = "visible";
+      const modal = container.querySelector(".vm--modal") || container;
+      const content = modal.querySelector(".general-content") || modal;
+      const fullEl = content.querySelector(".full");
+      if (!fullEl) return;
 
-      const sidebar = document.createElement("div");
-      sidebar.className = "room-presets-sidebar";
-      sidebar.innerHTML = `
-        <div class="room-presets-header">
-          <div class="top">
-            <div class="room-presets-title">PRESETS</div>
-            <div class="right">
-              <i class="fas fa-share room-preset-action export" title="Share Presets"></i>
-              <i class="fas fa-file-import room-preset-action import" title="Import Presets"></i>
-            </div>
+      const panel = document.createElement("div");
+      panel.className = "row presets";
+      panel.innerHTML = `
+        <div class="header presets-header">
+          <div class="left">
+            Presets
+            <i class="fas fa-chevron-down presets-arrow"></i>
+          </div>
+          <div class="right">
+            <i class="fas fa-share room-preset-action export" title="Share Presets"></i>
+            <i class="fas fa-file-import room-preset-action import" title="Import Presets"></i>
           </div>
         </div>
-        <div class="room-presets-list"></div>
-        <div class="juice-button save-preset">
-          SAVE CURRENT
+        <div class="presets-body">
+          <div class="room-presets-list"></div>
+          <button class="save-preset"">SAVE CURRENT</button>
         </div>
       `;
 
-      sidebar.querySelector(".export").onclick = () => {
-        clipboard.writeText(JSON.stringify(presets));
+      const headerEl = panel.querySelector(".presets-header");
+      const bodyEl = panel.querySelector(".presets-body");
+      const foldIcon = panel.querySelector(".presets-arrow");
+
+      const applyCollapsedState = () => {
+        bodyEl.style.display = collapsed ? "none" : "";
+        foldIcon.style.transform = collapsed ? "rotate(-90deg)" : "rotate(0deg)";
+      };
+      applyCollapsedState();
+
+      headerEl.addEventListener("click", (e) => {
+        if (e.target.closest(".right")) return;
+        collapsed = !collapsed;
+        saveCollapsed();
+        applyCollapsedState();
+      });
+
+      panel.querySelector(".export").onclick = () => {
+        navigator.clipboard.writeText(JSON.stringify(presets));
         alert("Presets copied to clipboard!");
-      }
+      };
 
-      sidebar.querySelector(".import").onclick = () => {
-        if (sidebar.querySelector(".import-presets")) {
-          sidebar.querySelector(".import-presets").remove();
+      panel.querySelector(".import").onclick = () => {
+        if (panel.querySelector(".import-presets")) {
+          panel.querySelector(".import-presets").remove();
           return;
-        };
+        }
 
-        const modal = document.createElement("div");
-        modal.classList.add("import-presets");
-        modal.innerHTML = `
+        const importBox = document.createElement("div");
+        importBox.classList.add("import-presets");
+        importBox.innerHTML = `
           <input class="import-input" type="text" placeholder="Paste preset settings" />
           <i class="fas fa-check room-preset-action confirm"></i>
         `;
 
-        sidebar.querySelector(".room-presets-header").appendChild(modal);
+        panel.insertBefore(importBox, panel.querySelector(".presets-body"));
 
-        modal.querySelector(".confirm").onclick = () => {
-          const input = modal.querySelector(".import-input").value;
+        importBox.querySelector(".confirm").onclick = () => {
+          const input = importBox.querySelector(".import-input").value;
           if (input) {
             try {
               const imported = JSON.parse(input);
@@ -596,39 +675,33 @@ window.addEventListener("DOMContentLoaded", async () => {
                 localStorage.setItem("dawn-room-presets", input);
                 presets = imported;
                 savePresets();
-                renderPresets(sidebar, container.querySelector(".vm--modal"));
+                renderPresets(panel, modal);
               }
             } catch (e) {
               alert("Invalid JSON format");
             }
           }
-          modal.remove();
+          importBox.remove();
         };
-      }
+      };
 
-      sidebar.querySelector(".save-preset").onclick = () => {
-        const modal = container.querySelector(".vm--modal");
+      panel.querySelector(".save-preset").onclick = () => {
         const settings = scrapeSettings(modal);
         presets.push({ name: `Preset ${presets.length + 1}`, settings });
         savePresets();
-        renderPresets(sidebar, modal);
+        renderPresets(panel, modal);
 
-        const btn = sidebar.querySelector(".save-preset");
-        btn.innerHTML = `<i class="fas fa-check"></i> SAVED!`;
-        btn.style.color = "#fff";
+        const btn = panel.querySelector(".save-preset");
+        const textEl = btn.querySelector(".text");
+        textEl.innerHTML = `<i class="fas fa-check"></i> SAVED!`;
 
         setTimeout(() => {
-          btn.innerHTML = "SAVE CURRENT";
-          btn.style.background = "";
-          btn.style.color = "";
+          textEl.textContent = "SAVE CURRENT";
         }, 1500);
       };
 
-      const modal = container.querySelector(".vm--modal");
-      if (modal) {
-        modal.appendChild(sidebar);
-        renderPresets(sidebar, modal);
-      }
+      fullEl.insertAdjacentElement("afterend", panel);
+      renderPresets(panel, modal);
     };
 
     const createObserver = new MutationObserver((mutations) => {
@@ -637,7 +710,7 @@ window.addEventListener("DOMContentLoaded", async () => {
           if (node.nodeType === 1 && node.classList.contains("vm--container")) {
             setTimeout(() => {
               if (node.querySelector(".create-btn")) {
-                injectSidebar(node);
+                injectPresetsPanel(node);
               }
             }, 0);
           }
@@ -894,93 +967,6 @@ window.addEventListener("DOMContentLoaded", async () => {
       if (relevantSettings.includes(e.detail.setting)) updateUIFeatures();
     });
     updateUIFeatures();
-  };
-
-  function findCamera(instance) {
-    for (const key of Object.getOwnPropertyNames(instance)) {
-      try {
-        const val = instance[key];
-        if (!val || typeof val !== "object") continue;
-        const names = Object.getOwnPropertyNames(val);
-        const hasFov = names.some(k => {
-          const desc = Object.getOwnPropertyDescriptor(val, k);
-          if (!desc?.get) return false;
-          try {
-            const v = desc.get.call(val);
-            return typeof v === "number" && v >= 40 && v <= 150;
-          } catch (e) { return false; }
-        });
-        const hasZoom = names.includes("zoom");
-        if (hasFov && hasZoom) return val;
-      } catch (e) { }
-    }
-    return null;
-  }
-
-  window.ads_power = 1;
-  const setAdsPower = (multiplier) => {
-    window.ads_power = multiplier;
-
-    const interval = setInterval(() => {
-      if (!window.__zoomInstance) return;
-      const cam = findCamera(window.__zoomInstance);
-      if (!cam) return;
-      clearInterval(interval);
-
-      const fovKey = Object.getOwnPropertyNames(cam).find(key => {
-        const desc = Object.getOwnPropertyDescriptor(cam, key);
-        if (!desc?.get) return false;
-        try {
-          const val = desc.get.call(cam);
-          return typeof val === "number" && val >= 40 && val <= 150;
-        } catch (e) { return false; }
-      });
-
-      if (!fovKey) return;
-
-      const desc = Object.getOwnPropertyDescriptor(cam, fovKey);
-      const origGet = desc.get;
-      const origSet = desc.set;
-
-      const defaultFov = parseFloat(localStorage.getItem("SETTINGS___SETTING/CAMERA___SETTING/MAIN_FOV___SETTING")?.replace(/"/g, "")) || 100;
-
-      let ads = false;
-
-      Object.defineProperty(cam, fovKey, {
-        get() { return origGet.call(this); },
-        set(v) {
-          if (v === defaultFov) {
-            ads = false;
-            origSet.call(this, v);
-            return;
-          }
-
-          if (v < defaultFov) {
-            ads = true;
-          }
-
-          if (ads) {
-            const weaponConfig = window.dawnWeaponConfig;
-            let adsPower = window.ads_power;
-
-            if (weaponConfig) {
-              const weaponId = weaponConfig.universalModeActive ? "universal" : (window.currentWeaponId || "vita");
-              const settings = weaponConfig.getSettings(weaponId);
-              adsPower = settings.adsPower ?? window.ads_power;
-            }
-
-            const zoomDelta = Math.abs(defaultFov - v);
-            const curved = Math.pow(adsPower, 0.4);
-            const newFov = defaultFov - zoomDelta * curved;
-            origSet.call(this, Math.max(1, Math.min(179, newFov)));
-          } else {
-            origSet.call(this, v);
-          }
-        },
-        configurable: true,
-        enumerable: true
-      });
-    }, 100);
   };
 
   const initWeaponMods = () => {
@@ -1796,6 +1782,37 @@ window.addEventListener("DOMContentLoaded", async () => {
       mat[8] = nz0 * sz; mat[9] = nz1 * sz; mat[10] = nz2 * sz;
     };
 
+    const WEAPON_AXIS_MAP = {
+      vita: { rx: "x", ry: "y", rz: "z" },
+      scar: { rx: "x", ry: "y", rz: "z" },
+      rev: { rx: "x", ry: "z", rz: "y" },
+      ar9: { rx: "x", ry: "z", rz: "y" },
+      mac10: { rx: "x", ry: "y", rz: "z" },
+      m60: { rx: "x", ry: "y", rz: "z" },
+      weatie: { rx: "x", ry: "y", rz: "z" },
+      lar: { rx: "x", ry: "y", rz: "z" },
+      shark: { rx: "y", ry: "x", rz: "z" },
+      bayonet: { rx: "y", ry: "x", rz: "z" },
+      tomahawk: { rx: "y", ry: "x", rz: "z" },
+    };
+
+    const applyMappedRotation = (mat, weaponId, rotX, rotY, rotZ) => {
+      const map = WEAPON_AXIS_MAP[weaponId] || WEAPON_AXIS_MAP.vita;
+      const radX = rotX * Math.PI / 180;
+      const radY = rotY * Math.PI / 180;
+      const radZ = rotZ * Math.PI / 180;
+
+      const applyFunc = {
+        "x": applyXSpin,
+        "y": applyYSpin,
+        "z": applyZSpin,
+      };
+
+      applyFunc[map.rx](mat, radX);
+      applyFunc[map.ry](mat, radY);
+      applyFunc[map.rz](mat, radZ);
+    };
+
     let currentInspectKeybind = settings.inspect_keybind;
 
     const inspectKeybindHandler = (e) => {
@@ -1952,7 +1969,8 @@ window.addEventListener("DOMContentLoaded", async () => {
             }
 
             const weaponCfg = window.dawnWeaponConfig?.getSettings?.(currentWeaponId) || {
-              size: 1.0, offsetX: 0, offsetY: 0, offsetZ: 0
+              size: 1.0, offsetX: 0, offsetY: 0, offsetZ: 0,
+              rotationX: 0, rotationY: 0, rotationZ: 0
             };
             const globalCfg = window.dawnWeaponConfig || {
               wireframe: false, colorEnabled: false, rgb: false, colorHex: "#FFFFFF"
@@ -1973,7 +1991,7 @@ window.addEventListener("DOMContentLoaded", async () => {
                 origBindTexture(gl.TEXTURE_2D, rgbTexture);
                 gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, rgbPixel);
               }
-            } else if (lastBoundTexture) {
+            } else if (gl.getParameter(gl.TEXTURE_BINDING_2D) === rgbTexture && lastBoundTexture) {
               origBindTexture(gl.TEXTURE_2D, lastBoundTexture);
             }
 
@@ -1992,7 +2010,6 @@ window.addEventListener("DOMContentLoaded", async () => {
             let spinZAngle = 0;
             let spinXAngle = 0;
             let spinYAngle = 0;
-            let baseSpinXAngle = 0;
 
             if (inspectStart !== null && inspectingWeaponId === null) {
               inspectingWeaponId = currentWeaponId;
@@ -2029,8 +2046,9 @@ window.addEventListener("DOMContentLoaded", async () => {
             matBuf[13] += oy;
             matBuf[14] += oz;
 
+            applyMappedRotation(matBuf, currentWeaponId, weaponCfg.rotationX || 0, weaponCfg.rotationY || 0, weaponCfg.rotationZ || 0);
+
             if (spinZAngle !== 0) applyZSpin(matBuf, spinZAngle);
-            if (baseSpinXAngle !== 0) applyXSpin(matBuf, baseSpinXAngle);
             if (spinXAngle !== 0) applyXSpin(matBuf, spinXAngle);
             if (spinYAngle !== 0) applyYSpin(matBuf, spinYAngle);
 
@@ -2077,6 +2095,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 
             const armSettings = window.dawnWeaponConfig?.getArmSettings?.(currentWeaponId, armType) || {
               size: 1.0, offsetX: 0, offsetY: 0, offsetZ: 0,
+              rotationX: 0, rotationY: 0, rotationZ: 0,
               wireframe: false, colorEnabled: false, colorHex: "#FFFFFF", rgb: false
             };
 
@@ -2113,6 +2132,8 @@ window.addEventListener("DOMContentLoaded", async () => {
             matBuf[12] += ox;
             matBuf[13] += oy;
             matBuf[14] += oz;
+
+            applyMappedRotation(matBuf, currentWeaponId, armSettings.rotationX || 0, armSettings.rotationY || 0, armSettings.rotationZ || 0);
 
             if (armSpinX !== 0) applyXSpin(matBuf, armSpinX);
             if (armSpinY !== 0) applyYSpin(matBuf, armSpinY);
@@ -2746,33 +2767,6 @@ window.addEventListener("DOMContentLoaded", async () => {
       sendBtn.click();
     }
 
-    let lastValue = "";
-    input.addEventListener("input", () => {
-      lastValue = input.value;
-    });
-
-    const commandMap = {
-      "/t": "/trade",
-      "/cw": "/confirmwager",
-      "/w": "/wager",
-      "/cl": "/claim",
-      "/p": "/price",
-      "/cf": "/coinflip",
-      "/i": "/inventory",
-      "/inv": "/inventory",
-    };
-
-    const subCommandMap = {
-      "a": "accept",
-      "acc": "accept",
-      "c": "cancel",
-      "ca": "cancel",
-      "co": "confirm",
-      "conf": "confirm",
-      "b": "bump",
-      "o": "offer",
-    };
-
     const setInputValue = (value, cursorPos) => {
       const nativeSetter = Object.getOwnPropertyDescriptor(
         window.HTMLInputElement.prototype,
@@ -2785,34 +2779,312 @@ window.addEventListener("DOMContentLoaded", async () => {
       }
     };
 
+    const commandDescriptions = {
+      "/trade offer": {
+        args: ["my:[<item>]", "your:[<item>]"],
+        desc: "Send an offer for everyone",
+      },
+      "/trade bump": "Re-send your ongoing trade offer",
+      "/trade cancel": "Cancel your ongoing trade offer",
+      "/trade accept": { args: ["<trade_id>"], desc: "Accept a trade" },
+
+      "/8ball": { args: ["<question>"], desc: "Ask the magic 8-ball a question." },
+      "/asset": "Link to the official Discord for submitting maps, weapons, and characters.",
+      "/banshee": "Info about Banshee, the first player to reach level 100.",
+      "/dice": { args: ["[faces]"], desc: "Roll a dice. Default 6 faces, supports 1-1000." },
+      "/roll": { args: ["[faces]"], desc: "Roll a dice. Default 6 faces, supports 1-1000." },
+      "/flip": "Flip a coin. Heads or Tails.",
+      "/coinflip": "Flip a coin. Heads or Tails.",
+      "/gecko": "Info about Gecko player.",
+      "/info": "Display bot info and data source credits.",
+      "/levels": "Show player level distribution stats.",
+      "/lvl": "Show player level distribution stats.",
+      "/naruto": { args: ["<t|r|s|b>"], desc: "Naruto jutsu game." },
+      "/trsb": { args: ["<t|r|s|b>"], desc: "Naruto jutsu game." },
+      "/ping": "Check bot latency in milliseconds.",
+      "/playercount": "Show current Kirka.io online player count.",
+      "/players": "Show current Kirka.io online player count.",
+      "/online": "Show current Kirka.io online player count.",
+      "/random": { args: ["[type]"], desc: "Show a random item. Optionally filter by weapon type." },
+      "/randomitem": { args: ["[type]"], desc: "Show a random item. Optionally filter by weapon type." },
+      "/rps": { args: ["<r|p|s>"], desc: "Rock-paper-scissors against the bot." },
+      "/skywalk": "Easter egg.",
+      "/tourney": "Show current tournament information.",
+      "/tournament": "Show current tournament information.",
+      "/zg-mario": "Info about ZG-Mario, the first player to reach level 101+.",
+
+      "/auto": { args: ["<item>"], desc: "Show the automatic (algorithm) price of an item." },
+      "/avg": { args: ["<item>"], desc: "Show the average price across all price lists." },
+      "/average": { args: ["<item>"], desc: "Show the average price across all price lists." },
+      "/bolt": { args: ["<item>"], desc: "Show Bolt price list value." },
+      "/bros": { args: ["<item>"], desc: "Show Bros price list value." },
+      "/cheapest": { args: ["[type]"], desc: "Show the 10 cheapest items." },
+      "/bottom10": { args: ["[type]"], desc: "Show the 10 cheapest items." },
+      "/credits": { args: ["<item>"], desc: "Show who created a skin." },
+      "/creator": { args: ["<item>"], desc: "Show who created a skin." },
+      "/diff": { args: ["<item>"], desc: "Show price difference between all price lists." },
+      "/pricediff": { args: ["<item>"], desc: "Show price difference between all price lists." },
+      "/fate": { args: ["<item>"], desc: "Show Fate price list value." },
+      "/fav": { args: ["[bros|bolt|fate|avg|auto]"], desc: "Set your favorite price list." },
+      "/favorite": { args: ["[bros|bolt|fate|avg|auto]"], desc: "Set your favorite price list." },
+      "/howmuch": { args: ["<item1, item2, ...>"], desc: "Calculate total value of multiple items." },
+      "/hm": { args: ["<item1, item2, ...>"], desc: "Calculate total value of multiple items." },
+      "/inv": { args: ["[player]"], desc: "Show a player's inventory and total value." },
+      "/inventory": { args: ["[player]"], desc: "Show a player's inventory and total value." },
+      "/invstats": "Show detailed inventory statistics.",
+      "/item": { args: ["<item>"], desc: "Show full price info for an item." },
+      "/price": { args: ["<item>"], desc: "Show full price info for an item." },
+      "/locate": { args: ["<item>"], desc: "Find which players own a specific item." },
+      "/finditem": { args: ["<item>"], desc: "Find which players own a specific item." },
+      "/owners": { args: ["<item>"], desc: "Show how many players own an item." },
+      "/top10": { args: ["[type]"], desc: "Show the 10 most expensive items." },
+      "/newitems": { args: ["[page]"], desc: "Show the newest items added to the game." },
+      "/ni": { args: ["[page]"], desc: "Show the newest items added to the game." },
+      "/newdates": { args: ["[page]"], desc: "Show dates when items were added." },
+      "/itemdates": { args: ["[page]"], desc: "Show dates when items were added." },
+      "/newitemdate": { args: ["<YYYY-MM-DD>", "[page]"], desc: "Show all items added on a specific date." },
+      "/nid": { args: ["<YYYY-MM-DD>", "[page]"], desc: "Show all items added on a specific date." },
+
+      "/daytrade": "Show today's price changes.",
+      "/dt": "Show today's price changes.",
+      "/gainers": { args: ["[days]"], desc: "Show items with the biggest price gains." },
+      "/winners": { args: ["[days]"], desc: "Show items with the biggest price gains." },
+      "/last10": { args: ["<item>"], desc: "Show last 10 price history entries for an item." },
+      "/losers": { args: ["[days]"], desc: "Show items with the biggest price losses." },
+      "/mytrade": "Show your trade statistics.",
+      "/st": { args: ["[item]"], desc: "Search for active trades involving an item." },
+      "/searchtrade": { args: ["[item]"], desc: "Search for active trades involving an item." },
+      "/vt": { args: ["<trade_id>"], desc: "View details of a specific trade." },
+      "/viewtrade": { args: ["<trade_id>"], desc: "View details of a specific trade." },
+      "/yourtrade": { args: ["<player>"], desc: "Show another player's trade statistics." },
+      "/yt": { args: ["<player>"], desc: "Show another player's trade statistics." },
+
+      "/biasedtrade": { args: ["[days]"], desc: "Show the most biased trades." },
+      "/bt": { args: ["[days]"], desc: "Show the most biased trades." },
+      "/expensivetrade": { args: ["[days]"], desc: "Show the most expensive trades." },
+      "/et": { args: ["[days]"], desc: "Show the most expensive trades." },
+      "/expensiveitems": "Show the most expensive items overall.",
+      "/ei": "Show the most expensive items overall.",
+      "/mostoffered": "Show the most offered items in trades.",
+      "/mo": "Show the most offered items in trades.",
+      "/mosttraded": "Show the most frequently traded items.",
+      "/mt": "Show the most frequently traded items.",
+      "/mostwanted": "Show the most wanted items in trades.",
+      "/mw": "Show the most wanted items in trades.",
+
+      "/myvotes": "Show your skin votes.",
+      "/myv": "Show your skin votes.",
+      "/rankskin": { args: ["<item>"], desc: "Show the vote rank of a specific skin." },
+      "/rs": { args: ["<item>"], desc: "Show the vote rank of a specific skin." },
+      "/topskin": { args: ["[type]"], desc: "Show the top voted skins." },
+      "/ts": { args: ["[type]"], desc: "Show the top voted skins." },
+      "/votetypes": "Show available weapon types you can vote on.",
+      "/types": "Show available weapon types you can vote on.",
+      "/voteskin": { args: ["<item>"], desc: "Vote for your favorite skin." },
+      "/vs": { args: ["<item>"], desc: "Vote for your favorite skin." },
+      "/vote": { args: ["<item>"], desc: "Vote for your favorite skin." },
+      "/votestats": "Show your voting statistics.",
+      "/yourvotes": { args: ["<player>"], desc: "Show another player's skin votes." },
+      "/yourv": { args: ["<player>"], desc: "Show another player's skin votes." },
+
+      "/goat": { args: ["<player>"], desc: "Vote for the Greatest of All Time player." },
+      "/goatstats": "Show GOAT voting statistics.",
+      "/mygoat": "Show your GOAT votes.",
+      "/rankgoat": { args: ["[page]"], desc: "Show GOAT player rankings." },
+      "/rg": { args: ["[page]"], desc: "Show GOAT player rankings." },
+      "/topgoat": { args: ["[page]"], desc: "Show the top GOAT voted players." },
+      "/tg": { args: ["[page]"], desc: "Show the top GOAT voted players." },
+
+      "/claim": "Claim your giveaway or lottery prize.",
+      "/donate": { args: ["<item>"], desc: "Donate a skin to the giveaway pool." },
+      "/donated": { args: ["[player]"], desc: "Show a player's total donation value." },
+      "/donators": { args: ["[page]"], desc: "Show the donation leaderboard." },
+      "/donors": { args: ["[page]"], desc: "Show the donation leaderboard." },
+      "/enter": "Enter the current active giveaway.",
+      "/giveaway": { args: ["<item>"], desc: "Start a giveaway by trading a skin to the bot." },
+      "/givers": { args: ["[page]"], desc: "Show the giveaway givers leaderboard." },
+      "/lottery": { args: ["<entries>"], desc: "Buy lottery entries with Golden (50 Golden per entry)." },
+      "/raffle": { args: ["<entries>"], desc: "Buy lottery entries with Golden (50 Golden per entry)." },
+      "/mylottery": "Show your lottery entries and stats.",
+      "/myraffle": "Show your lottery entries and stats.",
+      "/lotterystats": "Show lottery pool statistics.",
+      "/rafflestats": "Show lottery pool statistics.",
+      "/ranklottery": { args: ["[page]"], desc: "Show lottery participant rankings." },
+      "/rr": { args: ["[page]"], desc: "Show lottery participant rankings." },
+      "/toplottery": { args: ["[page]"], desc: "Show top lottery participants." },
+      "/tr": { args: ["[page]"], desc: "Show top lottery participants." },
+      "/unclaim": "Forfeit your active claim.",
+
+      "/cancelwager": "Cancel your pending wager.",
+      "/confirmwager": "Accept a wager challenge.",
+      "/acceptwager": "Accept a wager challenge.",
+      "/mywager": "Show your current and past wagers.",
+      "/topwager": { args: ["[page]"], desc: "Show the top wagerers leaderboard." },
+      "/tw": { args: ["[page]"], desc: "Show the top wagerers leaderboard." },
+      "/wager": { args: ["<player>", "<item>"], desc: "Challenge a player to a coin-flip wager." },
+
+      "/gift": { args: ["<player>", "<item>"], desc: "Gift a skin to another player." },
+      "/letter": { args: ["<player>"], desc: "Send a letter to a player (costs Golden)." },
+      "/mygift": "Show your gifts given and received.",
+      "/mygifts": "Show your gifts given and received.",
+      "/topgifter": { args: ["[page]"], desc: "Show the top gift givers leaderboard." },
+      "/topgifters": { args: ["[page]"], desc: "Show the top gift givers leaderboard." },
+
+      "/myrep": "Show your reputation score.",
+      "/repdown": { args: ["<player>"], desc: "Remove reputation from a player (costs Golden)." },
+      "/rep-": { args: ["<player>"], desc: "Remove reputation from a player (costs Golden)." },
+      "/repstats": "Show your reputation statistics.",
+      "/repup": { args: ["<player>"], desc: "Give reputation to a player (costs Golden)." },
+      "/rep+": { args: ["<player>"], desc: "Give reputation to a player (costs Golden)." },
+      "/toprep": { args: ["[page]"], desc: "Show the reputation leaderboard." },
+      "/yourrep": { args: ["<player>"], desc: "Check another player's reputation score." },
+      "/checkrep": { args: ["<player>"], desc: "Check another player's reputation score." },
+
+      "/rmwp": "Remove your wanted poster.",
+      "/rmwantedposter": "Remove your wanted poster.",
+      "/sp": { args: ["[item]"], desc: "Search wanted posters." },
+      "/searchposter": { args: ["[item]"], desc: "Search wanted posters." },
+      "/wp": { args: ["<item>", "<price>"], desc: "Create a wanted poster for an item." },
+      "/wantedposter": { args: ["<item>", "<price>"], desc: "Create a wanted poster for an item." },
+
+      "/announce": "Show the current announcement.",
+      "/announcement": "Show the current announcement.",
+      "/downtime": "Show current server downtime info.",
+      "/help": "Show all command categories.",
+      "/commands": "Show all command categories.",
+    };
+
+    function removeExistingHelpers(except) {
+      document.querySelectorAll(".chat-helper").forEach((el) => {
+        if (el !== except) el.remove();
+      });
+    }
+
+    removeExistingHelpers();
+
+    const chatHelper = document.createElement("div");
+    chatHelper.className = "chat-helper";
+    chatHelper.style.display = "none";
+    input.parentElement.appendChild(chatHelper);
+
+    let helperActiveIndex = 0;
+    let helperMatches = [];
+
+    function renderHelper(matches) {
+      chatHelper.innerHTML = "";
+      if (matches.length === 0) {
+        chatHelper.style.display = "none";
+        return;
+      }
+
+      matches.forEach((cmd, i) => {
+        const item = document.createElement("div");
+        item.className = "chat-helper-item" + (i === helperActiveIndex ? " active" : "");
+
+        const commandSpan = document.createElement("span");
+        commandSpan.className = "chat-helper-helper";
+        commandSpan.textContent = cmd.name;
+        item.appendChild(commandSpan);
+
+        const entry = commandDescriptions[cmd.name];
+        const argsList = typeof entry === "object" && Array.isArray(entry.args) ? entry.args : [];
+        const descText = typeof entry === "object" ? entry.desc : entry;
+
+        argsList.forEach((argText) => {
+          const argSpan = document.createElement("span");
+          argSpan.className = "chat-helper-arg";
+          argSpan.textContent = argText;
+          item.appendChild(argSpan);
+        });
+
+        const descSpan = document.createElement("span");
+        descSpan.className = "chat-helper-description";
+        descSpan.textContent = descText || "";
+        item.appendChild(descSpan);
+
+        item.addEventListener("mousedown", (e) => {
+          e.preventDefault();
+          applyHelperSelection(cmd.name);
+        });
+
+        chatHelper.appendChild(item);
+      });
+
+      chatHelper.style.display = "block";
+    }
+
+    function applyHelperSelection(commandName) {
+      const entry = commandDescriptions[commandName];
+      const argsList = typeof entry === "object" && Array.isArray(entry.args) ? entry.args : [];
+      const argsText = argsList.length > 0 ? " " + argsList.join(" ") : "";
+
+      const text = input.value;
+      const match = text.match(/^(\S*)(\s*)(.*)$/);
+      const rest = match ? match[3] : "";
+      const space = match && match[2] ? match[2] : " ";
+      const newText = commandName + argsText + (rest ? space + rest : "");
+      input.value = newText;
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      chatHelper.style.display = "none";
+      input.focus();
+    }
+
     input.addEventListener("input", (e) => {
-      if (!ipcRenderer.sendSync("get-settings").command_abbreviations) return;
-      if (e.inputType && e.inputType.startsWith("delete")) return;
+      const settings = ipcRenderer.sendSync("get-settings");
+      if (!settings.command_abbreviations) {
+        chatHelper.style.display = "none";
+        return;
+      }
+
       const text = input.value;
 
-      const match = text.match(/^(\S*)(\s*)(\S*)(\s*)(.*)$/);
-      if (!match) return;
-
-      let [, cmd, space1, sub, space2, rest] = match;
-      let changed = false;
-
-      if (commandMap[cmd] && (!(ipcRenderer.sendSync("get-settings").abbreviation_confirmation) || space1.length > 0)) {
-        cmd = commandMap[cmd];
-        changed = true;
+      if (text.length === 0 || text[0] !== "/") {
+        chatHelper.style.display = "none";
+        return;
       }
 
-      if (subCommandMap[sub] && (!(ipcRenderer.sendSync("get-settings").abbreviation_confirmation) || space2.length > 0)) {
-        sub = subCommandMap[sub];
-        changed = true;
+      removeExistingHelpers(chatHelper);
+
+      const allCommands = Object.keys(commandDescriptions);
+
+      let matches = allCommands.filter((name) => name.startsWith(text));
+
+      if (matches.length === 0) {
+        const exact = allCommands.find((name) => text.startsWith(name + " "));
+        if (exact) {
+          const entry = commandDescriptions[exact];
+          const argsList = typeof entry === "object" && Array.isArray(entry.args) ? entry.args : [];
+
+          const afterCommand = text.slice(exact.length).trim();
+          const typedArgCount = afterCommand.length === 0 ? 0 : afterCommand.split(/\s+/).length;
+
+          if (typedArgCount < argsList.length) {
+            matches = [exact];
+          }
+        }
       }
 
-      if (!changed) return;
+      helperMatches = matches.map((name) => ({ name }));
+      helperActiveIndex = 0;
+      renderHelper(helperMatches);
+    });
 
-      const newText = cmd + space1 + sub + space2 + rest;
-      if (newText !== text) {
-        const cursorPos = input.selectionStart;
-        const diff = newText.length - text.length;
-        setInputValue(newText, cursorPos + diff);
+    input.addEventListener("keydown", (e) => {
+      if (chatHelper.style.display === "none" || helperMatches.length === 0) return;
+
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        helperActiveIndex = (helperActiveIndex + 1) % helperMatches.length;
+        renderHelper(helperMatches);
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        helperActiveIndex = (helperActiveIndex - 1 + helperMatches.length) % helperMatches.length;
+        renderHelper(helperMatches);
+      } else if (e.key === "Tab" || e.key === "Enter") {
+        e.preventDefault();
+        applyHelperSelection(helperMatches[helperActiveIndex].name);
+      } else if (e.key === "Escape") {
+        chatHelper.style.display = "none";
       }
     });
   };
@@ -3058,6 +3330,7 @@ window.addEventListener("DOMContentLoaded", async () => {
               width: unset;
               min-width: 60rem;
               background: url("${bgUrl}") no-repeat center / cover;
+              border-radius: 0 0 16px 16px;
               box-shadow: inset 0 1px 0 5px rgba(0, 0, 0, 0.5),
                           inset 0 6px 0 -5px rgba(0, 0, 0, 0.5);
             `;
@@ -3144,11 +3417,11 @@ window.addEventListener("DOMContentLoaded", async () => {
     }
   };
 
+  observeForElement("#profile-modal-modal", handleProfile);
+
   const handleInGame = () => {
     let settings = ipcRenderer.sendSync("get-settings");
     const nicknames = JSON.parse(localStorage.getItem("nicknames") || "{}");
-
-    setAdsPower(settings.ads_power);
 
     let red_players = [];
     let blue_players = [];
@@ -3398,7 +3671,6 @@ window.addEventListener("DOMContentLoaded", async () => {
 
       const nickname = deathCont.querySelector(".nickname");
       const textNode = [...nickname.childNodes].find(n => n.nodeType === Node.TEXT_NODE);
-      console.log(textNode.textContent)
       const userClan = deathCont.querySelector(".killer-clan")?.textContent.trim();
       const shortIdElem = deathCont.querySelector(".short-id");
       const shortId = deathCont.querySelector(".short-id")?.textContent.trim().split("#")[1];
@@ -4252,63 +4524,73 @@ window.addEventListener("DOMContentLoaded", async () => {
       return clanData;
     }
 
+    const iconsSvg = fs.readFileSync(
+      path.join(__dirname, "../assets/img/icons.svg"),
+      "utf8"
+    );
+
+    const spriteContainer = document.createElement("div");
+    spriteContainer.style.display = "none";
+    spriteContainer.innerHTML = iconsSvg;
+    document.body.appendChild(spriteContainer);
+
     function buildClanPage(data, container) {
       const sorted = [...data.members].sort((a, b) => b.monthScores - a.monthScores);
 
       const memberRows = sorted.map((m, i) => `
-        <div data-v-45a6a849="" class="item">
-          <div data-v-45a6a849="" class="number">${i + 1}</div>
-          <div data-v-45a6a849="" class="item-content">
-            <div data-v-45a6a849="" class="name-rang">
-              <div data-v-34c14d58="" data-v-45a6a849="" class="role-select ${m.role}">
+        <div class="item">
+          <div class="number">${i + 1}</div>
+          <div class="item-content">
+            <div class="name-rang">
+              <div class="role-select ${m.role}">
                 ${m.role}
               </div>
-              <div data-v-45a6a849="" class="name ${m.role === "LEADER" ? "bolder" : ""}" data-shortid="${m.user.shortId}">
+              <div class="name ${m.role === "LEADER" ? "bolder" : ""}" data-shortid="${m.user.shortId}">
                 ${m.user.name}
               </div>
             </div>
-            <div data-v-45a6a849="" class="stats">
-              <div data-v-45a6a849="" class="stat">${m.monthScores.toLocaleString()}</div>
-              <div data-v-45a6a849="" class="stat">${m.allScores.toLocaleString()}</div>
+            <div class="stats">
+              <div class="stat">${m.monthScores.toLocaleString()}</div>
+              <div class="stat">${m.allScores.toLocaleString()}</div>
             </div>
           </div>
         </div>
       `).join("");
 
       container.innerHTML = `
-        <div data-v-1c9e870c="" data-v-392a0664="" class="card-cont">
-          <div data-v-1c9e870c="" class="clan-name text-1">${data.name}</div>
-          <div data-v-1c9e870c="" class="info">
-            <div data-v-1c9e870c="" class="left-info">
-              <div data-v-1c9e870c="" class="champions-stat background">
-                <div data-v-1c9e870c="" class="champions-labels">
-                  <span data-v-1c9e870c="" class="champions-league">clan war #</span>
-                  <div data-v-1c9e870c="" class="champions-scores">scores</div>
+        <div class="card-cont">
+          <div class="clan-name text-1">${data.name}</div>
+          <div class="info">
+            <div class="left-info">
+              <div class="champions-stat background">
+                <div class="champions-labels">
+                  <span class="champions-league">clan war #</span>
+                  <div class="champions-scores">scores</div>
                 </div>
-                <div data-v-1c9e870c="" class="champions-values">
-                  <div data-v-1c9e870c="">${data.currentClanWarPosition ?? "—"}</div>
-                  <div data-v-1c9e870c="" class="">${(data.monthScores ?? 0).toLocaleString()}</div>
+                <div class="champions-values">
+                  <div>${data.currentClanWarPosition ?? "—"}</div>
+                  <div class="">${(data.monthScores ?? 0).toLocaleString()}</div>
                 </div>
               </div>
-              <div data-v-1c9e870c="" class="all-scores background">
-                <div data-v-1c9e870c="" class="all-scores-label">all scores</div>
-                <div data-v-1c9e870c="" class="all-scores-value">${data.allScores.toLocaleString()}</div>
+              <div class="all-scores background">
+                <div class="all-scores-label">all scores</div>
+                <div class="all-scores-value">${data.allScores.toLocaleString()}</div>
               </div>
-              <div data-v-1c9e870c="" class="ranks-cont">
-                <div data-v-1c9e870c="" class="ranks-label text-2">ranks:</div>
-                <div data-v-1c9e870c="" class="ranks">
-                  <div data-v-1c9e870c="" class="rank leader"> LEADER </div>
-                  <div data-v-1c9e870c="" class="rank officer"> OFFICER </div>
-                  <div data-v-1c9e870c="" class="rank newbie"> NEWBIE </div>
+              <div class="ranks-cont">
+                <div class="ranks-label text-2">ranks:</div>
+                <div class="ranks">
+                  <div class="rank leader"> LEADER </div>
+                  <div class="rank officer"> OFFICER </div>
+                  <div class="rank newbie"> NEWBIE </div>
                 </div>
               </div>
             </div>
-            <div data-v-1c9e870c="" class="right-info">
-              <div data-v-1c9e870c="" class="description background">${data.description ?? ""}</div>
+            <div class="right-info">
+              <div class="description background">${data.description ?? ""}</div>
               ${data.discordLink ? `
-                <a data-v-1c9e870c="" class="discord-cont" href="${data.discordLink}" target="_blank">
-                  <svg data-v-2b44d870="" data-v-1c9e870c="" xmlns="http://www.w3.org/2000/svg" class="discord-icon svg-icon svg-icon--__discord-classic__">
-                    <use data-v-2b44d870="" xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="/img/icons.8d8d28b5.svg#__discord-classic__"></use>
+                <a class="discord-cont" href="${data.discordLink}" target="_blank">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="discord-icon svg-icon svg-icon--__discord-classic__">
+                    <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#__discord-classic__"></use>
                   </svg>
                   DISCORD
                 </a>
@@ -4316,15 +4598,15 @@ window.addEventListener("DOMContentLoaded", async () => {
             </div>
           </div>
         </div>
-        <div data-v-45a6a849="" data-v-392a0664="" class="list-container">
-          <div data-v-45a6a849="" class="head">
+        <div class="list-container">
+          <div class="head">
             Players
-            <div data-v-45a6a849="" class="labels">
-              <div data-v-45a6a849="" class="label"> scores per month </div>
-              <div data-v-45a6a849="" class="label"> scores </div>
+            <div class="labels">
+              <div class="label"> scores per month </div>
+              <div class="label"> scores </div>
             </div>
           </div>
-          <div data-v-45a6a849="" class="list">${memberRows}</div>
+          <div class="list">${memberRows}</div>
         </div>
       `;
 
@@ -4390,10 +4672,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       pagesNav.appendChild(clanTab);
       clansContainer.appendChild(clanPage);
 
-      function clickClanTab() { clanTab.click() }
-
-      pagesNav.childNodes[1].click();
-      observeForElement(".my-clan", clickClanTab);
+      clanTab.click()
     }
 
     applyClanCustomizations = () => {
@@ -4711,6 +4990,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     const friendsCont = document.querySelector(".friends > .content > .allo");
     const addFriends = document.querySelector(".friends > .add-friends");
     const friendsList = friendsCont?.querySelector(".list");
+    const addFriendsBottom = document.querySelector(".friends >.add-friends > .sidebar-bottom");
 
     if (!friendsCont || !addFriends || !friendsList) return;
 
@@ -4724,7 +5004,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         </div>
         <input type="text" placeholder="ENTER USERNAME OR ID" class="search-input" style="border: .125rem solid #202639; outline: none; background: #2f3957; width: 100%; height: 2.875rem; padding-left: .5rem; box-sizing: border-box; font-weight: 600; font-size: 1rem; color: #f2f2f2; box-shadow: 0 1px 2px rgba(0,0,0,.4), inset 0 0 8px rgba(0,0,0,.4); border-radius: .25rem; transition: border-color 0.2s;"/>
       `;
-      addFriends.appendChild(searchFriends);
+      addFriends.insertBefore(searchFriends, addFriendsBottom);
 
       const input = searchFriends.querySelector(".search-input");
 
@@ -4744,7 +5024,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       playerLookup.style = `display: flex; flex-direction: column; align-items: flex-start; margin-top: 1.5rem; padding: 0 1rem;`;
       playerLookup.innerHTML = `
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: .5rem; width: 100%;">
-          <span class="search-text">View Profile</span>
+          <span class="search-text">Open Profile</span>
           <span class="hint-text">Press Enter to search</span>
         </div>
         <input type="text" placeholder="ENTER PLAYER ID..." class="lookup-input" style="border: .125rem solid #202639; outline: none; background: #2f3957; width: 100%; height: 2.875rem; padding-left: .5rem; box-sizing: border-box; font-weight: 600; font-size: 1rem; color: #f2f2f2; box-shadow: 0 1px 2px rgba(0,0,0,.4), inset 0 0 8px rgba(0,0,0,.4); border-radius: .25rem; transition: border-color 0.2s;"/>
@@ -4756,7 +5036,7 @@ window.addEventListener("DOMContentLoaded", async () => {
           <div class="lookup-history" style="display: flex; flex-direction: column; width: 100%; gap: .25rem;"></div>
         </div>
       `;
-      addFriends.appendChild(playerLookup);
+      addFriends.insertBefore(playerLookup, addFriendsBottom);
 
       const input = playerLookup.querySelector(".lookup-input");
       const historyWrap = playerLookup.querySelector(".lookup-history-wrap");
@@ -5020,6 +5300,173 @@ window.addEventListener("DOMContentLoaded", async () => {
     });
   };
 
+  const PRICE_SHEET_URL = "https://opensheet.elk.sh/1pxMSoaSo8FYv-OIJ26HpSj8EDy7EDRmatHyQW24o6E4/Sorted+View";
+
+  let priceMap = null;
+  let priceMapPromise = null;
+  let tradeObserver = null;
+  let tradeDebounceTimer = null;
+
+  function parseValue(raw) {
+    if (raw == null) return 0;
+    const s = String(raw).trim();
+    if (!s || s.toUpperCase() === "TBD" || s.toLowerCase().includes("owners price")) return 0;
+    const num = parseFloat(s.replace(/[, ]/g, ""));
+    return isNaN(num) ? 0 : num;
+  }
+
+  async function loadPriceMap() {
+    if (priceMap) return priceMap;
+    if (!priceMapPromise) {
+      priceMapPromise = fetch(PRICE_SHEET_URL)
+        .then(res => res.json())
+        .then(rows => {
+          const map = new Map();
+          for (const row of rows) {
+            if (!row || !row["Skin Name"]) continue;
+            const name = row["Skin Name"].trim().toLowerCase();
+            const value = parseValue(row["Base Value"]);
+            if (!map.has(name)) map.set(name, value);
+          }
+          priceMap = map;
+          return map;
+        })
+        .catch(err => {
+          console.error("Failed to load price sheet:", err);
+          priceMap = new Map();
+          return priceMap;
+        });
+    }
+    return priceMapPromise;
+  }
+
+  function getSkinValue(name) {
+    if (!priceMap) return 0;
+    return priceMap.get(name.trim().toLowerCase()) || 0;
+  }
+
+  function readOfferPanel(panelEl) {
+    let total = 0;
+
+    panelEl.querySelectorAll(".offer-item").forEach(itemEl => {
+      const nameEl = itemEl.querySelector(".oi-name");
+      const qtyEl = itemEl.querySelector(".oi-qty");
+      if (!nameEl) return;
+
+      const name = nameEl.textContent.trim();
+      const qty = qtyEl ? parseInt(qtyEl.textContent.trim(), 10) || 1 : 1;
+      const unitValue = getSkinValue(name);
+      total += unitValue * qty;
+    });
+
+    return total;
+  }
+
+  function formatValue(n) {
+    const sign = n > 0 ? "+" : n < 0 ? "-" : "";
+    return sign + Math.round(Math.abs(n)).toLocaleString("en-US");
+  }
+
+  function renderPanelTotal(panelEl, total) {
+    let totalEl = panelEl.querySelector(".oi-total-value");
+    if (!totalEl) {
+      totalEl = document.createElement("span");
+      totalEl.className = "oi-total-value";
+      const header = panelEl.querySelector(".offer-header");
+      if (header) header.appendChild(totalEl);
+    }
+    totalEl.textContent = `Value: ${Math.round(total).toLocaleString("en-US")}`;
+  }
+
+  function getOrCreateDiffBadge() {
+    let badge = document.getElementById("trade-diff-badge");
+    if (badge) return badge;
+
+    const tradeWindow = document.querySelector(".trade-window");
+    if (!tradeWindow) return null;
+
+    badge = document.createElement("div");
+    badge.id = "trade-diff-badge";
+
+    const computedPosition = getComputedStyle(tradeWindow).position;
+    if (computedPosition === "static") {
+      tradeWindow.style.position = "relative";
+    }
+
+    tradeWindow.appendChild(badge);
+    return badge;
+  }
+
+  function renderDiffBadge(diff) {
+    const badge = getOrCreateDiffBadge();
+    if (!badge) return;
+
+    badge.classList.remove("positive", "negative", "even");
+
+    if (diff > 0) {
+      badge.classList.add("positive");
+      badge.textContent = `${formatValue(diff)}`;
+    } else if (diff < 0) {
+      badge.classList.add("negative");
+      badge.textContent = `${formatValue(diff)}`;
+    } else {
+      badge.classList.add("even");
+      badge.textContent = "0";
+    }
+  }
+
+  async function handleTrade() {
+    await loadPriceMap();
+
+    const panels = document.querySelectorAll(".offer-panel");
+    let theirTotal = null;
+    let yourTotal = null;
+
+    panels.forEach((panel, idx) => {
+      const total = readOfferPanel(panel);
+      renderPanelTotal(panel, total);
+
+      if (idx === 0) theirTotal = total;
+      else if (idx === 1) yourTotal = total;
+    });
+
+    const diff = (theirTotal ?? 0) - (yourTotal ?? 0);
+    renderDiffBadge(diff);
+
+    if (!tradeObserver) {
+      const tradeWindow = document.querySelector(".trade-window");
+      if (tradeWindow) {
+        tradeObserver = new MutationObserver(() => {
+          clearTimeout(tradeDebounceTimer);
+          tradeDebounceTimer = setTimeout(() => {
+            handleTrade();
+          }, 100);
+        });
+
+        const grids = tradeWindow.querySelectorAll(".offer-grid");
+        grids.forEach(grid => {
+          tradeObserver.observe(grid, { childList: true, subtree: true });
+        });
+      }
+    }
+
+    return diff;
+  }
+
+  observeForElement(".trade-overlay", handleTrade);
+
+  function getSkinValue(name) {
+    if (!priceMap) return 0;
+    return priceMap.get(name.trim().toLowerCase()) || 0;
+  }
+
+  function formatCompactValue(n) {
+    if (n >= 1_000_000_000) return (n / 1_000_000_000).toFixed(1).replace(/\.0$/, "") + "B";
+    if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
+    if (n >= 1_000) return (n / 1_000).toFixed(1).replace(/\.0$/, "") + "K";
+    return Math.round(n).toLocaleString("en-US");
+  }
+
   const handleInventory = () => {
     const STORAGE_KEY = "inventory_favorites";
     let observer = null;
@@ -5106,21 +5553,78 @@ window.addEventListener("DOMContentLoaded", async () => {
       });
     }
 
-    if (!tabsBound) {
-      tabsBound = true;
-      document.querySelectorAll(".inventory .tab").forEach((tab) => {
-        tab.addEventListener("click", () => {
-          applyFavorites();
-          addFavoriteButtons();
-          sortInventory();
-        });
+    function getOrCreateInventoryValueLabel() {
+      let label = document.getElementById("inventory-page-value");
+      if (label) return label;
+
+      const filterName = document.querySelector(".inventory .filter-name");
+      if (!filterName) return null;
+
+      label = document.createElement("div");
+      label.id = "inventory-page-value";
+      filterName.insertAdjacentElement("afterend", label);
+      return label;
+    }
+
+    function removeInventoryValueLabel() {
+      const label = document.getElementById("inventory-page-value");
+      if (label) label.remove();
+    }
+
+    function removeItemValues() {
+      document.querySelectorAll(".inventory .subject .item-value").forEach(el => el.remove());
+    }
+
+    async function updateInventoryValue() {
+      const settings = ipcRenderer.sendSync("get-settings");
+      await loadPriceMap();
+
+      let total = 0;
+
+      document.querySelectorAll(".inventory .subjects .subject").forEach((subject) => {
+        const nameEl = subject.querySelector(".item-name");
+        if (!nameEl) return;
+        const name = nameEl.textContent.trim();
+
+        const countEl = subject.querySelector(".bottom-subj .count");
+        const qty = countEl ? parseInt(countEl.textContent.trim(), 10) || 1 : 1;
+
+        const unitValue = getSkinValue(name);
+        total += unitValue * qty;
+
+        const bottomSubj = subject.querySelector(".bottom-subj");
+        if (!bottomSubj) return;
+
+        let valueEl = bottomSubj.querySelector(".item-value");
+
+        if (settings.inventory_item_values) {
+          if (!valueEl) {
+            valueEl = document.createElement("div");
+            valueEl.className = "item-value";
+            bottomSubj.insertBefore(valueEl, bottomSubj.firstChild);
+          }
+          valueEl.textContent = formatCompactValue(unitValue * qty);
+        } else if (valueEl) {
+          valueEl.remove();
+        }
       });
+
+      if (settings.inventory_item_values) {
+        const label = getOrCreateInventoryValueLabel();
+        if (label) {
+          label.textContent = `Page Value: ${Math.round(total).toLocaleString("en-US")}`;
+        }
+      } else {
+        removeInventoryValueLabel();
+        removeItemValues();
+      }
     }
 
     observeForElement(".inventory .gun", () => {
       applyFavorites();
       addFavoriteButtons();
       sortInventory();
+      updateInventoryValue();
 
       const container = document.querySelector(".inventory .subjects");
       if (!container) return;
@@ -5129,9 +5633,14 @@ window.addEventListener("DOMContentLoaded", async () => {
 
       observer = new MutationObserver(() => {
         observer.disconnect();
+        if (document.querySelector(".inventory .tab.active").querySelector(".title").textContent === "CHESTS" || document.querySelector(".inventory .tab.active").querySelector(".title").textContent === "WEAPONS") {
+          observer.observe(container, { childList: true, subtree: false });
+          return;
+        };
         applyFavorites();
         addFavoriteButtons();
         sortInventory();
+        updateInventoryValue();
         observer.observe(container, { childList: true, subtree: false });
       });
       observer.observe(container, { childList: true, subtree: false });
@@ -5233,11 +5742,6 @@ window.addEventListener("DOMContentLoaded", async () => {
       case "inspect_duration":
         INSPECT_DURATION = value;
         break;
-
-      case "ads_power":
-        settings.ads_power = value;
-        setAdsPower(value);
-        break;
     }
   });
 
@@ -5258,7 +5762,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     if (url.startsWith(`${base_url}games`)) handleInGame();
     if (url.startsWith(`${base_url}hub/ranked`)) handleInGame();
     if (url.startsWith(`${base_url}servers/`)) handleServers();
-    if (url.startsWith(`${base_url}profile/`)) handleProfile();
+    if (url.startsWith(`${base_url}/`)) handleProfile();
     if (url === `${base_url}hub/clans/champions-league`) handleClans();
     if (url === `${base_url}hub/market`) handleMarket();
     if (url === `${base_url}friends`) handleFriends();

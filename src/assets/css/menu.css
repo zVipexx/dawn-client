@@ -1687,58 +1687,103 @@
     width: 34rem !important;
 }
 
-.room-presets-sidebar {
-    position: fixed;
-    right: 15%;
-    top: 50%;
-    transform: translateY(-50%);
-    margin-left: 25px;
+.row.presets {
     display: flex;
     flex-direction: column;
-    width: 15.625%;
-    background: #2f3957;
-    border: 3px solid rgb(3, 4, 5);
-    padding: 0;
-    gap: 0;
-    max-height: 85vh;
-    overflow: hidden;
-    border-radius: 1.25rem;
-    box-shadow: 0 0 6.9811px 4.36319px rgba(12, 14, 18, 0.25);
-    z-index: 100;
-}
-
-.room-presets-header {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    background: rgba(0, 0, 0, 0.2);
-    border-bottom: 2px solid rgba(0, 0, 0, 0.5);
+    align-items: stretch;
+    margin-top: 1rem;
+    background: rgba(0, 0, 0, .25);
     padding: 1rem 1.25rem;
-    gap: 0.75rem;
+    border-radius: 6px;
+    transition: 0.3s;
 }
 
-.room-presets-header .top {
-    width: 100%;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.room-presets-title {
-    font-size: 1.1rem;
-    font-weight: 700;
+.row.presets .presets-header {
+    text-transform: uppercase;
     color: #ffb914;
-    letter-spacing: 0.5px;
-    text-shadow: -1px -1px 0 #0f0f0f, 1px -1px 0 #0f0f0f, -1px 1px 0 #0f0f0f, 1px 1px 0 #0f0f0f, 0 0.13rem 1px rgba(0, 0, 0, 0.486);
+    font-size: 1.5rem;
+    font-weight: 700;
+    text-align: left;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+}
+
+.row.presets .presets-header .left,
+.row.presets .presets-header .right {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.row.presets .presets-arrow {
+    transition: 0.15s;
+    zoom: 0.7;
+}
+
+.row.presets .presets-body {
+    margin-top: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.row.presets .save-preset {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: none;
+    position: relative;
+    background: #2f80ed;
+    border-top: 4px solid #4f94f1;
+    border-bottom: 4px solid #256fd3;
+    color: var(--white);
+    font-size: 1rem;
+    transition: all .3s ease;
+    font-family: Rowdies;
+    padding: calc(.9em - 4px) calc(1.4em - 4px);
+    font-weight: 900;
+    overflow: hidden;
+    text-transform: uppercase;
+    border-right: 1px solid black;
+    border-left: 1px solid black;
+    outline: none;
+    text-shadow: 0 0.1em 0 #000;
+    -webkit-text-stroke: 1px var(--black);
+    box-shadow: 0 0.15rem 0 rgba(0, 0, 0, .315);
+    cursor: pointer;
+    touch-action: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.row.presets .save-preset:hover {
+    background: #4f94f1;
+}
+
+.row.presets .save-preset:active {
+    transform: scale(0.95);
+}
+
+.row.presets .import-presets {
+    display: flex;
+    align-items: center;
+    margin-top: 0.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.row.presets .import-input {
+    flex: 1;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .4), inset 0 0 4px rgba(0, 0, 0, .4);
+    outline: none;
+    background: #2f3957;
+    border: .125rem solid #202639;
+    color: #f2f2f2;
+    padding: 5px;
 }
 
 .room-presets-list {
     display: flex;
     flex-direction: column;
-    padding: 0.75rem;
-    max-height: 400px;
-    overflow-y: auto;
     gap: 0.5rem;
 }
 
@@ -1777,22 +1822,6 @@
     transform: translateX(2px);
 }
 
-.room-presets-header .import-presets {
-    width: 100%;
-    display: flex;
-    align-items: center;
-}
-
-.room-presets-header .import-input {
-    flex: 1;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, .4), inset 0 0 4px rgba(0, 0, 0, .4);
-    outline: none;
-    background: #2f3957;
-    border: .125rem solid #202639;
-    color: #f2f2f2;
-    padding: 5px;
-}
-
 .room-preset-name-input {
     flex: 1;
     font-size: 1rem;
@@ -1806,14 +1835,9 @@
     font-weight: 600;
     letter-spacing: 0.3px;
     outline: none;
-    border: 0.125rem solid transparent;
+    border: .125rem solid #202639;
     transition: border-color 0.2s ease;
     writing-mode: horizontal-tb;
-}
-
-.room-preset-name-input:focus {
-    background: #202639;
-    border-color: #2f80ed;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), inset 0 0 8px rgba(0, 0, 0, 0.4);
 }
 
@@ -2440,6 +2464,10 @@ button:focus,
     color: #ffb914;
 }
 
+.create-clan-btn {
+    margin-right: 1.5rem;
+}
+
 .other-clan-page {
     padding: 1.4rem .5rem 0 .5rem;
     display: flex;
@@ -2459,23 +2487,260 @@ button:focus,
     padding-bottom: 10rem;
 }
 
-.role-select:hover {
-    cursor: default;
+.other-clan-page .card-cont {
+    background: #2f3957;
+    box-shadow: 0 0 20px rgba(0, 0, 0, .25);
+    border-radius: 5px 5px 0 0;
+    width: calc(50% - .4rem);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
 }
 
-.role-select.NEWBIE,
-.rank.newbie {
+.other-clan-page .clan-name {
+    font-size: 2.25rem;
+    font-weight: 700;
+    padding: .5rem 1rem;
+}
+
+.other-clan-page .info {
+    display: flex;
+    justify-content: space-between;
+    width: calc(100% - 1rem);
+    margin: .4rem 1rem 0 .35rem;
+}
+
+.other-clan-page .left-info {
+    width: calc(50% - .5rem);
+}
+
+.other-clan-page .champions-stat {
+    padding: .7rem .8rem;
+}
+
+.other-clan-page .background {
+    background: #202639;
+    border-radius: 6px;
+}
+
+.other-clan-page .champions-labels {
+    display: flex;
+    justify-content: space-between;
+    text-transform: uppercase;
+}
+
+.other-clan-page .champions-league {
+    color: #ffb914;
+    font-weight: 900;
+}
+
+.other-clan-page .champions-scores {
+    color: #ffb914;
+    font-weight: 600;
+}
+
+.other-clan-page .champions-values {
+    display: flex;
+    justify-content: space-between;
+    font-size: 1.4rem;
+    font-weight: 100;
+    margin-top: .5rem;
+}
+
+.other-clan-page .all-scores {
+    margin-top: .75rem;
+    font-size: 1.5rem;
+    font-weight: 900;
+    display: flex;
+    justify-content: space-between;
+    padding: .6rem .8rem;
+    text-transform: uppercase;
+}
+
+.other-clan-page .all-scores-label {
+    color: #ffb914;
+    font-size: 1.5rem;
+}
+
+.other-clan-page .all-scores-value {
+    font-size: 1.5rem;
+    font-weight: 100;
+}
+
+.other-clan-page .ranks-cont {
+    margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.other-clan-page .ranks-label {
+    font-weight: 700;
+    font-size: 1.5rem;
+    text-align: left;
+    margin-left: .5rem;
+    text-transform: uppercase;
+}
+
+.other-clan-page .ranks {
+    display: flex;
+    margin-top: .3rem;
+}
+
+.other-clan-page .rank {
+    margin-left: .5rem;
+    font-weight: 700;
+}
+
+.other-clan-page .right-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    width: calc(50% - .5rem);
+}
+
+.other-clan-page .description {
+    max-height: 19rem;
+    width: 100%;
+    padding: .9rem;
+    font-size: .875rem;
+    text-align: left;
+}
+
+.other-clan-page .discord-cont {
+    display: flex;
+    align-items: center;
+    border-radius: 5px;
+    background: #7289da;
+    border: 2px solid #89a0ef;
+    margin-top: .7rem;
+    margin-bottom: 6%;
+    padding: 0 .4rem;
+    font-size: .875rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .3s ease;
+    color: white;
+    text-decoration: none;
+    -webkit-user-drag: none;
+}
+
+.discord-cont:hover {
+    box-shadow: 0 0 10px rgba(0, 0, 0, .35);
+    transform: scale(1.1);
+}
+
+.other-clan-page .discord-icon {
+    height: 2.25rem;
+    width: 2.25rem;
+}
+
+.other-clan-page .svg-icon {
+    fill: currentColor;
+}
+
+.other-clan-page .list-container {
+    background: #2f3957;
+    box-shadow: 0 0 20px rgba(0, 0, 0, .25);
+    border-radius: 5px 5px 0 0;
+    width: calc(50% - .4rem);
+    overflow-y: scroll;
+    overflow-x: hidden;
+    margin-bottom: 85px;
+    padding-bottom: 5px;
+}
+
+.other-clan-page .head {
+    display: flex;
+    justify-content: space-between;
+    font-weight: 700;
+    font-size: 2.25rem;
+    padding: .5rem 1.5rem .5rem 2rem;
+}
+
+.other-clan-page .labels {
+    display: flex;
+    font-size: 1.125rem;
+    color: #1cce6c;
+    margin-top: 1.1rem;
+}
+
+.other-clan-page .label {
+    margin-left: 1rem;
+}
+
+.other-clan-page .label:nth-child(2) {
+    margin-left: 2.7rem;
+    margin-right: 1rem;
+}
+
+.other-clan-page .item {
+    display: flex;
+    align-items: center;
+    margin: .3rem .5rem;
+    width: 100%;
+}
+
+.other-clan-page .number {
+    margin-right: .6rem;
+    width: 1.3rem;
+    font-size: 1.5rem;
+    font-weight: 900;
+}
+
+.other-clan-page .item-content {
+    background: #3c4b68;
+    border-radius: 6px;
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+    width: 100%;
+    padding: .4rem;
+    margin-right: 1rem;
+}
+
+.other-clan-page .name-rang {
+    display: flex;
+}
+
+.other-clan-page .role-select {
+    font-weight: 700;
+    margin-right: .35rem;
+    width: 4.7rem;
+    display: flex;
+    align-items: center;
+}
+
+.other-clan-page .rank.newbie,
+.other-clan-page .role-select.NEWBIE {
     color: #0dc683;
 }
 
-.role-select.OFFICER,
-.rank.officer {
+.other-clan-page .rank.officer,
+.other-clan-page .role-select.OFFICER {
     color: #4f94f1;
 }
 
-.role-select.LEADER,
-.rank.leader {
+.other-clan-page .rank.leader,
+.other-clan-page .role-select.LEADER {
     color: #e24f4f
+}
+
+.other-clan-page .name.bolder {
+    color: #ffb914;
+}
+
+.other-clan-page .stats {
+    display: flex;
+}
+
+.other-clan-page .stat:first-child {
+    padding-right: 1rem;
+}
+
+.other-clan-page .stat {
+    width: 7.9rem;
+    text-align: right;
 }
 
 .menu .checkbox label::after,
@@ -2729,11 +2994,6 @@ button:focus,
     white-space: nowrap;
 }
 
-.discord-cont {
-    color: white;
-    text-decoration: none;
-}
-
 .setting-value {
     font-size: 2rem;
     margin-right: .5rem;
@@ -2789,4 +3049,130 @@ button:focus,
     border-radius: 2px;
     font-size: 18px;
     float: right;
+}
+
+.chat-helper {
+    position: absolute;
+    bottom: calc(100% + .4em);
+    left: 0;
+    width: 100%;
+    background: rgba(37, 47, 82, .92);
+    border-radius: 4px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, .4);
+    padding: .25em 0;
+    z-index: 30;
+    max-height: 12em;
+    overflow-y: auto;
+    backdrop-filter: blur(3px);
+}
+
+.chat-helper-item {
+    display: flex;
+    align-items: center;
+    padding: .35em .65em;
+    font-size: .95em;
+    cursor: pointer;
+    color: var(--white);
+}
+
+.chat-helper-item:hover {
+    background: rgba(74, 97, 158, .75);
+}
+
+.chat-helper-helper {
+    font-size: .95em;
+    cursor: pointer;
+    font-weight: 700;
+    color: #ffb914;
+    margin-right: .5em;
+}
+
+.chat-helper-arg {
+    font-size: .95em;
+    cursor: pointer;
+    color: hsla(0, 0%, 100%, .75);
+    margin-right: .5em;
+    font-family: Exo\ 2;
+}
+
+.chat-helper-description {
+    font-size: .95em;
+    cursor: pointer;
+    color: hsla(0, 0%, 100%, .6);
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: end;
+}
+
+.trade-overlay {
+    width: 100%;
+    height: 100%;
+}
+
+.trade-window .offer-header {
+    position: relative;
+}
+
+.trade-window .ready {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+#trade-diff-badge {
+    position: absolute;
+    top: -40px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 6px 16px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 16px;
+    background: rgba(20, 24, 40, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    white-space: nowrap;
+    z-index: 1000;
+    pointer-events: none;
+}
+
+#trade-diff-badge.positive {
+    color: #4CAF50;
+}
+
+#trade-diff-badge.negative {
+    color: #F44336;
+}
+
+#trade-diff-badge.even {
+    color: #CCCCCC;
+}
+
+.oi-total-value {
+    font-weight: bold;
+    color: #FFD24A;
+}
+
+.inventory .filters {
+    justify-content: flex-start;
+}
+
+#inventory-page-value {
+    font-weight: bold;
+    margin-left: 8px;
+    margin-bottom: 8px;
+    color: #FFD24A;
+    white-space: nowrap;
+    margin-right: auto;
+}
+
+.inventory .item-value {
+    position: absolute;
+    left: 10px;
+    bottom: 0;
+    font-size: .8rem;
+    font-weight: 700;
+    color: #FFD24A;
 }

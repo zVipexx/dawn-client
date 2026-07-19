@@ -1,5 +1,20 @@
 [
   {
+    "version": "1.2.0",
+    "date": "19/7/2026",
+    "changelogs": [
+      "Added Bolt Values into the Trading Menu",
+      "Added Bolt Values into the Inventory",
+      "Added Weapon Rotations",
+      "Removed ADS Power because its now built into kirka",
+      "Fixed several bugs caused by the new update:",
+      "- Moved Room Creation Presets into the Match Settings",
+      "- Profiles not getting recognized",
+      "- Black weapons when turning off arms and shadows",
+      "- Friend Search/Open Profile positioning"
+    ]
+  },
+  {
     "version": "1.1.8",
     "date": "7/7/2026",
     "changelogs": [
