@@ -979,7 +979,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     const SETTLE_MS = 120;
 
     const INSPECT_DURATIONS = {
-      vita: 600,
+      vita: 550,
       rev: 550,
       mac10: 800,
       ar9: 550,
@@ -2229,12 +2229,20 @@ window.addEventListener("DOMContentLoaded", async () => {
           e.stopPropagation();
 
           navigator.clipboard.readText().then((text) => {
-            if (!text.startsWith("https://kirka.io/")) {
+            const regions = ["EU~", "NA~", "ASIA~", "SA~", "OCEANIA~", "INDIA~"];
+
+            if (text === "") {
               customNotification({
-                message: `<span style="color: gray;">${text}</span> is not a valid lobby/game link!`,
+                message: `Empty Clipboard!<br>Copy a lobby/game code first`,
+              });
+              return;
+            } else if (!text.startsWith("https://kirka.io/") && !regions.some(prefix => text.startsWith(prefix))) {
+              customNotification({
+                message: `<span style="color: gray;">${text.length > 100 ? text.slice(0, 100) + "…" : text}</span> is not a valid lobby/game code!`,
               });
               return;
             };
+
             playContentUp.querySelector(".join-btn")?.click();
 
             const observer = new MutationObserver(() => {
@@ -2352,7 +2360,11 @@ window.addEventListener("DOMContentLoaded", async () => {
         if (!clan) return;
         if (!settings.customizations) return;
 
-        const userClan = clan.textContent.trim();
+        const userClan = Array.from(clan.childNodes)
+          .filter((node) => node.nodeType === Node.TEXT_NODE)
+          .map((node) => node.textContent.trim())
+          .join(" ")
+          .trim();
         const customs = clancustomizations.find((c) => c.clan === userClan);
         if (!customs) return;
 
@@ -2721,6 +2733,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         input.value = text;
         input.dispatchEvent(new Event("input", { bubbles: true }));
         sendBtn.click();
+        chatHelper.style.display = "none";
       };
 
       const bumpDiv = makeDivButton("Bump", "#10b981", "#34d399", "#047857");
@@ -3428,6 +3441,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     let dm_players = [];
 
     const playerCache = new Map();
+    const resetMessages = new WeakSet();
 
     const nicknameByOriginal = new Map();
     const nicknameByNickname = new Map();
@@ -3576,6 +3590,21 @@ window.addEventListener("DOMContentLoaded", async () => {
         const match = findPlayer(name);
         if (match?.nickname && textNode.textContent !== (match.nickname + suffix)) {
           textNode.textContent = match.nickname + suffix;
+        }
+        return;
+      }
+
+      if (typeClass === "STATUS") {
+        const textNode = [...body.childNodes].find(n => n.nodeType === Node.TEXT_NODE);
+        if (!textNode) return;
+        if (!resetMessages.has(message) && textNode.textContent.includes("reset the match.")) {
+          resetMessages.add(message);
+          assistsCount = 0;
+          headshotsCount = 0;
+          objectivesCount = 0;
+          renderAssists();
+          renderObjectives();
+          renderHeadshots();
         }
         return;
       }
@@ -3801,13 +3830,6 @@ window.addEventListener("DOMContentLoaded", async () => {
       }
     };
 
-    const updateOverlay = () => {
-      const isVisible = !!document.querySelector("#overlay #fps")?.textContent.trim();
-      const teamPlayersState = document.querySelector(".team-players-state");
-      if (!teamPlayersState) return;
-      teamPlayersState.style.visibility = isVisible ? "hidden" : "";
-    };
-
     const updateTeammates = () => {
       const teammates = document.querySelectorAll(".team-panel .teammate");
       teammates.forEach((teammate) => {
@@ -3822,6 +3844,30 @@ window.addEventListener("DOMContentLoaded", async () => {
           }
         }
       });
+    };
+
+    const renderAssists = () => {
+      const assists = document.querySelector(".kill-death .assists");
+      if (assists) assists.childNodes[0].nodeValue = assistsCount;
+    };
+
+    const renderObjectives = () => {
+      const objectives = document.querySelector(".kill-death .objectives");
+      if (objectives) objectives.childNodes[0].nodeValue = objectivesCount;
+    };
+
+    const renderHeadshots = () => {
+      const hsp = document.querySelector(".kill-death .hsp");
+      const killsEl = document.querySelector(".kill-death .kill");
+      if (!hsp || !killsEl) return;
+
+      const killCount = killsEl.innerText;
+      const hsPercentage = parseFloat((headshotsCount / killCount * 100)).toFixed(0) || 0;
+
+      const nextHtml = `<span class="hs-percentage">${hsPercentage}</span> <span class="text-hs" style="font-size: 0.75rem;">HS%</span>`;
+      if (hsp.innerHTML !== nextHtml) {
+        hsp.innerHTML = nextHtml;
+      }
     };
 
     const updateKD = () => {
@@ -3856,8 +3902,32 @@ window.addEventListener("DOMContentLoaded", async () => {
       kd.innerHTML = `<span class="kd-ratio">0</span> <span class="text-kd" style="font-size: 0.75rem;">K/D</span>`;
 
       document.querySelector(".kill-death").insertBefore(kd, kills.parentElement.children[2]);
-      kills.addEventListener("DOMSubtreeModified", updateKD);
-      deaths.addEventListener("DOMSubtreeModified", updateKD);
+
+      let prevKills = parseInt(kills.textContent) || 0;
+      let prevDeaths = parseInt(deaths?.textContent) || 0;
+
+      const checkReset = () => {
+        const currentKills = parseInt(kills.textContent) || 0;
+        const currentDeaths = parseInt(deaths?.textContent) || 0;
+
+        if ((prevKills > 0 && currentKills === 0) || (prevDeaths > 0 && currentDeaths === 0)) {
+          assistsCount = 0;
+          headshotsCount = 0;
+          objectivesCount = 0;
+
+          renderAssists();
+          renderObjectives();
+          renderHeadshots();
+        }
+
+        prevKills = currentKills;
+        prevDeaths = currentDeaths;
+
+        updateKD();
+      };
+
+      kills.addEventListener("DOMSubtreeModified", checkReset);
+      deaths.addEventListener("DOMSubtreeModified", checkReset);
     };
 
     let assistsCount = 0;
@@ -3896,7 +3966,7 @@ window.addEventListener("DOMContentLoaded", async () => {
               lastTriggered = now;
 
               assistsCount++;
-              assists.childNodes[0].nodeValue = assistsCount;
+              renderAssists();
             }
           }
         });
@@ -3953,7 +4023,7 @@ window.addEventListener("DOMContentLoaded", async () => {
               lastTriggered = now;
 
               objectivesCount++;
-              objectives.childNodes[0].nodeValue = objectivesCount;
+              renderObjectives();
             }
           }
         });
@@ -3991,10 +4061,10 @@ window.addEventListener("DOMContentLoaded", async () => {
           for (const mutation of mutations) {
             const animCont = mutation.target;
             if (
+              (animCont.querySelector(".text")?.textContent.includes("HEADSHOT") || animCont.querySelector(".text")?.textContent.includes("KILL")) &&
               mutation.attributeName === "class" &&
               animCont.classList.contains("slide-fade-enter-active") &&
-              animCont.classList.contains("slide-fade-enter-to") &&
-              animCont.querySelector(".text")?.textContent.includes("HEADSHOT") || animCont.querySelector(".text")?.textContent.includes("KILL")
+              animCont.classList.contains("slide-fade-enter-to")
             ) {
               const now = Date.now();
               if (now - lastTriggered < 200) continue;
@@ -4002,17 +4072,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 
               if (animCont.querySelector(".text")?.textContent.includes("HEADSHOT")) headshotsCount++;
 
-              const killsEl = document.querySelector(".kill-death .kill");
-
-              if (!killsEl || !hsp) return;
-
-              const killCount = killsEl.innerText;
-              const hsPercentage = parseFloat((headshotsCount / killCount * 100)).toFixed(0);
-
-              const nextHtml = `<span class="hs-percentage">${hsPercentage}</span> <span class="text-hs" style="font-size: 0.75rem;">HS%</span>`;
-              if (hsp.innerHTML !== nextHtml) {
-                hsp.innerHTML = nextHtml;
-              }
+              renderHeadshots();
             }
           }
         });
@@ -4399,11 +4459,6 @@ window.addEventListener("DOMContentLoaded", async () => {
     observeForElement(".esc-interface", applyCustomizationsEsc);
     observeForElement(".death-cont .user-card", updateDeathCont);
     observeForElement(".end-modal", updateEndModal, document.querySelector("#app"));
-
-    const overlay = document.querySelector("#overlay");
-    if (overlay && settings.hide_teamstate_overlay) {
-      new MutationObserver(() => updateOverlay()).observe(overlay, { characterData: true, subtree: true, childList: true });
-    }
 
     let chatObserver = null;
     let chatObserverAttached = false;
@@ -4967,25 +5022,77 @@ window.addEventListener("DOMContentLoaded", async () => {
     const settings = ipcRenderer.sendSync("get-settings");
     const nicknames = JSON.parse(localStorage.getItem("nicknames") || "{}");
 
-    if (window.copyGameLink) {
-      document.removeEventListener("click", window.copyGameLink);
-    }
+    if (!window.friends) {
+      window.friends = true;
 
-    window.copyGameLink = (e) => {
-      if (e.shiftKey && e.target.classList.contains("online")) {
-        const online = e.target;
-        if (online && online.innerText.includes("in game")) {
-          const content = online.innerText.match(/\[(.*?)\]/)[1];
-          const gameLink = `${base_url}games/${content}`;
-          navigator.clipboard.writeText(gameLink);
-          customNotification({
-            message: `Copied game link to clipboard: ${gameLink}`,
-          });
+      let isKeyPressed = false;
+      let hoveredAuthorEl = null;
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Shift") {
+          isKeyPressed = true;
+          if (hoveredAuthorEl) {
+            hoveredAuthorEl.style.textDecoration = "underline";
+          }
         }
-      }
-    };
+      });
 
-    document.addEventListener("click", window.copyGameLink);
+      document.addEventListener("keyup", (e) => {
+        if (e.key === "Shift") {
+          isKeyPressed = false;
+          if (hoveredAuthorEl) {
+            hoveredAuthorEl.style.textDecoration = "none";;
+          }
+        }
+      });
+
+      window.addEventListener("blur", () => {
+        isKeyPressed = false;
+        if (hoveredAuthorEl) {
+          hoveredAuthorEl.style.textDecoration = "none";
+        }
+      });
+
+      document.addEventListener("mouseover", (e) => {
+        const target = e.target.closest(".online");
+        if (target) {
+          hoveredAuthorEl = target;
+          if (isKeyPressed) {
+            target.style.textDecoration = "underline";
+          }
+        }
+      });
+
+      document.addEventListener("mouseout", (e) => {
+        const target = e.target.closest(".online");
+        if (target && target === hoveredAuthorEl) {
+          target.style.textDecoration = "none";
+          hoveredAuthorEl = null;
+        }
+      });
+
+      const copyGameLink = (e) => {
+        if (e.shiftKey && e.target.classList.contains("online")) {
+          e.stopPropagation();
+
+          const online = e.target;
+          if (online && online.innerText.includes("in game")) {
+            const content = online.innerText.match(/\[(.*?)\]/)[1];
+            const gameLink = `${base_url}games/${content}`;
+            navigator.clipboard.writeText(gameLink);
+            customNotification({
+              message: `Copied game link to clipboard: <span style="color: #1cce6c;">${content}</span>`,
+            });
+          } else {
+            customNotification({
+              message: `Player is offline or not in a game`,
+            });
+          }
+        }
+      };
+
+      document.addEventListener("click", copyGameLink, true);
+    }
 
     const friendsCont = document.querySelector(".friends > .content > .allo");
     const addFriends = document.querySelector(".friends > .add-friends");
@@ -5176,16 +5283,16 @@ window.addEventListener("DOMContentLoaded", async () => {
         return;
       }
 
-      document.querySelectorAll(".online").forEach((div) => {
-        if (div.textContent.includes("in game"))
-          addSpectateButton(div);
+      document.querySelectorAll(".friend").forEach((div) => {
+        if (div.querySelector(".online")?.textContent.includes("in game"))
+          addSpectateButton(div.querySelector(".online"));
         else
           div.querySelector(".spectate-eye")?.remove();
       });
-
-      if (!addFriends.querySelector(".search-friends")) createSearch();
-      if (!addFriends.querySelector(".player-lookup")) createPlayerLookup();
     }, 250);
+
+    if (!addFriends.querySelector(".search-friends")) createSearch();
+    if (!addFriends.querySelector(".player-lookup")) createPlayerLookup();
 
     const applyCustomizations = () => {
       if (settings.customizations) {
@@ -5364,7 +5471,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   function formatValue(n) {
     const sign = n > 0 ? "+" : n < 0 ? "-" : "";
-    return sign + Math.round(Math.abs(n)).toLocaleString("en-US");
+    return sign + Math.round(Math.abs(n)).toLocaleString();
   }
 
   function renderPanelTotal(panelEl, total) {
@@ -5375,7 +5482,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       const header = panelEl.querySelector(".offer-header");
       if (header) header.appendChild(totalEl);
     }
-    totalEl.textContent = `Value: ${Math.round(total).toLocaleString("en-US")}`;
+    totalEl.textContent = `Value: ${Math.round(total).toLocaleString()}`;
   }
 
   function getOrCreateDiffBadge() {
@@ -5464,13 +5571,15 @@ window.addEventListener("DOMContentLoaded", async () => {
     if (n >= 1_000_000_000) return (n / 1_000_000_000).toFixed(1).replace(/\.0$/, "") + "B";
     if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
     if (n >= 1_000) return (n / 1_000).toFixed(1).replace(/\.0$/, "") + "K";
-    return Math.round(n).toLocaleString("en-US");
+    return Math.round(n).toLocaleString();
   }
 
   const handleInventory = () => {
     const STORAGE_KEY = "inventory_favorites";
     let observer = null;
     let tabsBound = false;
+    let isSorting = false;
+    let originalOrders = {};
 
     function getFavorites() {
       return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
@@ -5487,22 +5596,101 @@ window.addEventListener("DOMContentLoaded", async () => {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(favorites));
     }
 
-    function sortInventory() {
+    function getItemKey(subject) {
+      const nameEl = subject.querySelector(".item-name");
+      return nameEl ? nameEl.textContent.trim() : subject.textContent.trim();
+    }
+
+    function getItemKeys(container) {
+      return [...container.children].map(getItemKey);
+    }
+
+    function sortInventory(forceUpdate = false) {
+      if (isSorting) return;
+
       const container = document.querySelector(".inventory .subjects");
       if (!container) return;
+
+      const { sortBy, favoritesFirst } = getSortSettings();
       const items = [...container.children];
-      const sorted = [...items].sort((a, b) => b.classList.contains("favorite") - a.classList.contains("favorite"));
-      let changed = false;
-      for (let i = 0; i < sorted.length; i++) {
-        if (sorted[i] !== items[i]) {
-          changed = true;
-          break;
+
+      if (items.length <= 1) return;
+
+      let sorted;
+
+      if (sortBy === "price") {
+        sorted = [...items].sort((a, b) => {
+          if (favoritesFirst) {
+            const favDiff = b.classList.contains("favorite") - a.classList.contains("favorite");
+            if (favDiff !== 0) return favDiff;
+          }
+          return getItemUnitValue(b) - getItemUnitValue(a);
+        });
+      } else {
+        const activeTab = document.querySelector(".inventory .tab.active");
+        const tabTitle = activeTab?.querySelector(".title")?.textContent;
+        const keyOrder = tabTitle ? originalOrders[tabTitle] : null;
+
+        let base = items;
+
+        if (keyOrder && keyOrder.length) {
+          const byKey = new Map();
+          items.forEach(el => {
+            const k = getItemKey(el);
+            if (!byKey.has(k)) byKey.set(k, []);
+            byKey.get(k).push(el);
+          });
+
+          const ordered = [];
+          keyOrder.forEach(k => {
+            const queue = byKey.get(k);
+            if (queue && queue.length) ordered.push(queue.shift());
+          });
+
+          items.forEach(el => {
+            if (!ordered.includes(el)) ordered.push(el);
+          });
+
+          if (ordered.length === items.length) base = ordered;
+        }
+
+        if (favoritesFirst) {
+          const favs = base.filter(el => el.classList.contains("favorite"));
+          const rest = base.filter(el => !el.classList.contains("favorite"));
+          sorted = [...favs, ...rest];
+        } else {
+          sorted = [...base];
         }
       }
-      if (!changed) return;
-      if (observer) observer.disconnect();
-      sorted.forEach(item => container.appendChild(item));
-      if (observer) observer.observe(container, { childList: true, subtree: false });
+
+      let needsSorting = forceUpdate;
+      if (!needsSorting && sorted.length === items.length) {
+        for (let i = 0; i < sorted.length; i++) {
+          if (sorted[i] !== items[i]) {
+            needsSorting = true;
+            break;
+          }
+        }
+      }
+
+      if (!needsSorting) return;
+
+      isSorting = true;
+
+      try {
+        if (observer) observer.disconnect();
+
+        const fragment = document.createDocumentFragment();
+        sorted.forEach(item => fragment.appendChild(item));
+        container.appendChild(fragment);
+      } finally {
+        requestAnimationFrame(() => {
+          if (observer && container) {
+            observer.observe(container, { childList: true, subtree: false });
+          }
+          isSorting = false;
+        });
+      }
     }
 
     function applyFavorites() {
@@ -5557,12 +5745,12 @@ window.addEventListener("DOMContentLoaded", async () => {
       let label = document.getElementById("inventory-page-value");
       if (label) return label;
 
-      const filterName = document.querySelector(".inventory .filter-name");
-      if (!filterName) return null;
+      const sortingLeft = document.querySelector(".inventory .sorting .left");
+      if (!sortingLeft) return null;
 
       label = document.createElement("div");
       label.id = "inventory-page-value";
-      filterName.insertAdjacentElement("afterend", label);
+      sortingLeft.insertAdjacentElement("afterend", label);
       return label;
     }
 
@@ -5603,7 +5791,9 @@ window.addEventListener("DOMContentLoaded", async () => {
             valueEl.className = "item-value";
             bottomSubj.insertBefore(valueEl, bottomSubj.firstChild);
           }
-          valueEl.textContent = formatCompactValue(unitValue * qty);
+          valueEl.textContent = qty > 1
+            ? `${formatCompactValue(unitValue)} (${formatCompactValue(unitValue * qty)})`
+            : formatCompactValue(unitValue);
         } else if (valueEl) {
           valueEl.remove();
         }
@@ -5612,7 +5802,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       if (settings.inventory_item_values) {
         const label = getOrCreateInventoryValueLabel();
         if (label) {
-          label.textContent = `Page Value: ${Math.round(total).toLocaleString("en-US")}`;
+          label.textContent = `Page Value: ${Math.round(total).toLocaleString()}`;
         }
       } else {
         removeInventoryValueLabel();
@@ -5620,32 +5810,235 @@ window.addEventListener("DOMContentLoaded", async () => {
       }
     }
 
-    observeForElement(".inventory .gun", () => {
+    function getItemUnitValue(subject) {
+      const nameEl = subject.querySelector(".item-name");
+      const name = nameEl ? nameEl.textContent.trim() : subject.textContent.trim();
+      return getSkinValue(name);
+    }
+
+    function getItemTotalValue(subject) {
+      const nameEl = subject.querySelector(".item-name");
+      const name = nameEl ? nameEl.textContent.trim() : subject.textContent.trim();
+      const countEl = subject.querySelector(".bottom-subj .count");
+      const qty = countEl ? parseInt(countEl.textContent.trim(), 10) || 1 : 1;
+      return getSkinValue(name) * qty;
+    }
+
+    function getSortSettings() {
+      const stored = JSON.parse(localStorage.getItem("inventory_sort_settings") || "{}");
+      return {
+        sortBy: stored.sortBy || "rarity",
+        favoritesFirst: stored.favoritesFirst !== undefined ? stored.favoritesFirst : true
+      };
+    }
+
+    function saveSortSettings(settings) {
+      localStorage.setItem("inventory_sort_settings", JSON.stringify(settings));
+    }
+
+    function addSortingElement() {
+      const filters = document.querySelector(".inventory .filters");
+      if (!filters || document.querySelector(".inventory .sorting")) return;
+
+      const settings = getSortSettings();
+
+      const sorting = document.createElement("div");
+      sorting.classList.add("sorting");
+      sorting.innerHTML = `
+        <div class="left">
+          <label class="custom-checkbox checkbox-size">
+            <input type="checkbox" class="favorites-first-checkbox" ${settings.favoritesFirst ? "checked" : ""}>
+            <span>Pin Favorites</span>
+          </label>
+        </div>
+        <div class="right">
+          <label class="wrapper-input select">
+            <div tabindex="0" class="input">
+              <div class="selected">${settings.sortBy === "price" ? "Price" : "Rarity"}</div>
+              <div class="items selectHide">
+                <div data-value="rarity">Rarity</div>
+                <div data-value="price">Price</div>
+              </div>
+            </div>
+          </label>
+        </div>
+      `;
+
+      filters.insertAdjacentElement("afterend", sorting);
+
+      const selectInput = sorting.querySelector(".wrapper-input.select .input");
+      const selectedLabel = sorting.querySelector(".selected");
+      const items = sorting.querySelectorAll(".items > div");
+
+      selectInput.addEventListener("click", () => {
+        sorting.querySelector(".items").classList.toggle("selectHide");
+      });
+
+      items.forEach(item => {
+        item.addEventListener("click", () => {
+          const value = item.dataset.value;
+          selectedLabel.textContent = item.textContent.trim();
+          const current = getSortSettings();
+          current.sortBy = value;
+          saveSortSettings(current);
+          sortInventory(true);
+        });
+      });
+
+      const favCheckbox = sorting.querySelector(".favorites-first-checkbox");
+      favCheckbox.addEventListener("change", () => {
+        const current = getSortSettings();
+        current.favoritesFirst = favCheckbox.checked;
+        saveSortSettings(current);
+        sortInventory(true);
+      });
+    }
+
+    observeForElement(".inventory .gun", async () => {
+      const container = document.querySelector(".inventory .subjects");
+      const activeTab = document.querySelector(".inventory .tab.active");
+      const tabTitle = activeTab?.querySelector(".title")?.textContent;
+
+      if (container && tabTitle && !originalOrders[tabTitle]) {
+        originalOrders[tabTitle] = getItemKeys(container);
+      }
+
       applyFavorites();
       addFavoriteButtons();
+
+      if (activeTab) {
+        if (tabTitle === "CHESTS" || tabTitle === "WEAPONS") {
+          if (document.querySelector(".sorting")) document.querySelector(".sorting").remove();
+        } else {
+          addSortingElement();
+        }
+      }
+
+      await loadPriceMap();
       sortInventory();
       updateInventoryValue();
 
-      const container = document.querySelector(".inventory .subjects");
       if (!container) return;
 
       if (observer) observer.disconnect();
 
+      let observerTimeout = null;
+      let currentActiveTab = document.querySelector(".inventory .tab.active");
+
       observer = new MutationObserver(() => {
-        observer.disconnect();
-        if (document.querySelector(".inventory .tab.active").querySelector(".title").textContent === "CHESTS" || document.querySelector(".inventory .tab.active").querySelector(".title").textContent === "WEAPONS") {
+        if (isSorting) return;
+
+        const newActiveTab = document.querySelector(".inventory .tab.active");
+        const isTabSwitch = currentActiveTab !== newActiveTab;
+        currentActiveTab = newActiveTab;
+
+        const processMutation = () => {
+          observer.disconnect();
+
+          const activeTab = document.querySelector(".inventory .tab.active");
+          const tabTitle = activeTab?.querySelector(".title")?.textContent;
+
+          if (activeTab) {
+            if (tabTitle === "CHESTS" || tabTitle === "WEAPONS") {
+              if (document.querySelector(".sorting")) document.querySelector(".sorting").remove();
+              observer.observe(container, { childList: true, subtree: false });
+              return;
+            }
+          }
+
+          if (tabTitle && !originalOrders[tabTitle]) {
+            originalOrders[tabTitle] = getItemKeys(container);
+          }
+
+          applyFavorites();
+          addFavoriteButtons();
+          addSortingElement();
+          sortInventory();
+          updateInventoryValue();
+
           observer.observe(container, { childList: true, subtree: false });
-          return;
         };
-        applyFavorites();
-        addFavoriteButtons();
-        sortInventory();
-        updateInventoryValue();
-        observer.observe(container, { childList: true, subtree: false });
+
+        if (isTabSwitch) {
+          if (observerTimeout) clearTimeout(observerTimeout);
+          processMutation();
+        } else {
+          if (observerTimeout) clearTimeout(observerTimeout);
+          observerTimeout = setTimeout(processMutation, 100);
+        }
       });
+
       observer.observe(container, { childList: true, subtree: false });
     });
   };
+
+  const handleInspect = () => {
+    function getInspectItemName() {
+      const nameEl = document.querySelector("#inspect-modal .name");
+      if (!nameEl) return null;
+
+      const clone = nameEl.cloneNode(true);
+      const ownedEl = clone.querySelector(".owned");
+      if (ownedEl) ownedEl.remove();
+
+      let text = clone.textContent.trim();
+      text = text.replace(/^Inspect:\s*/i, "").trim();
+      return text || null;
+    }
+
+    function getOrCreateInspectValueLabel() {
+      let el = document.querySelector("#inspect-modal .inspect-value");
+      if (el) return el;
+
+      const nameEl = document.querySelector("#inspect-modal .name");
+      if (!nameEl) return null;
+
+      el = document.createElement("div");
+      el.className = "oi-total-value";
+      el.style.top = "8px";
+      el.style.position = "absolute";
+      el.style.zIndex = "1";
+      nameEl.insertAdjacentElement("afterend", el);
+      return el;
+    }
+
+    async function updateInspectValue() {
+      const name = getInspectItemName();
+      if (!name) return;
+
+      await loadPriceMap();
+
+      const value = getSkinValue(name);
+      const label = getOrCreateInspectValueLabel();
+      if (!label) return;
+
+      label.textContent = `Value: ${Math.round(value).toLocaleString()}`;
+    }
+
+    let loading = null;
+    let polling = null;
+
+    const run = () => {
+      clearTimeout(loading);
+      clearTimeout(polling);
+
+      loading = setTimeout(() => {
+        const tryApply = () => {
+          const nameEl = document.querySelector("#inspect-modal .name");
+          if (nameEl) {
+            updateInspectValue();
+          } else {
+            polling = setTimeout(tryApply, 10);
+          }
+        };
+        tryApply();
+      }, 0);
+    };
+
+    run();
+  };
+
+  observeForElement("#inspect-modal", handleInspect);
 
   window.customNotification = (data) => {
     const notifElement = document.createElement("div");
@@ -5681,6 +6074,14 @@ window.addEventListener("DOMContentLoaded", async () => {
       <span style="font-size: 1rem; font-weight: 600; text-align: left;" class="text">${data.message
       }</span>
     </div>`;
+
+    notifElement.addEventListener("click", () => {
+      notifElement.style.transition = "0.3s ease"
+      notifElement.style.opacity = "0"
+      setTimeout(() => {
+        notifElement.remove();
+      }, 300)
+    })
 
     document
       .getElementsByClassName("vue-notification-group")[0]

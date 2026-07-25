@@ -1620,6 +1620,7 @@
     width: 32px;
     height: 32px;
     border-radius: 5px;
+    cursor: pointer;
 }
 
 .menu input[type="color"]:focus {
@@ -1696,6 +1697,7 @@
     padding: 1rem 1.25rem;
     border-radius: 6px;
     transition: 0.3s;
+    will-change: transform;
 }
 
 .row.presets .presets-header {
@@ -3079,6 +3081,10 @@ button:focus,
     background: rgba(74, 97, 158, .75);
 }
 
+.chat-helper-item.active {
+    background: rgba(74, 97, 158, .75);
+}
+
 .chat-helper-helper {
     font-size: .95em;
     cursor: pointer;
@@ -3159,13 +3165,15 @@ button:focus,
     justify-content: flex-start;
 }
 
+.inventory .filter-rarity {
+    margin-left: auto;
+}
+
 #inventory-page-value {
     font-weight: bold;
-    margin-left: 8px;
     margin-bottom: 8px;
     color: #FFD24A;
     white-space: nowrap;
-    margin-right: auto;
 }
 
 .inventory .item-value {
@@ -3175,4 +3183,140 @@ button:focus,
     font-size: .8rem;
     font-weight: 700;
     color: #FFD24A;
+}
+
+.inventory .sorting {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 .5rem;
+}
+
+.inventory .sorting .left {
+    height: 100%;
+}
+
+.inventory .sorting .right {
+    display: flex;
+}
+
+.inventory .sorting .wrapper-input.select {
+    font-size: 4rem !important;
+    width: 10rem !important;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+    margin-bottom: .5rem;
+}
+
+.inventory .sorting .wrapper-input.select .input {
+    border: .125rem solid #202639;
+    background: none;
+    background: #2f3957;
+    position: relative;
+    width: 100%;
+    height: 2.875rem;
+    box-sizing: border-box;
+    font-weight: 600;
+    font-size: 1.4rem;
+    color: var(--gray-1);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .4), inset 0 0 8px rgba(0, 0, 0, .4);
+    border-radius: .25rem;
+    cursor: pointer;
+    text-align: left;
+    outline: none;
+    line-height: 2.875rem;
+}
+
+.inventory .sorting .wrapper-input.select .selected {
+    padding-left: .5em;
+    user-select: none;
+    display: flex;
+    align-items: center;
+}
+
+.inventory .sorting .wrapper-input.select .selected:after {
+    position: absolute;
+    content: "";
+    top: 1.3rem;
+    right: 1em;
+    width: 0;
+    height: 0;
+    border: 5px solid transparent;
+    border-color: #fff transparent transparent transparent;
+}
+
+.inventory .sorting .wrapper-input.select .items {
+    background: #2f3957;
+    display: none;
+    color: #fff;
+    border-radius: 0 0 6px 6px;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .4), inset 0 0 8px rgba(0, 0, 0, .4);
+    position: absolute;
+    left: 0;
+    right: 0;
+    z-index: 1;
+    max-height: 16rem;
+    overflow-y: scroll;
+}
+
+.inventory .sorting .wrapper-input.select .items:not(.selectHide) {
+    display: block;
+}
+
+.inventory .sorting .wrapper-input.select .items>div {
+    color: #fff;
+    padding-left: .5em;
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    align-items: center;
+}
+
+.inventory .sorting .wrapper-input.select .items>div:hover {
+    background: #3b4975;
+}
+
+.inventory .sorting .custom-checkbox {
+    padding-bottom: 0.5rem;
+    height: 100%;
+    display: flex;
+    align-items: center;
+}
+
+.inventory .sorting .custom-checkbox input {
+    position: absolute;
+    z-index: -1;
+    opacity: 0;
+}
+
+.inventory .sorting .custom-checkbox span {
+    display: flex;
+    align-items: center;
+    user-select: none;
+    font-size: 1.2em;
+}
+
+.inventory .sorting .custom-checkbox>input:checked+span:before {
+    background-color: #ffb914;
+    border-color: #b6830e;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='hsl(42, 85%, 100%)' d='M6.564.75l-3.59 3.612-1.538-1.55L0 4.26 2.974 7.25 8 2.193z'/%3e%3c/svg%3e");
+}
+
+.inventory .sorting .custom-checkbox span:before {
+    content: "";
+    display: inline-block;
+    width: 1.3em;
+    height: 1.3em;
+    flex-shrink: 0;
+    flex-grow: 0;
+    margin-top: .1em;
+    border: .15rem solid #3c4b68;
+    border-radius: .25em;
+    margin-right: .5em;
+    background-repeat: no-repeat;
+    background-position: 50%;
+    background-size: 50% 50%;
 }

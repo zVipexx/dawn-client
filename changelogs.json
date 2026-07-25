@@ -1,5 +1,15 @@
 [
   {
+    "version": "1.2.1",
+    "date": "19/7/2026",
+    "changelogs": [
+      "Added Inventory rarity/price sorting",
+      "Added Bolt Price when inspecting an item",
+      "Fixed Stats not zeroing when resetting the match",
+      "Other Small bug fixes and improvements"
+    ]
+  },
+  {
     "version": "1.2.0",
     "date": "19/7/2026",
     "changelogs": [
