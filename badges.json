@@ -655,8 +655,19 @@
   },
   {
     "shortId": "E53WJK",
+    "profile-background": "https://i.imgur.com/DbdeIrz.png",
+    "gradient": {
+      "rot": "90deg",
+      "stops": [
+        "#FF0000 0%",
+        "#6F1616 33%",
+        "#B20101 67%",
+        "#FF0000 100%"
+      ],
+      "shadow": "0 0 100px #0011ff"
+    },
     "badges": [
-      "https://i.imgur.com/S8dpJNh.png"
+      "https://i.imgur.com/6uRcx6N.png"
     ]
   }
 ]
