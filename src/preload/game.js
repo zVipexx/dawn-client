@@ -3441,7 +3441,6 @@ window.addEventListener("DOMContentLoaded", async () => {
     let dm_players = [];
 
     const playerCache = new Map();
-    const resetMessages = new WeakSet();
 
     const nicknameByOriginal = new Map();
     const nicknameByNickname = new Map();
@@ -3594,27 +3593,33 @@ window.addEventListener("DOMContentLoaded", async () => {
         return;
       }
 
-      if (typeClass === "STATUS") {
-        const textNode = [...body.childNodes].find(n => n.nodeType === Node.TEXT_NODE);
-        if (!textNode) return;
-        if (!resetMessages.has(message) && textNode.textContent.includes("reset the match.")) {
-          resetMessages.add(message);
-          assistsCount = 0;
-          headshotsCount = 0;
-          objectivesCount = 0;
-          renderAssists();
-          renderObjectives();
-          renderHeadshots();
-        }
-        return;
-      }
-
       if (!message.querySelector(".lvl")) return;
       if (!author) return;
 
       const match = findPlayer(typeClass);
       if (match?.nickname) setDisplay(author, match.nickname + ":\u00A0\u00A0");
       else clearDisplay(author);
+    };
+
+    const checkLatestMessageForReset = (container) => {
+      const messages = container.querySelectorAll(".message");
+      const last = messages[messages.length - 1];
+      if (!last) return;
+
+      const body = last.querySelector(".text");
+      if (!body || !body.classList.contains("STATUS")) return;
+
+      const textNode = [...body.childNodes].find(n => n.nodeType === Node.TEXT_NODE);
+      if (!textNode) return;
+
+      if (textNode.textContent.includes("reset the match.")) {
+        assistsCount = 0;
+        headshotsCount = 0;
+        objectivesCount = 0;
+        renderAssists();
+        renderObjectives();
+        renderHeadshots();
+      }
     };
 
     const updateMessages = () => {
@@ -4474,20 +4479,21 @@ window.addEventListener("DOMContentLoaded", async () => {
       const observeMessage = (message) => {
         if (observedMessages.has(message)) {
           processMessage(message);
+          checkLatestMessageForReset(chatCont);
           return;
         }
         observedMessages.add(message);
 
         new MutationObserver(() => {
-          if (!settings.customizations) return;
-          processMessage(message);
+          if (settings.customizations) processMessage(message);
+          checkLatestMessageForReset(chatCont);
         }).observe(message, { childList: true });
 
         const body = message.querySelector(".text");
         if (body) {
           new MutationObserver(() => {
-            if (!settings.customizations) return;
-            processMessage(message);
+            if (settings.customizations) processMessage(message);
+            checkLatestMessageForReset(chatCont);
           }).observe(body, {
             attributes: true,
             attributeFilter: ["class"],
@@ -4503,13 +4509,13 @@ window.addEventListener("DOMContentLoaded", async () => {
       chatCont.querySelectorAll(".message").forEach(observeMessage);
 
       new MutationObserver((mutations) => {
-        if (!settings.customizations) return;
         for (const mutation of mutations) {
           mutation.addedNodes.forEach(node => {
             if (node.nodeType !== Node.ELEMENT_NODE || !node.classList.contains("message")) return;
             observeMessage(node);
           });
         }
+        checkLatestMessageForReset(chatCont);
       }).observe(chatCont, { childList: true });
     };
 

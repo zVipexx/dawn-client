@@ -1,7 +1,14 @@
 [
   {
+    "version": "1.2.2",
+    "date": "27/7/2026",
+    "changelogs": [
+      "Fixed a small rare bug that constantly reset the Indicators"
+    ]
+  },
+  {
     "version": "1.2.1",
-    "date": "19/7/2026",
+    "date": "26/7/2026",
     "changelogs": [
       "Added Inventory rarity/price sorting",
       "Added Bolt Price when inspecting an item",
