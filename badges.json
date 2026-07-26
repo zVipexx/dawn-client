@@ -581,18 +581,16 @@
   },
   {
     "shortId": "XMNVRX",
-    "animated": true,
     "gradient": {
       "rot": "90deg",
       "stops": [
-        "#00FF00 0%",
-        "#0000FF 50%",
-        "#FFFF00 100%"
-      ]
+        "#94244B 0%",
+        "#94244B 100%"
+      ],
+      "shadow": "0px 0px 32px #4e1328"
     },
     "badges": [
-      "https://i.imgur.com/OGxRl68.png",
-      "https://i.imgur.com/kNCEePB.png"
+      "https://i.imgur.com/bviusvX.png"
     ]
   },
   {
