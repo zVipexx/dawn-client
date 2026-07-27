@@ -3343,7 +3343,7 @@ window.addEventListener("DOMContentLoaded", async () => {
               width: unset;
               min-width: 60rem;
               background: url("${bgUrl}") no-repeat center / cover;
-              border-radius: 0 0 16px 16px;
+              border-radius: 0 0 20px 20px;
               box-shadow: inset 0 1px 0 5px rgba(0, 0, 0, 0.5),
                           inset 0 6px 0 -5px rgba(0, 0, 0, 0.5);
             `;
@@ -5140,7 +5140,7 @@ window.addEventListener("DOMContentLoaded", async () => {
           <span class="search-text">Open Profile</span>
           <span class="hint-text">Press Enter to search</span>
         </div>
-        <input type="text" placeholder="ENTER PLAYER ID..." class="lookup-input" style="border: .125rem solid #202639; outline: none; background: #2f3957; width: 100%; height: 2.875rem; padding-left: .5rem; box-sizing: border-box; font-weight: 600; font-size: 1rem; color: #f2f2f2; box-shadow: 0 1px 2px rgba(0,0,0,.4), inset 0 0 8px rgba(0,0,0,.4); border-radius: .25rem; transition: border-color 0.2s;"/>
+        <input type="text" placeholder="ENTER PLAYER ID" class="lookup-input" style="border: .125rem solid #202639; outline: none; background: #2f3957; width: 100%; height: 2.875rem; padding-left: .5rem; box-sizing: border-box; font-weight: 600; font-size: 1rem; color: #f2f2f2; box-shadow: 0 1px 2px rgba(0,0,0,.4), inset 0 0 8px rgba(0,0,0,.4); border-radius: .25rem; transition: border-color 0.2s;"/>
         <div class="lookup-history-wrap" style="display: none; flex-direction: column; width: 100%; margin-top: .75rem;">
           <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: .5rem; width: 100%;">
             <span>History</span>

@@ -55,10 +55,20 @@ const getData = async (key) => {
 };
 
 const filterItems = (data, key) => {
+  let filtered = data;
   if (key === "css") {
-    return data.filter(i => convert(i, key).availability === "free");
+    filtered = data.filter(i => convert(i, key).availability === "free");
   }
-  return data;
+
+  filtered.sort((a, b) => {
+    const aFeatured = (a.label || "").toLowerCase() === "featured";
+    const bFeatured = (b.label || "").toLowerCase() === "featured";
+    if (aFeatured && !bFeatured) return -1;
+    if (!aFeatured && bFeatured) return 1;
+    return 0;
+  });
+
+  return filtered;
 };
 
 const convert = (item, type) => {
@@ -683,6 +693,7 @@ const initBrowser = (menu) => {
       } else {
         filtered = currentItems;
       }
+      filtered = filterItems(filtered, currentKey);
       renderCards(container, filtered, currentKey, currentItems);
     });
   }

@@ -1,5 +1,12 @@
 [
   {
+    "version": "1.2.3",
+    "date": "27/7/2026",
+    "changelogs": [
+      "Teeny tiny bug fix"
+    ]
+  },
+  {
     "version": "1.2.2",
     "date": "27/7/2026",
     "changelogs": [
