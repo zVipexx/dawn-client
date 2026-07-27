@@ -1,5 +1,17 @@
 [
   {
+    "title": "sleek",
+    "description": "",
+    "homeImage": "https://css.daymian.xyz/css/CSS/sleek/sleekmenu.png",
+    "ingameImage": "https://css.daymian.xyz/css/CSS/sleek/sleekingame.png",
+    "tags": ["Green"],
+    "availability": "free",
+    "owner": "vipex",
+    "discord": "843088623314141204",
+    "label": "featured",
+    "downloadUrl": "https://css.daymian.xyz/css/CSS/sleek/sleek.css"
+  },
+  {
     "title": "5hours",
     "description": "",
     "homeImage": "https://css.daymian.xyz/css/CSS/5hours/image_2025-02-03_193316431.png",
