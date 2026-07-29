@@ -18,12 +18,6 @@
     "image": "https://ktiers.com/imgs/maps/Lodge.png"
   },
   {
-    "map": "Cove",
-    "modes": ["Point 2v2"],
-    "code": "https://ktiers.com/maps/files/Cove.txt",
-    "preview": "https://ktiers.com/imgs/maps/Cove.png"
-  },
-  {
     "map": "Hearth",
     "modes": ["Point 2v2", "Point 3v3"],
     "code": "https://ktiers.com/maps/files/Hearth.txt",
@@ -36,10 +30,10 @@
     "preview": "https://ktiers.com/imgs/maps/Dust.png"
   },
   {
-    "map": "Frontier",
+    "map": "Woodlands",
     "modes": ["Point 2v2", "Point 3v3"],
-    "code": "https://ktiers.com/maps/files/Frontier.txt",
-    "preview": "https://ktiers.com/imgs/maps/Frontier.png"
+    "code": "https://ktiers.com/maps/files/Woodlands.txt",
+    "preview": "https://ktiers.com/imgs/maps/Woodlands.png"
   },
   {
     "map": "Workshop",
