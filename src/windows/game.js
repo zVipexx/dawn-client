@@ -1,31 +1,30 @@
 const { BrowserWindow, ipcMain, app, shell, clipboard, dialog, net, session, protocol } = require("electron");
 const { default_settings, allowed_urls } = require("../util/defaults.json");
-const { initResourceSwapper } = require("../addons/swapper.js");
+const { initResourceSwapper } = require('../addons/swapper.js');
 const { registerShortcuts } = require("../util/shortcuts");
 const { applySwitches } = require("../util/switches");
-const { nativeImage } = require("electron");
+const { nativeImage } = require('electron');
 const DiscordRPC = require("../addons/rpc");
 const path = require("path");
 const Store = require("electron-store");
 const fs = require("fs-extra");
 const ffmpeg = require("fluent-ffmpeg");
-const http = require("http");
+const http = require('http');
 const https = require("https");
 let ffmpegPath = require("ffmpeg-static");
 
 const fetchText = (url) => new Promise((resolve, reject) => {
   https.get(url, (res) => {
-    let data = "";
-    res.on("data", chunk => data += chunk);
-    res.on("end", () => resolve(data));
-    res.on("error", reject);
-  }).on("error", reject);
+    let data = '';
+    res.on('data', chunk => data += chunk);
+    res.on('end', () => resolve(data));
+    res.on('error', reject);
+  }).on('error', reject);
 });
 
 protocol.registerSchemesAsPrivileged([
-  { scheme: "https", privileges: { bypassCSP: true, secure: true, supportFetchAPI: true, corsEnabled: true } },
-  { scheme: "dawn-patch", privileges: { bypassCSP: true, secure: true, supportFetchAPI: true, corsEnabled: true } },
-  { scheme: "dawnclient", privileges: { bypassCSP: true, secure: true, supportFetchAPI: true, corsEnabled: true } }
+  { scheme: 'https', privileges: { bypassCSP: true, secure: true, supportFetchAPI: true } },
+  { scheme: 'dawn-patch', privileges: { bypassCSP: true, secure: true, supportFetchAPI: true } }
 ]);
 
 const store = new Store();
@@ -128,19 +127,19 @@ ipcMain.on("open-sounds-folder", () => {
 const galleryFolder = path.join(app.getPath("documents"), "DawnClient/gallery");
 if (!fs.existsSync(galleryFolder)) fs.mkdirSync(galleryFolder, { recursive: true });
 
-ipcMain.handle("get-file-preview", (event, filePath) => {
-  const fs = require("fs");
-  const ext = filePath.split(".").pop().toLowerCase();
+ipcMain.handle('get-file-preview', (event, filePath) => {
+  const fs = require('fs');
+  const ext = filePath.split('.').pop().toLowerCase();
   const mimeTypes = {
-    png: "image/png",
-    jpg: "image/jpeg",
-    jpeg: "image/jpeg",
-    gif: "image/gif",
-    webp: "image/webp",
+    png: 'image/png',
+    jpg: 'image/jpeg',
+    jpeg: 'image/jpeg',
+    gif: 'image/gif',
+    webp: 'image/webp',
   };
-  const mime = mimeTypes[ext] || "image/png";
+  const mime = mimeTypes[ext] || 'image/png';
   const data = fs.readFileSync(filePath);
-  return `data:${mime};base64,${data.toString("base64")}`;
+  return `data:${mime};base64,${data.toString('base64')}`;
 });
 
 ipcMain.handle("get-gallery-root", () => {
@@ -371,11 +370,6 @@ const createWindow = () => {
     });
   }
 
-  gameWindow.webContents.setWindowOpenHandler(({ url }) => {
-    require("electron").shell.openExternal(url);
-    return { action: "deny" };
-  });
-
   gameWindow.webContents.setUserAgent(
     `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.7204.296 Safari/537.36 Electron/10.4.7 DawnClient/${app.getVersion()}`
   );
@@ -458,54 +452,42 @@ const createWindow = () => {
 };
 
 const initGame = () => {
-  protocol.handle("dawn-patch", async (request) => {
-    try {
-      const urlParams = new URL(request.url);
-      const targetScriptUrl = urlParams.searchParams.get("url");
-      if (!targetScriptUrl) {
-        return new Response("Missing URL", { status: 400 });
-      }
-      const code = await fetchText(targetScriptUrl);
+  protocol.registerBufferProtocol('dawn-patch', (request, callback) => {
+    const urlParams = new URL(request.url);
+    const targetScriptUrl = urlParams.searchParams.get('url');
+    fetchText(targetScriptUrl).then((code) => {
       const target = "f5['a'][hF]";
       if (code.includes(target)) {
         code = code.replace(target, "(window.__f5=f5,window.__zoomInstance=this,f5['a'][hF])");
       }
-      const modifiedCode = code + `\n//# sourceURL=${targetScriptUrl}`;
-      return new Response(Buffer.from(modifiedCode), {
-        headers: { "content-type": "text/javascript" },
-      });
-    } catch (error) {
-      console.error("dawn-patch error:", error);
-      return new Response("Error loading script", { status: 500 });
-    }
+      code += `\n//# sourceURL=${targetScriptUrl}`;
+      callback({ mimeType: 'text/javascript', data: Buffer.from(code) });
+    });
   });
 
   const swap = initResourceSwapper();
 
-  const bundleFilter = { urls: ["*://kirka.io/assets/js/app.*.js"] };
+  const bundleFilter = { urls: ['*://kirka.io/assets/js/app.*.js'] };
   const allUrls = [...(swap.filter.urls.length ? swap.filter.urls : []), ...bundleFilter.urls];
 
-  if (swap.filter.urls.length) {
-    session.defaultSession.webRequest.onBeforeRequest(
-      { urls: allUrls },
-      (details, callback) => {
-        if (/kirka\.io\/assets\/js\/app\.[^/]+\.js/.test(details.url)) {
-          return callback({ redirectURL: "dawn-patch://bundle/app.js?url=" + encodeURIComponent(details.url) });
-        }
-
-        const cleanUrl = details.url.replace(/https|http|(\?.*)|(#.*)|\_/gi, "");
-        const filePath = swap.files[cleanUrl];
-
-        if (filePath) {
-          const redirectURL = new URL("dawnclient://file");
-          redirectURL.searchParams.set("path", filePath);
-          return callback({ cancel: false, redirectURL: redirectURL.toString() });
-        }
-
-        callback({ cancel: false });
+  session.defaultSession.webRequest.onBeforeRequest(
+    { urls: allUrls },
+    (details, callback) => {
+      if (/kirka\.io\/assets\/js\/app\.[^/]+\.js/.test(details.url)) {
+        return callback({ redirectURL: 'dawn-patch://bundle/app.js?url=' + encodeURIComponent(details.url) });
       }
-    );
-  }
+
+      if (swap.filter.urls.length) {
+        const redirect =
+          'dawnclient://' +
+          (swap.files[details.url.replace(/https|http|(\?.*)|(#.*)|\_/gi, '')] ||
+            details.url);
+        return callback({ cancel: false, redirectURL: redirect });
+      }
+
+      callback({ cancel: false });
+    }
+  );
 
   createWindow();
   if (settings.discord_rpc) {

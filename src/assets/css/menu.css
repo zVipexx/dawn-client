@@ -7,7 +7,9 @@
     --orange: 195, 145, 245;
     --green: 176, 144, 218;
     --blue: 142, 124, 195;
+    --blue-kill: #0d6dc6cc;
     --red: 199, 100, 163;
+    --red-kill: #ff4d4280;
     --hover-dark: 44, 36, 56;
     --hover-dark-darker: 29, 21, 41;
     --hover-light: 230, 224, 245, 0.05;
@@ -24,7 +26,9 @@
     --orange: 125, 80, 170;
     --green: 100, 75, 150;
     --blue: 85, 70, 130;
+    --blue-kill: #0d6dc6cc;
     --red: 135, 45, 105;
+    --red-kill: #ff4d4280;
     --hover-dark: 200, 195, 220;
     --hover-dark-darker: 185, 180, 205;
     --hover-light: 18, 14, 28, 0.05;
@@ -41,7 +45,9 @@
     --orange: 255, 140, 0;
     --green: 201, 143, 67;
     --blue: 255, 173, 96;
+    --blue-kill: #0d6dc6cc;
     --red: 220, 85, 47;
+    --red-kill: #ff4d4280;
     --hover-dark: 48, 30, 15;
     --hover-dark-darker: 33, 15, 0;
     --hover-light: 255, 245, 230, 0.05;
@@ -58,7 +64,9 @@
     --orange: 195, 145, 245;
     --green: 176, 144, 218;
     --blue: 142, 124, 195;
+    --blue-kill: #0d6dc6cc;
     --red: 199, 100, 163;
+    --red-kill: #ff4d4280;
     --hover-dark: 44, 36, 56;
     --hover-light: 230, 224, 245, 0.05;
     --border: 230, 224, 245, 0.15;
@@ -79,7 +87,9 @@
     --orange: 179, 193, 234;
     --green: 160, 185, 145;
     --blue: 130, 155, 195;
+    --blue-kill: #0d6dc6cc;
     --red: 220, 85, 47;
+    --red-kill: #ff4d4280;
     --hover-dark: 25, 38, 55;
     --hover-dark-darker: 14, 22, 35;
     --hover-light: 200, 215, 240, 0.05;
@@ -101,7 +111,9 @@
     --light: var(--custom-light);
     --green: 176, 144, 218;
     --blue: 142, 124, 195;
+    --blue-kill: #0d6dc6cc;
     --red: 199, 100, 163;
+    --red-kill: #ff4d4280;
     --hover-dark: 44, 36, 56;
     --hover-dark-darker: 29, 21, 41;
     --hover-light: var(--custom-light), 0.05;
@@ -1670,9 +1682,6 @@
 
 .desktop-game-interface .kill-bar-cont .kill-bar-item {
     box-shadow: black 0 0 10px 0 !important;
-
-    --blue-kill: #0d6dc6cc;
-    --red-kill: #ff4d4280;
 }
 
 .desktop-game-interface .kill-bar-cont .kill-bar-item.red {
@@ -3322,76 +3331,4 @@ button:focus,
     background-repeat: no-repeat;
     background-position: 50%;
     background-size: 50% 50%;
-}
-
-.dawn-notice .content {
-    font-family: "Satoshi", sans-serif;
-    position: absolute;
-    z-index: 999;
-    display: flex;
-    flex-direction: column;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    align-items: center;
-    color: rgb(172, 172, 172);
-    gap: 0.5rem;
-}
-
-.dawn-notice .overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, .75);
-    backdrop-filter: blur(10px);
-    z-index: 999;
-}
-
-.dawn-notice .header {
-    font-size: 2em;
-    font-weight: bold;
-    color: orange;
-}
-
-.dawn-notice .notice {
-    font-size: 1.2em;
-    text-align: center;
-}
-
-.dawn-notice .footer {
-    font-size: 1em;
-    color: gray;
-}
-
-.dawn-notice .have-read {
-    height: 2rem;
-    width: 8rem;
-    padding: 5px;
-    border-radius: 6px;
-    background: rgba(0, 128, 0, .5);
-    border: 1px solid rgba(255, 255, 255, .2);
-    transition: 0.3s;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: space-around;
-    color: rgb(209, 209, 209);
-}
-
-.dawn-notice .have-read:hover {
-    border: 1px solid rgba(255, 255, 255, .8)
-}
-
-.dawn-notice .have-read:hover:active {
-    transform: translateY(1px);
-    filter: brightness(0.8);
-    border: 1px solid rgba(255, 255, 255, .2);
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0), inset 0 4px 8px 0 rgba(0, 0, 0, 0.5);
-}
-
-.dawn-notice .have-read i {
-    zoom: 0.8;
-    transform: translateY(2px);
 }

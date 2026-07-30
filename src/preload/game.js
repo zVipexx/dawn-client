@@ -71,47 +71,6 @@ window.addEventListener("DOMContentLoaded", async () => {
   const menu = new Menu();
   menu.init();
 
-  function showNotice() {
-    const notice = document.createElement("div");
-    notice.classList.add("dawn-notice");
-    notice.innerHTML = `
-      <div class="overlay"></div>
-      <div class="content">
-        <span class="header">Dawn Client Notice</span>
-        <span class="notice">
-          In this update, Dawn Client is updating its Electron version to the latest. While this greatly increases FPS,
-          it may cause problems on some devices with Unlimited FPS and other things. Additionally, it increases your raw mouse sensitivity, so
-          you will have to adjust it. There is currently an ongoing poll on the discord server about this change, and every vote is greatly appreciated.
-          More information can be found on the discord server.
-        </span>
-        <span class="footer">This popup won't show again, but it can be viewed in the About tab.</span>
-        <div class="have-read">
-          <i class="fas fa-check"></i>
-          <span>I understand</span>
-        </div>
-      </div>
-    `;
-
-    const overlay = notice.querySelector(".overlay");
-    const content = notice.querySelector(".content");
-    const button = notice.querySelector(".have-read");
-    button.addEventListener("click", () => {
-      overlay.style.transition = "0.3s";
-      overlay.style.opacity = "0";
-      content.style.transition = "0.3s";
-      content.style.opacity = "0";
-      content.style.transform = "translate(-50%, calc(-50% - 10px))";
-      notice.style.pointerEvents = "none";
-      setTimeout(() => {
-        notice.remove();
-        localStorage.setItem("read-notice", true)
-      }, 300)
-    })
-
-    document.body.appendChild(notice);
-  }
-  if (!localStorage.getItem("read-notice")) showNotice();
-
   opener();
   customReqScripts(settings);
   editResourceSwapper();

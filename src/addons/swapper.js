@@ -1,43 +1,14 @@
 const { app, session, protocol } = require("electron");
 const path = require("path");
 const fs = require("fs");
+const url = require("url");
 
 const initResourceSwapper = () => {
-  protocol.handle("dawnclient", async (request) => {
-    try {
-      const url = new URL(request.url);
-      const filePath = decodeURIComponent(url.searchParams.get("path") || "");
-
-      if (!filePath || !fs.existsSync(filePath)) {
-        return new Response("Not Found", { status: 404 });
-      }
-
-      const data = await fs.promises.readFile(filePath);
-      const ext = path.extname(filePath).toLowerCase();
-      const mimeTypes = {
-        ".css": "text/css",
-        ".js": "text/javascript",
-        ".png": "image/png",
-        ".jpg": "image/jpeg",
-        ".jpeg": "image/jpeg",
-        ".gif": "image/gif",
-        ".webp": "image/webp",
-        ".mp3": "audio/mpeg",
-        ".wav": "audio/wav",
-        ".ogg": "audio/ogg",
-        ".mp4": "video/mp4",
-        ".webm": "video/webm",
-      };
-      const contentType = mimeTypes[ext] || "application/octet-stream";
-
-      return new Response(data, {
-        status: 200,
-        headers: { "content-type": contentType },
-      });
-    } catch (error) {
-      console.error("dawnclient protocol error:", error);
-      return new Response("Internal Server Error", { status: 500 });
-    }
+  protocol.registerFileProtocol("dawnclient", (request, callback) =>
+    callback({ path: request.url.replace("dawnclient://", "") })
+  );
+  protocol.registerFileProtocol("file", (request, callback) => {
+    callback(decodeURIComponent(request.url.replace("file:///", "")));
   });
 
   const SWAP_FOLDER = path.join(
@@ -92,7 +63,11 @@ const initResourceSwapper = () => {
           filterurl = filterurl.replace("/", "/*");
           filterurl = filterurl.replace(".", "*.*");
           swap.filter.urls.push(kirk.replace(origfilterurl, filterurl));
-          swap.files[kirk.replace(/\*|_/g, "")] = filePath;
+          swap.files[kirk.replace(/\*|_/g, "")] = url.format({
+            pathname: filePath,
+            protocol: "",
+            slashes: false,
+          });
         });
       }
     });
@@ -104,16 +79,11 @@ const initResourceSwapper = () => {
     session.defaultSession.webRequest.onBeforeRequest(
       swap.filter,
       (details, callback) => {
-        const cleanUrl = details.url.replace(/https|http|(\?.*)|(#.*)|\_/gi, "");
-        const filePath = swap.files[cleanUrl];
-
-        if (filePath) {
-          const redirectURL = new URL("dawnclient://file");
-          redirectURL.searchParams.set("path", filePath);
-          return callback({ cancel: false, redirectURL: redirectURL.toString() });
-        }
-
-        callback({ cancel: false });
+        const redirect =
+          "dawnclient://" +
+          (swap.files[details.url.replace(/https|http|(\?.*)|(#.*)|\_/gi, "")] ||
+            details.url);
+        callback({ cancel: false, redirectURL: redirect });
       }
     );
   }
