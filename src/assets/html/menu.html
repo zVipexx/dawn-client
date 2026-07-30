@@ -863,8 +863,20 @@
       </div>
       <div id="general-options" class="juice options inner">
         <div class="option-group">
-          <div class="option requires-restart">
+          <div class="option">
             <div class="left">
+              <span>Auto Updater</span>
+              <span class="description">
+                Only works for windows users
+              </span>
+            </div>
+            <div class="checkbox">
+              <input type="checkbox" id="auto_update" data-setting="auto_update" />
+              <label for="auto_update"></label>
+            </div>
+          </div>
+          <div class="option">
+            <div class="left requires-restart">
               <span>Discord Activity</span>
               <span class="description">
                 Display Dawn Client as your Discord activity
@@ -1355,6 +1367,14 @@
               </div>
             </div>
           </div>
+        </div>
+      </div>
+      <div class="option-group">
+        <div class="about-top compact">
+          In this update, Dawn Client is updating its Electron version to the latest. While this greatly increases FPS,
+          it may cause problems on some devices with Unlimited FPS and other things. Additionally, it increases your raw
+          mouse sensitivity, so you will have to adjust it. There is currently an ongoing poll on the discord server
+          about this change, and every vote is greatly appreciated.
         </div>
       </div>
       <div class="option-group">

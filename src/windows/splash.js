@@ -2,6 +2,7 @@ const { app, BrowserWindow, ipcMain } = require("electron");
 const { autoUpdater } = require("electron-updater");
 const { initGame } = require("./game");
 const path = require("path");
+const Store = require("electron-store");
 
 autoUpdater.setFeedURL({
   provider: "github",
@@ -10,6 +11,7 @@ autoUpdater.setFeedURL({
 });
 
 let splashWindow;
+const store = new Store();
 
 const createWindow = () => {
   splashWindow = new BrowserWindow({
@@ -46,34 +48,35 @@ ipcMain.on("quit-and-install", () =>
 );
 
 const checkForUpdates = () => {
+  if (!store.get("settings").auto_update) {
+    handleClose();
+    return;
+  };
+
   autoUpdater.on("update-available", () =>
     splashWindow.webContents.send("update-available")
   );
   autoUpdater.on("update-not-available", () => {
-    splashWindow.webContents.send("update-not-available");
     handleClose();
   });
   autoUpdater.on("update-downloaded", () => {
     splashWindow.webContents.send("update-downloaded");
-    console.log("Update downloaded");
   });
   autoUpdater.on("download-progress", (progress) =>
     splashWindow.webContents.send("download-progress", progress)
   );
   autoUpdater.on("error", (err) => {
-    splashWindow.webContents.send("update-error", err.message);
-    setTimeout(handleClose, 3000);
+    handleClose();
   });
   autoUpdater.checkForUpdates().catch(handleClose);
 };
 
-const handleClose = () =>
-  setTimeout(() => {
-    if (splashWindow) {
-      initGame();
-      splashWindow.close();
-    }
-  }, 500);
+const handleClose = () => {
+  if (splashWindow) {
+    initGame();
+    splashWindow.close();
+  }
+};
 
 const initSplash = createWindow;
 

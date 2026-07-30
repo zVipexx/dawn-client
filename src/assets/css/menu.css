@@ -1670,14 +1670,17 @@
 
 .desktop-game-interface .kill-bar-cont .kill-bar-item {
     box-shadow: black 0 0 10px 0 !important;
+
+    --blue-kill: #0d6dc6cc;
+    --red-kill: #ff4d4280;
 }
 
 .desktop-game-interface .kill-bar-cont .kill-bar-item.red {
-    background: rgba(255, 77, 66, .5) !important;
+    background: var(--red-kill) !important;
 }
 
 .desktop-game-interface .kill-bar-cont .kill-bar-item.blue {
-    background: rgba(13, 109, 198, .8) !important;
+    background: var(--blue-kill) !important;
 }
 
 .nickname {
@@ -3319,4 +3322,76 @@ button:focus,
     background-repeat: no-repeat;
     background-position: 50%;
     background-size: 50% 50%;
+}
+
+.dawn-notice .content {
+    font-family: "Satoshi", sans-serif;
+    position: absolute;
+    z-index: 999;
+    display: flex;
+    flex-direction: column;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    align-items: center;
+    color: rgb(172, 172, 172);
+    gap: 0.5rem;
+}
+
+.dawn-notice .overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, .75);
+    backdrop-filter: blur(10px);
+    z-index: 999;
+}
+
+.dawn-notice .header {
+    font-size: 2em;
+    font-weight: bold;
+    color: orange;
+}
+
+.dawn-notice .notice {
+    font-size: 1.2em;
+    text-align: center;
+}
+
+.dawn-notice .footer {
+    font-size: 1em;
+    color: gray;
+}
+
+.dawn-notice .have-read {
+    height: 2rem;
+    width: 8rem;
+    padding: 5px;
+    border-radius: 6px;
+    background: rgba(0, 128, 0, .5);
+    border: 1px solid rgba(255, 255, 255, .2);
+    transition: 0.3s;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    color: rgb(209, 209, 209);
+}
+
+.dawn-notice .have-read:hover {
+    border: 1px solid rgba(255, 255, 255, .8)
+}
+
+.dawn-notice .have-read:hover:active {
+    transform: translateY(1px);
+    filter: brightness(0.8);
+    border: 1px solid rgba(255, 255, 255, .2);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0), inset 0 4px 8px 0 rgba(0, 0, 0, 0.5);
+}
+
+.dawn-notice .have-read i {
+    zoom: 0.8;
+    transform: translateY(2px);
 }

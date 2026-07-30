@@ -61,6 +61,7 @@
     "animations": false,
     "unlimited_fps": false,
     "auto_fullscreen": true,
+    "auto_update": true,
     "discord_rpc": true,
     "css_link": "",
     "css_enabled": false,
