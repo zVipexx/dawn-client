@@ -655,14 +655,14 @@
   },
   {
     "shortId": "E53WJK",
-    "profile-background": "https://i.imgur.com/DbdeIrz.png",
+    "profile-background": "https://i.imgur.com/DO6uK19.png",
     "gradient": {
       "rot": "90deg",
       "stops": [
-        "#FF0000 0%",
-        "#6F1616 33%",
-        "#B20101 67%",
-        "#FF0000 100%"
+        "#859FFF 0%",
+        "#AEA3FF 33%",
+        "#AE6BFF 67%",
+        "#8D5CFF 100%"
       ],
       "shadow": "0 0 100px #0011ff"
     },
