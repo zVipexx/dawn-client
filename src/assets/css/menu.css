@@ -7,9 +7,7 @@
     --orange: 195, 145, 245;
     --green: 176, 144, 218;
     --blue: 142, 124, 195;
-    --blue-kill: #0d6dc6cc;
     --red: 199, 100, 163;
-    --red-kill: #ff4d4280;
     --hover-dark: 44, 36, 56;
     --hover-dark-darker: 29, 21, 41;
     --hover-light: 230, 224, 245, 0.05;
@@ -26,9 +24,7 @@
     --orange: 125, 80, 170;
     --green: 100, 75, 150;
     --blue: 85, 70, 130;
-    --blue-kill: #0d6dc6cc;
     --red: 135, 45, 105;
-    --red-kill: #ff4d4280;
     --hover-dark: 200, 195, 220;
     --hover-dark-darker: 185, 180, 205;
     --hover-light: 18, 14, 28, 0.05;
@@ -45,9 +41,7 @@
     --orange: 255, 140, 0;
     --green: 201, 143, 67;
     --blue: 255, 173, 96;
-    --blue-kill: #0d6dc6cc;
     --red: 220, 85, 47;
-    --red-kill: #ff4d4280;
     --hover-dark: 48, 30, 15;
     --hover-dark-darker: 33, 15, 0;
     --hover-light: 255, 245, 230, 0.05;
@@ -64,9 +58,7 @@
     --orange: 195, 145, 245;
     --green: 176, 144, 218;
     --blue: 142, 124, 195;
-    --blue-kill: #0d6dc6cc;
     --red: 199, 100, 163;
-    --red-kill: #ff4d4280;
     --hover-dark: 44, 36, 56;
     --hover-light: 230, 224, 245, 0.05;
     --border: 230, 224, 245, 0.15;
@@ -87,9 +79,7 @@
     --orange: 179, 193, 234;
     --green: 160, 185, 145;
     --blue: 130, 155, 195;
-    --blue-kill: #0d6dc6cc;
     --red: 220, 85, 47;
-    --red-kill: #ff4d4280;
     --hover-dark: 25, 38, 55;
     --hover-dark-darker: 14, 22, 35;
     --hover-light: 200, 215, 240, 0.05;
@@ -111,9 +101,7 @@
     --light: var(--custom-light);
     --green: 176, 144, 218;
     --blue: 142, 124, 195;
-    --blue-kill: #0d6dc6cc;
     --red: 199, 100, 163;
-    --red-kill: #ff4d4280;
     --hover-dark: 44, 36, 56;
     --hover-dark-darker: 29, 21, 41;
     --hover-light: var(--custom-light), 0.05;
@@ -1682,6 +1670,9 @@
 
 .desktop-game-interface .kill-bar-cont .kill-bar-item {
     box-shadow: black 0 0 10px 0 !important;
+
+    --blue-kill: #0d6dc6cc;
+    --red-kill: #ff4d4280;
 }
 
 .desktop-game-interface .kill-bar-cont .kill-bar-item.red {
@@ -3296,6 +3287,7 @@ button:focus,
     height: 100%;
     display: flex;
     align-items: center;
+    cursor: pointer;
 }
 
 .inventory .sorting .custom-checkbox input {

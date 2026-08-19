@@ -978,19 +978,44 @@ window.addEventListener("DOMContentLoaded", async () => {
     let settlerSince = 0;
     const SETTLE_MS = 120;
 
-    const INSPECT_DURATIONS = {
-      vita: 550,
-      rev: 550,
-      mac10: 800,
-      ar9: 550,
-      m60: 550,
-      scar: 550,
-      shark: 550,
-      lar: 550,
-      weatie: 550,
-      bayonet: 800,
-      tomahawk: 750,
+    const INSPECT_DURATIONS = {};
+
+    const updateInspectDurations = () => {
+      const weaponConfig = window.dawnWeaponConfig;
+      if (!weaponConfig) return;
+
+      const defaults = {
+        vita: 550,
+        rev: 550,
+        mac10: 800,
+        ar9: 550,
+        m60: 550,
+        scar: 550,
+        shark: 550,
+        lar: 550,
+        weatie: 550,
+        bayonet: 800,
+        tomahawk: 750,
+      };
+
+      if (weaponConfig.universalModeActive) {
+        const universalDuration = weaponConfig.weaponSettings?.universalSettings?.inspectDuration || 750;
+        for (const weaponId of Object.keys(defaults)) {
+          INSPECT_DURATIONS[weaponId] = universalDuration;
+        }
+      } else {
+        for (const weaponId of Object.keys(defaults)) {
+          const weaponSettings = weaponConfig.weaponSettings?.settings?.[weaponId];
+          INSPECT_DURATIONS[weaponId] = weaponSettings?.inspectDuration || defaults[weaponId];
+        }
+      }
     };
+
+    updateInspectDurations();
+
+    document.addEventListener("juice-settings-changed", () => {
+      updateInspectDurations();
+    });
 
     const inspectKeyframes_vita = (t) => {
       const easeOut = (x) => 1 - Math.pow(1 - x, 3);
@@ -1827,7 +1852,8 @@ window.addEventListener("DOMContentLoaded", async () => {
         inputName = e.code;
       }
       if (inputName === currentInspectKeybind) {
-        if (document.querySelector(".chat input[type='text']:focus")) return;
+        if (document.querySelector("input:focus")) return;
+        updateInspectDurations();
         inspectStart = performance.now();
         inspectingWeaponId = domWeaponId || null;
         e.preventDefault();

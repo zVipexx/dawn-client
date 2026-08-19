@@ -1,17 +1,26 @@
 [
   {
+    "version": "1.3.2",
+    "date": "19/8/2026",
+    "changelogs": [
+      "Added per-weapon Inspect Durations",
+      "Fixed text fields not registering the set key for custom inspect",
+      "Fixed colored killfeed"
+    ]
+  },
+  {
     "version": "1.3.1",
     "date": "30/7/2026",
     "changelogs": [
-      "- Reverted the change in electron versions"
+      "Reverted the change in electron versions"
     ]
   },
   {
     "version": "1.3.0",
     "date": "30/7/2026",
     "changelogs": [
-      "- Added a toggle for auto updating",
-      "- Updated Electron Version to latest (might revert this change)"
+      "Added a toggle for auto updating",
+      "Updated Electron Version to latest (might revert this change)"
     ]
   },
   {

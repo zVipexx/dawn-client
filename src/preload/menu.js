@@ -217,6 +217,21 @@ class Menu {
     const resetWeaponSettingsBtn = weaponsContent.querySelector("#reset-weapon-settings");
     const resetArmSettingsBtn = armsContent.querySelector("#reset-arm-settings");
 
+    const defaultWeaponSettings = {
+      size: 1.0,
+      offsetX: 0,
+      offsetY: 0,
+      offsetZ: 0,
+      rotationX: 0,
+      rotationY: 0,
+      rotationZ: 0,
+      inspectDuration: 750,
+      leftArm: {},
+      rightArm: {},
+      mirrorArm: false,
+      mirrorMaster: "left"
+    };
+
     const weaponSizeInput = weaponsContent.querySelector("#weapon_size");
     const offsetXInput = weaponsContent.querySelector("#weapon_offset_x");
     const offsetYInput = weaponsContent.querySelector("#weapon_offset_y");
@@ -243,6 +258,8 @@ class Menu {
     const armColorHexInput = armsContent.querySelector(".arm-color .hex");
     const armColorPicker = armsContent.querySelector(".arm-color .color-picker");
     const armRgbCheckbox = armsContent.querySelector("#arm_rgb");
+    const weaponInspectDurationInput = weaponsContent.querySelector("#weapon_inspect_duration");
+    const inspectDurationValue = weaponsContent.querySelector(".weapon-inspect-duration-value");
 
     if (!universalCheckbox) return;
 
@@ -364,6 +381,12 @@ class Menu {
       if (oyVal) oyVal.value = settings.offsetY ?? 0;
       const ozVal = weaponsContent.querySelector(".weapon-offset-z-value");
       if (ozVal) ozVal.value = settings.offsetZ ?? 0;
+
+      if (this.viewMode === "universal") {
+        loadInspectDurationToUI(this.weaponSettings.universalSettings);
+      } else {
+        loadInspectDurationToUI(settings);
+      }
     };
 
     const loadArmToUI = (armSettings) => {
@@ -401,6 +424,7 @@ class Menu {
         rotationX: parseFloat(weaponRotationXSlider.value),
         rotationY: parseFloat(weaponRotationYSlider.value),
         rotationZ: parseFloat(weaponRotationZSlider.value),
+        inspectDuration: weaponInspectDurationInput ? parseInt(weaponInspectDurationInput.value) || 750 : 750
       };
       const weaponId = this.viewMode === "universal" ? "universal" : this.selectedWeapon;
       setWeaponConfig(weaponId, newSettings);
@@ -483,6 +507,34 @@ class Menu {
         weaponsContent.style.display = "flex";
       }
     };
+
+    const loadInspectDurationToUI = (settings) => {
+      if (weaponInspectDurationInput) {
+        weaponInspectDurationInput.value = settings.inspectDuration ?? 750;
+        if (inspectDurationValue) inspectDurationValue.value = settings.inspectDuration ?? 750;
+      }
+    };
+
+    const saveCurrentInspectDuration = () => {
+      if (!weaponInspectDurationInput) return;
+      const newSettings = {
+        inspectDuration: parseInt(weaponInspectDurationInput.value) || 750
+      };
+      if (this.viewMode === "universal") {
+        this.weaponSettings.universalSettings = { ...this.weaponSettings.universalSettings, ...newSettings };
+      } else {
+        this.weaponSettings.settings[this.selectedWeapon] = { ...this.weaponSettings.settings[this.selectedWeapon], ...newSettings };
+      }
+      this.saveWeaponSettings();
+    };
+
+    if (weaponInspectDurationInput) {
+      weaponInspectDurationInput.addEventListener("input", () => {
+        if (inspectDurationValue) inspectDurationValue.value = weaponInspectDurationInput.value;
+        saveCurrentInspectDuration();
+      });
+      weaponInspectDurationInput.addEventListener("change", saveCurrentInspectDuration);
+    }
 
     universalSelector.addEventListener("click", () => {
       this.viewMode = "universal";
@@ -573,7 +625,8 @@ class Menu {
           offsetZ: 0,
           rotationX: 0,
           rotationY: 0,
-          rotationZ: 0
+          rotationZ: 0,
+          inspectDuration: 750
         };
 
         if (this.viewMode === "universal") {
@@ -800,6 +853,7 @@ class Menu {
       rotationX: 0,
       rotationY: 0,
       rotationZ: 0,
+      inspectDuration: 750,
       leftArm: { ...defaultArmSettings },
       rightArm: { ...defaultArmSettings },
       mirrorArm: false,
@@ -814,6 +868,7 @@ class Menu {
       rotationX: 0,
       rotationY: 0,
       rotationZ: 0,
+      inspectDuration: 750,
       wireframe: false,
       colorEnabled: false,
       colorHex: "#FFFFFF",
@@ -2024,6 +2079,10 @@ class Menu {
         slider: document.getElementById("arm_rotation_z"),
         input: document.querySelector(".arm-rotation-z-value"),
       },
+      {
+        slider: document.getElementById("weapon_inspect_duration"),
+        input: document.querySelector(".weapon-inspect-duration-value"),
+      }
     ];
 
     sliderMap.forEach(({ slider, input }) => {
