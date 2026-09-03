@@ -103,6 +103,7 @@ class Menu {
     this.bindWeaponOptions();
     this.handleSearch();
     this.handleButtons();
+    this.handleInfoTooltips();
 
     initBrowser(this.menu);
 
@@ -1322,6 +1323,7 @@ class Menu {
           - For a smooth animated gradient put your starting color at the end aswell
         </div>
       `;
+
       infoWrapper.querySelector(".info-btn").onmouseenter = () => infoWrapper.querySelector(".info-tooltip").style.display = "block";
       infoWrapper.querySelector(".info-btn").onmouseleave = () => infoWrapper.querySelector(".info-tooltip").style.display = "none";
 
@@ -1907,6 +1909,12 @@ class Menu {
       const value = this.settings[setting];
       textarea.value = value;
     });
+
+    const options = this.menu.querySelectorAll(".option");
+    options.forEach((option) => {
+      if (!Array.from(option.children).some(child => child.tagName === "INPUT")) return;
+      option.style.height = "24px";
+    })
   }
 
   async initChangelogs() {
@@ -2121,6 +2129,16 @@ class Menu {
         hex: document.querySelector(".arm-color .hex"),
         storageKey: "arm_color_hex",
       },
+      {
+        picker: document.querySelector(".killfeed-color-picker.red"),
+        hex: document.querySelector(".killfeed-color-value.red"),
+        storageKey: null,
+      },
+      {
+        picker: document.querySelector(".killfeed-color-picker.blue"),
+        hex: document.querySelector(".killfeed-color-value.blue"),
+        storageKey: null,
+      }
     ];
 
     colorMap.forEach(({ picker, hex, storageKey }) => {
@@ -2909,6 +2927,13 @@ class Menu {
         this.initMenu();
       }
     });
+  }
+
+  handleInfoTooltips() {
+    this.menu.querySelectorAll(".info-wrapper").forEach((wrapper) => {
+      wrapper.querySelector(".info-btn").onmouseenter = () => wrapper.querySelector(".info-tooltip").style.display = "block";
+      wrapper.querySelector(".info-btn").onmouseleave = () => wrapper.querySelector(".info-tooltip").style.display = "none";
+    })
   }
 
   createModal(title, description) {

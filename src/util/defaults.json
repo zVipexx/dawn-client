@@ -57,6 +57,7 @@
     "command_helper": true,
     "show_trade_buttons": true,
     "accept_on_click": false,
+    "ktiers_icon": true,
     "customizations": true,
     "animations": false,
     "unlimited_fps": false,

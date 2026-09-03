@@ -13,18 +13,8 @@ const http = require("http");
 const https = require("https");
 let ffmpegPath = require("ffmpeg-static");
 
-const fetchText = (url) => new Promise((resolve, reject) => {
-  https.get(url, (res) => {
-    let data = "";
-    res.on("data", chunk => data += chunk);
-    res.on("end", () => resolve(data));
-    res.on("error", reject);
-  }).on("error", reject);
-});
-
 protocol.registerSchemesAsPrivileged([
-  { scheme: "https", privileges: { bypassCSP: true, secure: true, supportFetchAPI: true } },
-  { scheme: "dawn-patch", privileges: { bypassCSP: true, secure: true, supportFetchAPI: true } }
+  { scheme: "https", privileges: { bypassCSP: true, secure: true, supportFetchAPI: true } }
 ]);
 
 const store = new Store();
@@ -370,10 +360,6 @@ const createWindow = () => {
     });
   }
 
-  gameWindow.webContents.setUserAgent(
-    `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.7204.296 Safari/537.36 Electron/10.4.7 DawnClient/${app.getVersion()}`
-  );
-
   const scriptsPath = path.join(
     app.getPath("documents"),
     "DawnClient",
@@ -452,42 +438,20 @@ const createWindow = () => {
 };
 
 const initGame = () => {
-  protocol.registerBufferProtocol("dawn-patch", (request, callback) => {
-    const urlParams = new URL(request.url);
-    const targetScriptUrl = urlParams.searchParams.get("url");
-    fetchText(targetScriptUrl).then((code) => {
-      const target = "f5['a'][hF]";
-      if (code.includes(target)) {
-        code = code.replace(target, "(window.__f5=f5,window.__zoomInstance=this,f5['a'][hF])");
-      }
-      code += `\n//# sourceURL=${targetScriptUrl}`;
-      callback({ mimeType: "text/javascript", data: Buffer.from(code) });
-    });
-  });
-
   const swap = initResourceSwapper();
 
-  const bundleFilter = { urls: ["*://kirka.io/assets/js/app.*.js"] };
-  const allUrls = [...(swap.filter.urls.length ? swap.filter.urls : []), ...bundleFilter.urls];
-
-  session.defaultSession.webRequest.onBeforeRequest(
-    { urls: allUrls },
-    (details, callback) => {
-      if (/kirka\.io\/assets\/js\/app\.[^/]+\.js/.test(details.url)) {
-        return callback({ redirectURL: "dawn-patch://bundle/app.js?url=" + encodeURIComponent(details.url) });
-      }
-
-      if (swap.filter.urls.length) {
+  if (swap.filter.urls.length) {
+    session.defaultSession.webRequest.onBeforeRequest(
+      { urls: swap.filter.urls },
+      (details, callback) => {
         const redirect =
           "dawnclient://" +
           (swap.files[details.url.replace(/https|http|(\?.*)|(#.*)|\_/gi, "")] ||
             details.url);
         return callback({ cancel: false, redirectURL: redirect });
       }
-
-      callback({ cancel: false });
-    }
-  );
+    );
+  }
 
   createWindow();
   if (settings.discord_rpc) {

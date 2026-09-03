@@ -39,6 +39,19 @@ const initGallery = () => {
 
   let categoriesMeta = [];
 
+  const previewCallbacks = new WeakMap();
+  const previewObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      const cb = previewCallbacks.get(entry.target);
+      if (cb) {
+        cb();
+        previewObserver.unobserve(entry.target);
+        previewCallbacks.delete(entry.target);
+      }
+    });
+  }, { root: null, rootMargin: "200px" });
+
   function refreshOpenHeights() {
     const savedStates = getSavedCategoryStates();
     categoriesMeta.forEach(({ contentWrapper, arrowIcon, categoryPath }) => {
@@ -226,22 +239,25 @@ const initGallery = () => {
             imgPreview.style.height = "64px";
             imgPreview.style.marginRight = "10px";
 
-            ipcRenderer.invoke("get-file-preview", file.path).then(dataUrl => {
-              const img = new Image();
-              img.onload = () => {
-                const ctx = imgPreview.getContext("2d");
-                const scale = Math.min(64 / img.width, 64 / img.height);
-                const x = (64 - img.width * scale) / 2;
-                const y = (64 - img.height * scale) / 2;
-                ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
-              };
-              img.src = dataUrl;
+            previewCallbacks.set(imgPreview, () => {
+              ipcRenderer.invoke("get-file-preview", file.path).then(dataUrl => {
+                const img = new Image();
+                img.onload = () => {
+                  const ctx = imgPreview.getContext("2d");
+                  const scale = Math.min(64 / img.width, 64 / img.height);
+                  const x = (64 - img.width * scale) / 2;
+                  const y = (64 - img.height * scale) / 2;
+                  ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
+                };
+                img.src = dataUrl;
+              });
+            });
+            previewObserver.observe(imgPreview);
 
-              imgPreview.addEventListener("click", (e) => {
-                e.stopPropagation();
-                ipcRenderer.invoke("get-file-preview", file.path).then(originalDataUrl => {
-                  openLightbox(originalDataUrl, 0);
-                });
+            imgPreview.addEventListener("click", (e) => {
+              e.stopPropagation();
+              ipcRenderer.invoke("get-file-preview", file.path).then(originalDataUrl => {
+                openLightbox(originalDataUrl, 0);
               });
             });
           }
@@ -308,6 +324,9 @@ const initGallery = () => {
           contentWrapper.style.maxHeight = contentWrapper.scrollHeight + "px";
           contentWrapper.style.opacity = "1";
           arrowIcon.style.transform = "rotate(0deg)";
+          contentWrapper.querySelectorAll("canvas").forEach(canvas => {
+            if (previewCallbacks.has(canvas)) previewObserver.observe(canvas);
+          });
         } else {
           contentWrapper.style.maxHeight = "0";
           contentWrapper.style.opacity = "0";

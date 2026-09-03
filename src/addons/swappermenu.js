@@ -158,13 +158,20 @@ const editResourceSwapper = () => {
     }
   });
 
-  document.getElementById("save-skin")?.addEventListener("click", () => {
+  const saveSkinBtn = document.getElementById("save-skin")
+  saveSkinBtn.addEventListener("click", () => {
     if (filePath) {
       ipcRenderer.send("save-skin-local", skinname, filePath);
-      alert("Skin saved!");
+      saveSkinBtn.innerHTML = "Skin saved!";
+      setTimeout(() => {
+        saveSkinBtn.innerHTML = "Save Skin";
+      }, 2000)
     } else if (buffer) {
       ipcRenderer.send("save-skin-from-buffer", skinname, Buffer.from(buffer));
-      alert("Skin saved!");
+      saveSkinBtn.innerHTML = "Skin saved!";
+      setTimeout(() => {
+        saveSkinBtn.innerHTML = "Save Skin";
+      }, 2000)
     } else {
       alert("Please upload or provide a skin image first.");
     }
@@ -229,14 +236,18 @@ const editResourceSwapper = () => {
     showSoundPreview(soundfile);
   });
 
+  const saveSoundBtn = document.getElementById("save-sound");
+
   ipcRenderer.on("save-sound-success", () => {
-    alert("Sound saved!");
+    saveSkinBtn.innerHTML = "Sound saved!";
+    setTimeout(() => {
+      saveSkinBtn.innerHTML = "Sound Skin";
+    }, 2000)
   });
   ipcRenderer.on("save-sound-error", (event, err) => {
     alert("Error saving sound: " + err);
   });
-
-  document.getElementById("save-sound")?.addEventListener("click", () => {
+  saveSoundBtn.addEventListener("click", () => {
     if (soundFilePath) {
       const volume = document.getElementById("sound-volume").value;
       ipcRenderer.send("save-sound", soundname, soundFilePath, volume);

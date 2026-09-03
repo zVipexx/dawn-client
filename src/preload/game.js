@@ -53,6 +53,18 @@ const observeForElement = (selector, functionToRun, target = document.body) => {
   return observer;
 };
 
+const waitForElement = (selector, callback) => {
+  const tryApply = () => {
+    const el = document.querySelector(selector);
+    if (el) {
+      callback(el);
+    } else {
+      setTimeout(tryApply, 10);
+    }
+  };
+  setTimeout(tryApply, 0);
+};
+
 const originalConsole = {
   log: console.log.bind(console),
   warn: console.warn.bind(console),
@@ -77,12 +89,15 @@ window.addEventListener("DOMContentLoaded", async () => {
   initGallery();
 
   const fetchAll = async () => {
-    const [customizations, clan] = await Promise.all([
+    const [customizations, clan, ktiers] = await Promise.all([
       fetch(
         "https://raw.githubusercontent.com/zVipexx/dawn-client/refs/heads/main/badges.json"
       ).then((r) => r.json()),
       fetch(
         "https://raw.githubusercontent.com/zVipexx/dawn-client/refs/heads/main/clans.json"
+      ).then((r) => r.json()),
+      fetch(
+        "https://ktiers-production.up.railway.app/api/players"
       ).then((r) => r.json()),
     ])
 
@@ -99,8 +114,9 @@ window.addEventListener("DOMContentLoaded", async () => {
       }
     }
 
-    localStorage.setItem("juice-customizations", JSON.stringify(customizations))
-    localStorage.setItem("juice-clans", JSON.stringify(clan))
+    localStorage.setItem("juice-customizations", JSON.stringify(customizations));
+    localStorage.setItem("juice-clans", JSON.stringify(clan));
+    localStorage.setItem("ktiers-list", JSON.stringify(ktiers));
   }
   fetchAll();
 
@@ -737,11 +753,15 @@ window.addEventListener("DOMContentLoaded", async () => {
         const slider = row.querySelector(".range");
         if (!valueDiv || !slider) return;
 
+        const rawText = valueDiv.textContent.trim();
+        const match = rawText.match(/^(-?\d*\.?\d+)(.*)$/);
+        const initialNum = match ? match[1] : rawText;
+        const unit = match ? match[2].trim() : "";
+
         const valueInput = document.createElement("input");
         valueInput.type = "number";
         valueInput.classList.add("setting-value");
-        valueInput.value = valueDiv.textContent.trim();
-        valueInput.title = "";
+        valueInput.value = initialNum;
         valueDiv.replaceWith(valueInput);
 
         const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
@@ -782,6 +802,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         });
 
         row.dataset.sliderInit = "1";
+        row.dataset.unit = unit;
       });
     }
 
@@ -792,7 +813,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         handleValues();
       });
     });
-  }
+  };
 
   observeForElement(".settings", initSettingsSliderInputs)
 
@@ -830,6 +851,9 @@ window.addEventListener("DOMContentLoaded", async () => {
     const updateUIFeatures = () => {
       const settings = ipcRenderer.sendSync("get-settings");
       const styles = [];
+
+      const killfeedColorRed = document.querySelector(".killfeed-color-picker.red").value;
+      const killfeedColorBlue = document.querySelector(".killfeed-color-picker.blue").value;
 
       if (settings.perm_tablist)
         styles.push(
@@ -931,6 +955,12 @@ window.addEventListener("DOMContentLoaded", async () => {
         styles.push("#tickTime { display: none !important; }");
       if (!settings.info_input)
         styles.push("#inputDelay { display: none !important; }");
+      if (killfeedColorRed)
+        styles.push(`.desktop-game-interface .kill-bar-item { --red-kill: ${settings.killfeed_color_red}28 }`);
+      if (killfeedColorBlue)
+        styles.push(`.desktop-game-interface .kill-bar-item { --blue-kill: ${settings.killfeed_color_blue}cc }`);
+      if (!settings.ktiers_icon)
+        styles.push(".ktiers-rank-icon { display: none }")
 
       addedStyles.innerHTML = styles.join("");
     };
@@ -963,8 +993,12 @@ window.addEventListener("DOMContentLoaded", async () => {
         "info_ping",
         "info_tick",
         "info_input",
+        "ktiers_icon",
       ];
       if (relevantSettings.includes(e.detail.setting)) updateUIFeatures();
+    });
+    document.querySelectorAll(".killfeed-color-picker").forEach((killfeedColor) => {
+      killfeedColor.addEventListener("change", updateUIFeatures)
     });
     updateUIFeatures();
   };
@@ -2512,27 +2546,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       }, 100);
     };
 
-    let loading = null;
-    let polling = null;
-
-    const run = () => {
-      clearTimeout(loading);
-      clearTimeout(polling);
-
-      loading = setTimeout(() => {
-        const tryApply = () => {
-          const profile = document.querySelector(".avatar-info .username");
-          if (profile) {
-            applyLobbyChanges();
-          } else {
-            polling = setTimeout(tryApply, 10);
-          }
-        };
-        tryApply();
-      }, 0);
-    };
-
-    run();
+    waitForElement(".avatar-info .username", applyLobbyChanges);
   };
 
   const handleServers = async () => {
@@ -2826,6 +2840,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       "/trade bump": "Re-send your ongoing trade offer",
       "/trade cancel": "Cancel your ongoing trade offer",
       "/trade accept": { args: ["<trade_id>"], desc: "Accept a trade" },
+      "/trade confirm": "Confirm your trade",
 
       "/8ball": { args: ["<question>"], desc: "Ask the magic 8-ball a question." },
       "/asset": "Link to the official Discord for submitting maps, weapons, and characters.",
@@ -3131,9 +3146,61 @@ window.addEventListener("DOMContentLoaded", async () => {
   let disconnectObservers = () => { };
 
   const handleProfile = () => {
+    console.log("a")
     disconnectObservers();
 
     const settings = ipcRenderer.sendSync("get-settings");
+
+    const getRank = (points) => {
+      if (points >= 240) return "Grandmaster";
+      if (points >= 180) return "Master";
+      if (points >= 130) return "Ace";
+      if (points >= 90) return "Specialist";
+      if (points >= 55) return "Cadet";
+      if (points >= 30) return "Novice";
+      return "Rookie";
+    };
+
+    const addKTiersIcon = () => {
+      const profile = document.querySelector(".tab-content > .profile-cont > .profile");
+      const shortId = profile.querySelector(".card-profile .copy-cont .value")?.textContent.trim().split("#")[1];
+      if (!profile || !shortId) return;
+
+      const ktiersList = localStorage.getItem("ktiers-list");
+      if (!ktiersList) return;
+
+      let ktiersData;
+      try {
+        ktiersData = JSON.parse(ktiersList);
+      } catch (e) {
+        return;
+      }
+
+      const player = ktiersData.players?.find((p) => p.shortId === shortId);
+      if (!player) return;
+
+      const rank = getRank(player.points);
+
+      if (profile.querySelector(".ktiers-rank-icon")) return;
+
+      const icon = document.createElement("img");
+      icon.src = `https://ktiers.com/imgs/placements/${rank}.svg`;
+      icon.classList.add("ktiers-rank-icon");
+
+      const rankColors = {
+        Grandmaster: "#ffb300b3",
+        Master: "#fffc5bb3",
+        Ace: "#ff8585b3",
+        Specialist: "#e66bffb3",
+        Cadet: "#8b5cf6b3",
+        Novice: "#0ea5e9b3",
+        Rookie: "#e8ecf4b3",
+      };
+
+      icon.style.setProperty("--rank-glow-color", rankColors[rank] || "transparent");
+
+      document.querySelector(".profile-cont").parentElement.insertAdjacentElement("afterend", icon);
+    };
 
     const addNicknameButton = () => {
       const profile = document.querySelector(".tab-content > .profile-cont > .profile");
@@ -3161,7 +3228,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         input.maxLength = 20;
 
         const applyBtn = document.createElement("button");
-        applyBtn.innerHTML = `APPLY<span style="font-size:0.65em;font-weight:normal;opacity:0.75;line-height:1.2;">Reloads Client</span>`;
+        applyBtn.innerHTML = `APPLY`;
         applyBtn.className = "nickname-apply-btn";
 
         const nicknames = JSON.parse(localStorage.getItem("nicknames") || "{}");
@@ -3198,7 +3265,12 @@ window.addEventListener("DOMContentLoaded", async () => {
 
         const closeBtn = document.createElement("button");
         closeBtn.className = "nickname-close-btn";
-        closeBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="svg-icon svg-icon--__close__"><use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="/img/icons.8d8d28b5.svg#__close__"></use></svg>`;
+        const closeSvg = document.querySelector(".svg-icon--__close__");
+        const iconHref = closeSvg?.querySelector("use")?.getAttribute("xlink:href");
+
+        if (iconHref) {
+          closeBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="close-icon svg-icon svg-icon--__close__"><use href="${iconHref}"></use></svg>`;
+        }
 
         closeBtn.addEventListener("click", closeModal);
         overlay.addEventListener("click", (e) => {
@@ -3422,6 +3494,26 @@ window.addEventListener("DOMContentLoaded", async () => {
     };
     self.applyCustomizations = applyCustomizations;
 
+    const addClanListener = () => {
+      const clan = document.querySelector(".profile .clan-tag");
+      const clanName = clan.textContent;
+      if (clan) clan.addEventListener("click", () => {
+        document.querySelector("#profile-modal-modal .close")?.click();
+        const url = `${base_url}hub/clans`;
+        window.history.pushState({}, "", url);
+        window.dispatchEvent(new PopStateEvent("popstate"));
+        waitForElement(".lookup-input", () => {
+          setTimeout(() => {
+            const lookup = document.querySelector(".lookup-input")
+            lookup.value = clanName;
+            lookup.click();
+            const event = new KeyboardEvent("keydown", { key: "Enter" });
+            lookup.dispatchEvent(event);
+          }, 10)
+        })
+      })
+    }
+
     let loading = null;
     let polling = null;
 
@@ -3436,9 +3528,11 @@ window.addEventListener("DOMContentLoaded", async () => {
             const profileCont = document.querySelector(".tab-content > .profile-cont > .profile");
             if (profileCont?.dataset.applied) return;
             if (profileCont) profileCont.dataset.applied = "true";
+            addKTiersIcon();
             addNicknameButton();
             applyCustomizations();
             applyCardChanges();
+            addClanListener();
           } else {
             polling = setTimeout(tryApply, 10);
           }
@@ -4073,6 +4167,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       if (document.querySelector(".kill-death .hsp")) return;
       const kills = document.querySelector(".kill-death .kill");
       const hsp = kills?.cloneNode(true);
+      const username = document.querySelector(".nickname.bolder")?.textContent.trim();
 
       if (!hsp) return;
       hsp.classList.add("hsp");
@@ -4084,34 +4179,26 @@ window.addEventListener("DOMContentLoaded", async () => {
 
       kills.parentElement.insertBefore(hsp, kills.parentElement.children[5]);
 
-      const achCont = document.querySelector(".ach-cont");
-      if (achCont) {
-        let lastTriggered = 0;
-
+      const killBarCont = document.querySelector(".kill-bar-cont");
+      if (killBarCont) {
         const observer = new MutationObserver((mutations) => {
           for (const mutation of mutations) {
-            const animCont = mutation.target;
-            if (
-              (animCont.querySelector(".text")?.textContent.includes("HEADSHOT") || animCont.querySelector(".text")?.textContent.includes("KILL")) &&
-              mutation.attributeName === "class" &&
-              animCont.classList.contains("slide-fade-enter-active") &&
-              animCont.classList.contains("slide-fade-enter-to")
-            ) {
-              const now = Date.now();
-              if (now - lastTriggered < 200) continue;
-              lastTriggered = now;
+            for (const node of mutation.addedNodes) {
+              if (node.classList.contains("fade-leave-active")) return;
 
-              if (animCont.querySelector(".text")?.textContent.includes("HEADSHOT")) headshotsCount++;
+              const killername = node.querySelector(".killer-name")?.textContent.trim();
+              if (!killername || killername !== username) return;
 
-              renderHeadshots();
+              if (node.querySelector(".skull")) {
+                headshotsCount++;
+                renderHeadshots();
+              } else renderHeadshots();
             }
           }
         });
 
-        observer.observe(achCont, {
-          subtree: true,
-          attributes: true,
-          attributeFilter: ["class"],
+        observer.observe(killBarCont, {
+          childList: true,
         });
       }
     };
@@ -4779,7 +4866,7 @@ window.addEventListener("DOMContentLoaded", async () => {
           clan.style.fontWeight = "700";
           clan.style.textShadow = customs.gradient.shadow || "0 0 0 transparent";
 
-          if (settings.animations && customs.animated) {
+          if (customs.animated) {
             clan.style.backgroundSize = "200% 200%";
             clan.style.animation = "animated-gradient 3s linear infinite";
           }
@@ -5008,36 +5095,19 @@ window.addEventListener("DOMContentLoaded", async () => {
     observeForElement(".clans .my-clan .list-container", (el) => {
       addSorting(el)
 
-      let loading = null;
-      let polling = null;
-
-      const run = () => {
-        clearTimeout(loading);
-        clearTimeout(polling);
-
-        loading = setTimeout(() => {
-          const tryApply = () => {
-            const clan = document.querySelector(".my-clan .clan-name");
-            if (clan) {
-              [
-                ".my-clan .stat",
-                ".my-clan .champions-values div",
-                ".my-clan .all-scores-value"
-              ].forEach(selector => {
-                document.querySelectorAll(selector).forEach(el => {
-                  const raw = parseInt(el.textContent.replace(/\D/g, ""));
-                  if (Number.isFinite(raw) && !isNaN(raw)) el.textContent = raw.toLocaleString();
-                });
-              });
-              applyClanCustomizations();
-            } else {
-              polling = setTimeout(tryApply, 10);
-            }
-          };
-          tryApply();
-        }, 0);
-      };
-      run();
+      waitForElement(".my-clan .clan-name", () => {
+        [
+          ".my-clan .stat",
+          ".my-clan .champions-values div",
+          ".my-clan .all-scores-value"
+        ].forEach(selector => {
+          document.querySelectorAll(selector).forEach(el => {
+            const raw = parseInt(el.textContent.replace(/\D/g, ""));
+            if (Number.isFinite(raw) && !isNaN(raw)) el.textContent = raw.toLocaleString();
+          });
+        });
+        applyClanCustomizations();
+      })
     });
   }
 
@@ -5927,6 +5997,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     }
 
     observeForElement(".inventory .gun", async () => {
+      console.log("a")
       const container = document.querySelector(".inventory .subjects");
       const activeTab = document.querySelector(".inventory .tab.active");
       const tabTitle = activeTab?.querySelector(".title")?.textContent;
@@ -6178,7 +6249,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  ipcRenderer.on("url-change", (_, url) => {
+  function handleUrlChange(_, url) {
     console.log = originalConsole.log;
     console.warn = originalConsole.warn;
     console.error = originalConsole.error;
@@ -6195,14 +6266,16 @@ window.addEventListener("DOMContentLoaded", async () => {
     if (url.startsWith(`${base_url}games`)) handleInGame();
     if (url.startsWith(`${base_url}hub/ranked`)) handleInGame();
     if (url.startsWith(`${base_url}servers/`)) handleServers();
-    if (url.startsWith(`${base_url}/`)) handleProfile();
+    if (url.startsWith(`${base_url}profile/`)) handleProfile();
     if (url === `${base_url}hub/clans/champions-league`) handleClans();
     if (url === `${base_url}hub/market`) handleMarket();
     if (url === `${base_url}friends`) handleFriends();
     if (url === `${base_url}inventory`) handleInventory();
 
     window.dispatchEvent(new CustomEvent("url-changed", { detail: url }));
-  });
+  }
+
+  ipcRenderer.on("url-change", handleUrlChange);
 
   const handleInitialLoad = () => {
     const url = window.location.href;
