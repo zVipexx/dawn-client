@@ -60,6 +60,12 @@
     "preview": "https://ktiers.com/imgs/maps/Sandstorm.png"
   },
   {
+    "map": "Rhubarb",
+    "modes": ["Point 2v2", "Point 3v3"],
+    "code": "https://ktiers.com/maps/files/Rhubarb.txt",
+    "preview": "https://ktiers.com/imgs/maps/Rhubarb.webp"
+  },
+  {
     "map": "Hydraulic",
     "modes": ["Point 2v2", "Point 3v3"],
     "code": "https://ktiers.com/maps/files/Hydraulic.txt",
