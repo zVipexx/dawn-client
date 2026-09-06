@@ -3146,7 +3146,6 @@ window.addEventListener("DOMContentLoaded", async () => {
   let disconnectObservers = () => { };
 
   const handleProfile = () => {
-    console.log("a")
     disconnectObservers();
 
     const settings = ipcRenderer.sendSync("get-settings");
@@ -3555,6 +3554,13 @@ window.addEventListener("DOMContentLoaded", async () => {
   const handleInGame = () => {
     let settings = ipcRenderer.sendSync("get-settings");
     const nicknames = JSON.parse(localStorage.getItem("nicknames") || "{}");
+
+    document.addEventListener("keyup", (e) => {
+      if (e.key === "8") {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+      }
+    }, true)
 
     let red_players = [];
     let blue_players = [];
@@ -5997,7 +6003,6 @@ window.addEventListener("DOMContentLoaded", async () => {
     }
 
     observeForElement(".inventory .gun", async () => {
-      console.log("a")
       const container = document.querySelector(".inventory .subjects");
       const activeTab = document.querySelector(".inventory .tab.active");
       const tabTitle = activeTab?.querySelector(".title")?.textContent;
