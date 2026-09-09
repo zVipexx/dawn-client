@@ -36,12 +36,6 @@
     "preview": "https://ktiers.com/imgs/maps/Dust.png"
   },
   {
-    "map": "Frontier",
-    "modes": ["Point 2v2", "Point 3v3"],
-    "code": "https://ktiers.com/maps/files/Frontier.txt",
-    "preview": "https://ktiers.com/imgs/maps/Frontier.png"
-  },
-  {
     "map": "Workshop",
     "modes": ["Point 2v2", "Point 3v3"],
     "code": "https://ktiers.com/maps/files/Workshop.txt",
@@ -63,7 +57,7 @@
     "map": "Rhubarb",
     "modes": ["Point 2v2", "Point 3v3"],
     "code": "https://ktiers.com/maps/files/Rhubarb.txt",
-    "preview": "https://ktiers.com/imgs/maps/Rhubarb.webp"
+    "preview": "https://ktiers.com/imgs/maps/Rhubarb.png"
   },
   {
     "map": "Hydraulic",
