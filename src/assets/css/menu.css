@@ -1,5 +1,4 @@
 @import url("https://fonts.cdnfonts.com/css/satoshi");
-@import url("https://irrvlo.xyz/nameless-font.css");
 
 .menu[data-theme="dark"] {
     --dark: 28, 22, 38;
@@ -557,7 +556,7 @@
     opacity: 1;
     display: flex;
     flex-direction: column;
-    gap: .2rem;
+    gap: .4rem;
 }
 
 .menu .option.dropdown i {
@@ -999,7 +998,7 @@
 #modal .content {
     position: relative;
     width: 30rem;
-    height: 15rem;
+    height: 20rem;
     background: rgba(var(--dark), 1);
     border-radius: 0.75rem;
     color: rgba(var(--light), 1);
@@ -3371,4 +3370,26 @@ button:focus,
     filter: drop-shadow(0 0 6px var(--rank-glow-color));
     -webkit-user-drag: none;
     pointer-events: none;
+}
+
+.friends {
+    overflow: hidden;
+}
+
+.friends .requests {
+    height: calc(100% - 3rem);
+}
+
+.menu .dropdown.active .css-buttons {
+    position: relative;
+    display: flex;
+    margin-left: auto;
+    justify-content: flex-end;
+    gap: .5rem;
+    margin-top: -1.5rem;
+}
+
+.menu .css-buttons i {
+    cursor: pointer;
+    transform: none !important;
 }

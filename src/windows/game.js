@@ -360,6 +360,19 @@ const createWindow = () => {
     });
   }
 
+  const quickCssPath = path.join(
+    app.getPath("documents"),
+    "DawnClient",
+    "quickcss.css"
+  );
+  if (!fs.existsSync(quickCssPath)) {
+    fs.writeFileSync(quickCssPath, "", "utf8");
+  }
+
+  ipcMain.on("get-quickcss-path", (e) => {
+    e.returnValue = quickCssPath;
+  });
+
   const scriptsPath = path.join(
     app.getPath("documents"),
     "DawnClient",

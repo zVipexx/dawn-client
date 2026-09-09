@@ -1,4 +1,4 @@
-const { ipcRenderer } = require("electron");
+const { shell, ipcRenderer } = require("electron");
 const fs = require("fs");
 const path = require("path");
 const { version } = require("../../package.json");
@@ -104,6 +104,7 @@ class Menu {
     this.handleSearch();
     this.handleButtons();
     this.handleInfoTooltips();
+    this.handleQuickCSS();
 
     initBrowser(this.menu);
 
@@ -2871,6 +2872,13 @@ class Menu {
       }
     });
 
+    const resetMenuSize = this.menu.querySelector("#reset-menu-size");
+    resetMenuSize.addEventListener("click", () => {
+      this.localStorage.removeItem("menu-position");
+      this.localStorage.removeItem("menu-size");
+      window.location.reload();
+    })
+
     const remoteToStaticLinks = this.menu.querySelector(
       "#remote-to-static-links"
     );
@@ -2934,6 +2942,99 @@ class Menu {
       wrapper.querySelector(".info-btn").onmouseenter = () => wrapper.querySelector(".info-tooltip").style.display = "block";
       wrapper.querySelector(".info-btn").onmouseleave = () => wrapper.querySelector(".info-tooltip").style.display = "none";
     })
+  }
+
+  handleQuickCSS() {
+    const quickCSSPath = ipcRenderer.sendSync("get-quickcss-path");
+    const quickCSSArea = this.menu.querySelector("textarea[data-setting=advanced_css]");
+
+    const customStyles = document.createElement("style");
+    customStyles.id = "juice-styles-custom";
+    document.head.appendChild(customStyles);
+
+    const updateStyle = () => {
+      customStyles.innerHTML = this.settings.advanced_css;
+    };
+
+    let lastKnownContent = this.settings.advanced_css || "";
+
+    try {
+      lastKnownContent = fs.readFileSync(quickCSSPath, "utf8");
+      this.settings.advanced_css = lastKnownContent;
+      quickCSSArea.value = lastKnownContent;
+    } catch (err) {
+      console.error("Failed to read quickCSS file on load:", err);
+    }
+    updateStyle();
+
+    const saveCSS = (contents) => {
+      if (contents === lastKnownContent) return;
+      lastKnownContent = contents;
+      this.settings.advanced_css = contents;
+      try {
+        fs.writeFileSync(quickCSSPath, contents, "utf8");
+      } catch (err) {
+        console.error("Failed to write quickCSS file:", err);
+      }
+      updateStyle();
+    };
+
+    let writeTimeout = null;
+    quickCSSArea.addEventListener("input", () => {
+      clearTimeout(writeTimeout);
+      writeTimeout = setTimeout(() => saveCSS(quickCSSArea.value), 300);
+    });
+
+    document.addEventListener("juice-settings-changed", ({ detail }) => {
+      if (detail.setting !== "advanced_css") return;
+      if (detail.value === lastKnownContent) return;
+      lastKnownContent = detail.value;
+      quickCSSArea.value = detail.value;
+      updateStyle();
+    });
+
+    const quickCssDir = path.dirname(quickCSSPath);
+    const quickCssFilename = path.basename(quickCSSPath);
+
+    fs.watch(quickCssDir, { persistent: false }, (eventType, filename) => {
+      if (filename !== quickCssFilename) return;
+      const fileContent = fs.readFileSync(quickCSSPath, "utf8");
+      if (fileContent === lastKnownContent) return;
+      lastKnownContent = fileContent;
+      this.settings.advanced_css = fileContent;
+      quickCSSArea.value = fileContent;
+      updateStyle();
+    });
+
+    const importCSSFromFile = this.menu.querySelector(".import-css");
+    importCSSFromFile.addEventListener("click", () => {
+      const fileInput = document.createElement("input");
+      fileInput.type = "file";
+      fileInput.accept = ".css,.txt";
+      fileInput.style.display = "none";
+
+      fileInput.addEventListener("change", (event) => {
+        const file = event.target.files[0];
+        fileInput.remove();
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const contents = e.target.result;
+          quickCSSArea.value = contents;
+          saveCSS(contents);
+        };
+        reader.readAsText(file);
+      });
+
+      document.body.appendChild(fileInput);
+      fileInput.click();
+    });
+
+    const openInEditor = this.menu.querySelector(".open-css");
+    openInEditor.addEventListener("click", () => {
+      shell.openPath(quickCSSPath);
+    });
   }
 
   createModal(title, description) {

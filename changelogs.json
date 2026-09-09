@@ -1,5 +1,17 @@
 [
   {
+    "version": "1.3.5",
+    "date": "9/9/2026",
+    "changelogs": [
+      "Made quick CSS an actual file that automatically syncs",
+      "Added Import from file and Open in Editor buttons to quick CSS",
+      "Added a button to reset menu size and position",
+      "Fixed colored killfeed, again",
+      "Fixed headshot % in ranked games",
+      "Fixed inventory favorites not saving correctly"
+    ]
+  },
+  {
     "version": "1.3.4",
     "date": "6/9/2026",
     "changelogs": [

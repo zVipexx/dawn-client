@@ -6,7 +6,6 @@ const { ipcRenderer, clipboard, app, contextBridge } = require("electron");
 const { initGallery } = require("../addons/gallery");
 const fs = require("fs");
 const path = require("path");
-const { pathToFileURL } = require("url");
 
 require("../addons/Custom Skin Link")
 
@@ -734,14 +733,9 @@ window.addEventListener("DOMContentLoaded", async () => {
       }
     });
 
-    const interfaceEl = document.querySelector("#app .interface") || document.querySelector(".interface");
-    if (interfaceEl) {
-      createObserver.observe(interfaceEl, { childList: true });
-    } else {
-      observeForElement(".interface", (iface) => {
-        createObserver.observe(iface, { childList: true });
-      }, document.querySelector("#app") || document.body);
-    }
+    waitForElement(".interface", (iface) => {
+      createObserver.observe(iface, { childList: true });
+    });
   };
 
   initSettingsSliderInputs = () => {
@@ -822,22 +816,15 @@ window.addEventListener("DOMContentLoaded", async () => {
     addedStyles.id = "juice-styles-theme";
     document.head.appendChild(addedStyles);
 
-    const customStyles = document.createElement("style");
-    customStyles.id = "juice-styles-custom";
-    document.head.appendChild(customStyles);
-
     window.updateTheme = () => {
       const settings = ipcRenderer.sendSync("get-settings");
       const cssLink = settings.css_link;
-      const advancedCSS = settings.advanced_css;
 
       if (cssLink && settings.css_enabled) {
         addedStyles.innerHTML = `@import url("${formatLink(cssLink)}");`;
       } else {
         addedStyles.innerHTML = "";
       }
-
-      customStyles.innerHTML = advancedCSS;
     };
 
     window.updateTheme();
@@ -3552,6 +3539,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   observeForElement("#profile-modal-modal", handleProfile);
 
   const handleInGame = () => {
+    if (!document.querySelector(".desktop-game-interface")) return;
     let settings = ipcRenderer.sendSync("get-settings");
     const nicknames = JSON.parse(localStorage.getItem("nicknames") || "{}");
 
@@ -4193,7 +4181,7 @@ window.addEventListener("DOMContentLoaded", async () => {
               if (node.classList.contains("fade-leave-active")) return;
 
               const killername = node.querySelector(".killer-name")?.textContent.trim();
-              if (!killername || killername !== username) return;
+              if (!killername || killername !== username || document.querySelector(".warmup-timer")) return;
 
               if (node.querySelector(".skull")) {
                 headshotsCount++;
@@ -4682,6 +4670,10 @@ window.addEventListener("DOMContentLoaded", async () => {
           updateMessages();
           updateTeammates();
           applyCustomizationsTab();
+          if (document.querySelector(".kill-death .hsp")) {
+            document.querySelector(".kill-death .hsp").remove();
+            createHeadshots();
+          };
           const observeElement = (selector, setting, execute) => {
             const elem = document.querySelector(selector);
             if (!elem) return;
@@ -5334,7 +5326,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 
       const lookup = () => {
         const id = input.value.trim().replace(/^#/, "").toUpperCase();
-        if (id.length === 6) {
+        if (id.length === 6 || id === "KIRKA") {
           const url = `/profile/${id}`;
           window.history.pushState({}, "", url);
           window.dispatchEvent(new PopStateEvent("popstate"));
@@ -5804,7 +5796,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     function applyFavorites() {
       const favorites = getFavorites();
       document.querySelectorAll(".inventory .subject").forEach((subject) => {
-        const id = subject.textContent.trim();
+        const id = getItemKey(subject);
         if (favorites.includes(id)) {
           subject.classList.add("favorite");
           if (subject.dataset.favoriteBound) return;
@@ -5832,7 +5824,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         toggleFavorite.addEventListener("click", () => {
           subject.classList.toggle("favorite");
           const isFavorite = subject.classList.contains("favorite");
-          saveFavorite(subject.textContent.trim(), isFavorite);
+          saveFavorite(getItemKey(subject), isFavorite);
           sortInventory();
         });
         toggleFavorite.addEventListener("mouseenter", () => {
@@ -6006,6 +5998,8 @@ window.addEventListener("DOMContentLoaded", async () => {
       const container = document.querySelector(".inventory .subjects");
       const activeTab = document.querySelector(".inventory .tab.active");
       const tabTitle = activeTab?.querySelector(".title")?.textContent;
+      if (container?.dataset.applied) return;
+      if (container) container.dataset.applied = "true";
 
       if (container && tabTitle && !originalOrders[tabTitle]) {
         originalOrders[tabTitle] = getItemKeys(container);
@@ -6123,27 +6117,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       label.textContent = `Value: ${Math.round(value).toLocaleString()}`;
     }
 
-    let loading = null;
-    let polling = null;
-
-    const run = () => {
-      clearTimeout(loading);
-      clearTimeout(polling);
-
-      loading = setTimeout(() => {
-        const tryApply = () => {
-          const nameEl = document.querySelector("#inspect-modal .name");
-          if (nameEl) {
-            updateInspectValue();
-          } else {
-            polling = setTimeout(tryApply, 10);
-          }
-        };
-        tryApply();
-      }, 0);
-    };
-
-    run();
+    waitForElement("#inspect-modal .name", updateInspectValue)
   };
 
   observeForElement("#inspect-modal", handleInspect);
@@ -6227,11 +6201,11 @@ window.addEventListener("DOMContentLoaded", async () => {
 
       case "css_link":
       case "css_enabled":
-      case "advanced_css":
         window.updateTheme();
         break;
 
       case "customizations":
+        console.log("test")
         value ? window.applyUserCustomizations() : window.removeUserCustomizations();
         break;
 

@@ -62,7 +62,7 @@
     <div id="ui-options" class="juice options active">
       <div class="option-group">
         <div class="option">
-          <span>Enable CSS</span>
+          <span>Enable CSS Link</span>
           <div class="checkbox">
             <input type="checkbox" id="css_enabled" data-setting="css_enabled" />
             <label for="css_enabled"></label>
@@ -78,6 +78,10 @@
             <span>Quick CSS</span>
           </div>
           <div class="content">
+            <div class="css-buttons">
+              <i class="fas fa-upload import-css" title="Import from file"></i>
+              <i class="fas fa-arrow-up-right-from-square open-css" title="Open in Editor"></i>
+            </div>
             <textarea placeholder="input css here" data-setting="advanced_css"></textarea>
           </div>
         </div>
@@ -107,43 +111,6 @@
         </div>
       </div>
       <div class="option-group">
-        <div class="option">
-          <span>K/D Indicator</span>
-          <div class="checkbox">
-            <input type="checkbox" id="kd_indicator" data-setting="kd_indicator" />
-            <label for="kd_indicator"></label>
-          </div>
-        </div>
-        <div class="option">
-          <span>Assists Indicator</span>
-          <div class="checkbox">
-            <input type="checkbox" id="assists_indicator" data-setting="assists_indicator" />
-            <label for="assists_indicator"></label>
-          </div>
-        </div>
-        <div class="option">
-          <span>Points Indicator</span>
-          <div class="checkbox">
-            <input type="checkbox" id="points_indicator" data-setting="points_indicator" />
-            <label for="points_indicator"></label>
-          </div>
-        </div>
-        <div class="option">
-          <span>Headshot Kills Indicator</span>
-          <div class="checkbox">
-            <input type="checkbox" id="hsp_indicator" data-setting="hsp_indicator" />
-            <label for="hsp_indicator"></label>
-          </div>
-        </div>
-      </div>
-      <div class="option-group">
-        <div class="option">
-          <span>Rave Mode</span>
-          <div class="checkbox">
-            <input type="checkbox" id="rave_mode" data-setting="rave_mode" />
-            <label for="rave_mode"></label>
-          </div>
-        </div>
         <div class="option dropdown">
           <div class="option top" style="width:100%">
             <i class=" fas fa-angle-down"></i>
@@ -246,6 +213,45 @@
             </div>
           </div>
         </div>
+        <div class="option dropdown">
+          <div class="option top">
+            <i class=" fas fa-angle-down"></i>
+            <div class="left">
+              <span>Indicators</span>
+              <span class="description">Show additional Indicators alongside Kills and Deaths</span>
+            </div>
+          </div>
+          <div class="content">
+            <div class="option">
+              <span>K/D Indicator</span>
+              <div class="checkbox">
+                <input type="checkbox" id="kd_indicator" data-setting="kd_indicator" />
+                <label for="kd_indicator"></label>
+              </div>
+            </div>
+            <div class="option">
+              <span>Assists Indicator</span>
+              <div class="checkbox">
+                <input type="checkbox" id="assists_indicator" data-setting="assists_indicator" />
+                <label for="assists_indicator"></label>
+              </div>
+            </div>
+            <div class="option">
+              <span>Points Indicator</span>
+              <div class="checkbox">
+                <input type="checkbox" id="points_indicator" data-setting="points_indicator" />
+                <label for="points_indicator"></label>
+              </div>
+            </div>
+            <div class="option">
+              <span>Headshot Kills Indicator</span>
+              <div class="checkbox">
+                <input type="checkbox" id="hsp_indicator" data-setting="hsp_indicator" />
+                <label for="hsp_indicator"></label>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="option-group">
         <div class="option">
@@ -289,6 +295,13 @@
             <label for="ui_animations"></label>
           </div>
         </div>
+        <div class="option">
+          <span>Rave Mode</span>
+          <div class="checkbox">
+            <input type="checkbox" id="rave_mode" data-setting="rave_mode" />
+            <label for="rave_mode"></label>
+          </div>
+        </div>
       </div>
       <div class="option-group">
         <div class="option">
@@ -324,7 +337,7 @@
       </div>
       <div class="option-group">
         <div class="option">
-          <span>KTiers Icon in Profile</span>
+          <span>KTiers Rank in Profile</span>
           <div class="checkbox">
             <input type="checkbox" id="ktiers_icon" data-setting="ktiers_icon" />
             <label for="ktiers_icon"></label>
@@ -1135,6 +1148,13 @@
             <button id="reset-juice-settings" class="juice-button large">
               <span class="text">Reset Dawn Client Settings</span>
               <span class="description"> This action cannot be undone</span>
+              <div class="custom-border"></div>
+            </button>
+          </div>
+          <div class="option">
+            <button id="reset-menu-size" class="juice-button large">
+              <span class="text">Reset Menu Size and Position</span>
+              <span class="description"> Reloads Client</span>
               <div class="custom-border"></div>
             </button>
           </div>

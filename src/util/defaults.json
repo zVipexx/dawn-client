@@ -9,6 +9,8 @@
     "hide_kill_text": false,
     "hide_interface": false,
     "ui_animations": true,
+    "killfeed_color_red": "#ff4d42",
+    "killfeed_color_blue": "#0d6dc6",
     "info_region": true,
     "info_version": true,
     "info_triangles": true,
