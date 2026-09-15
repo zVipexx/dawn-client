@@ -7,9 +7,7 @@ const store = new Store();
 
 const registerShortcuts = (window) => {
   const register = (key, action) => shortcut.register(window, key, action);
-  register("Escape", () =>
-    window.webContents.executeJavaScript("document.exitPointerLock()")
-  );
+  register("F1", () => window.webContents.executeJavaScript("debugger"));
   register("F2", () => {
     const { x, y, width, height } = screen.getPrimaryDisplay().bounds;
     const screenshotsFolder = path.join(app.getPath("documents"), "DawnClient", "gallery", "screenshots");

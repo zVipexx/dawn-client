@@ -7,7 +7,7 @@ const { initGallery } = require("../addons/gallery");
 const fs = require("fs");
 const path = require("path");
 
-require("../addons/Custom Skin Link")
+require("../addons/Custom Skin Link");
 
 const scriptsPath = ipcRenderer.sendSync("get-scripts-path");
 const scripts = fs.readdirSync(scriptsPath);
@@ -35,7 +35,7 @@ const observeForElement = (selector, functionToRun, target = document.body) => {
   const observer = new MutationObserver((mutations, obs) => {
     for (const mutation of mutations) {
       if (mutation.type === "childList" && mutation.addedNodes.length > 0) {
-        mutation.addedNodes.forEach(node => {
+        mutation.addedNodes.forEach((node) => {
           if (node.nodeType === Node.ELEMENT_NODE) {
             if (node.matches(selector)) {
               functionToRun(node);
@@ -89,23 +89,17 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   const fetchAll = async () => {
     const [customizations, clan, ktiers] = await Promise.all([
-      fetch(
-        "https://raw.githubusercontent.com/zVipexx/dawn-client/refs/heads/main/badges.json"
-      ).then((r) => r.json()),
-      fetch(
-        "https://raw.githubusercontent.com/zVipexx/dawn-client/refs/heads/main/clans.json"
-      ).then((r) => r.json()),
-      fetch(
-        "https://ktiers-production.up.railway.app/api/players"
-      ).then((r) => r.json()),
-    ])
+      fetch("https://raw.githubusercontent.com/zVipexx/dawn-client/refs/heads/main/badges.json").then((r) => r.json()),
+      fetch("https://raw.githubusercontent.com/zVipexx/dawn-client/refs/heads/main/clans.json").then((r) => r.json()),
+      fetch("https://ktiers-production.up.railway.app/api/players").then((r) => r.json()),
+    ]);
 
     const shortId = localStorage.getItem("user-id");
     const existingLocal = JSON.parse(localStorage.getItem("juice-customizations") || "[]");
-    const localEntry = existingLocal.find(c => c.shortId === shortId);
+    const localEntry = existingLocal.find((c) => c.shortId === shortId);
 
     if (localEntry && settings.local_customizations) {
-      const globalEntryIndex = customizations.findIndex(c => c.shortId === shortId);
+      const globalEntryIndex = customizations.findIndex((c) => c.shortId === shortId);
       if (globalEntryIndex >= 0) {
         customizations[globalEntryIndex] = { ...customizations[globalEntryIndex], ...localEntry };
       } else {
@@ -116,7 +110,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     localStorage.setItem("juice-customizations", JSON.stringify(customizations));
     localStorage.setItem("juice-clans", JSON.stringify(clan));
     localStorage.setItem("ktiers-list", JSON.stringify(ktiers));
-  }
+  };
   fetchAll();
 
   const formatLink = (link) => link.replace(/\\/g, "/");
@@ -128,29 +122,18 @@ window.addEventListener("DOMContentLoaded", async () => {
 
     keybindReminder.innerText = `Press ${settings.menu_keybind} to open the client menu.`;
 
-    if (
-      !document.querySelector("#app > .interface") ||
-      document.querySelector("#juice-keybind-reminder")
-    )
-      return;
+    if (!document.querySelector("#app > .interface") || document.querySelector("#juice-keybind-reminder")) return;
 
     document.querySelector("#app #left-icons").appendChild(keybindReminder);
   };
 
   const lobbyNews = async (settings) => {
-    if (
-      !document.querySelector("#app > .interface") ||
-      document.querySelector(".lobby-news")
-    )
-      return;
+    if (!document.querySelector("#app > .interface") || document.querySelector(".lobby-news")) return;
 
     const { general_news, promotional_news, event_news, alert_news } = settings;
-    if (!general_news && !promotional_news && !event_news && !alert_news)
-      return;
+    if (!general_news && !promotional_news && !event_news && !alert_news) return;
 
-    let news = await fetch(
-      "https://raw.githubusercontent.com/zVipexx/dawn-client/refs/heads/main/news.json"
-    ).then((r) => r.json());
+    let news = await fetch("https://raw.githubusercontent.com/zVipexx/dawn-client/refs/heads/main/news.json").then((r) => r.json());
     if (!news.length) return;
 
     news = news.filter(({ category }) => {
@@ -179,9 +162,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     const dailyBtn = document.querySelector(".daily-rewards-btn");
     const btnBottom = dailyBtn ? dailyBtn.getBoundingClientRect().bottom + window.scrollY : 280;
     lobbyNewsContainer.style.top = `${btnBottom + 8}px`;
-    document
-      .querySelector("#app #left-interface")
-      .appendChild(lobbyNewsContainer);
+    document.querySelector("#app #left-interface").appendChild(lobbyNewsContainer);
 
     const createNewsCard = (newsItem) => {
       const div = document.createElement("div");
@@ -267,24 +248,14 @@ window.addEventListener("DOMContentLoaded", async () => {
       };
 
       if (newsItem.img && newsItem.img !== "") addImage();
-      if (
-        newsItem.updatedAt &&
-        newsItem.updatedAt > Date.now() - 432000000 &&
-        !newsItem.live
-      )
-        addBadge("NEW", "#e24f4f");
+      if (newsItem.updatedAt && newsItem.updatedAt > Date.now() - 432000000 && !newsItem.live) addBadge("NEW", "#e24f4f");
       else if (newsItem.live) addBadge("LIVE", "#4dbf4d");
       addContent();
 
       div.onclick = () => {
         if (newsItem.link) {
-          if (newsItem.link.startsWith("https://kirka.io/"))
-            window.location.href = newsItem.link;
-          else
-            window.open(
-              newsItem.link.replace("https://kirka.io/", base_url),
-              "_blank"
-            );
+          if (newsItem.link.startsWith("https://kirka.io/")) window.location.href = newsItem.link;
+          else window.open(newsItem.link.replace("https://kirka.io/", base_url), "_blank");
         }
       };
     };
@@ -297,8 +268,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     if (!btn || document.querySelector("#juice-discord-btn")) return;
 
     const discordBtn = btn.cloneNode(true);
-    discordBtn.className =
-      "card-cont soc-group transfer-list-top-enter transfer-list-top-enter-active";
+    discordBtn.className = "card-cont soc-group transfer-list-top-enter transfer-list-top-enter-active";
     discordBtn.id = "juice-discord-btn";
     discordBtn.style = `
     background: radial-gradient(circle at 75%, #FFCA8A 0%, rgba(255, 123, 0, 1) 33%) !important;
@@ -357,7 +327,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     const scrapeSettings = (modal) => {
       const settings = { selects: {}, modes: {}, maps: {}, weapons: {}, inputs: {}, sliders: {}, multiSelect: isMultiSelectEnabled(modal) };
 
-      modal.querySelectorAll(".element").forEach(el => {
+      modal.querySelectorAll(".element").forEach((el) => {
         const labelEl = el.querySelector(".label");
         if (!labelEl) return;
         const label = labelEl.textContent.trim().split(" ")[0].split("\n")[0];
@@ -368,19 +338,19 @@ window.addEventListener("DOMContentLoaded", async () => {
       const modePicker = modal.querySelector(".single-picker .selected");
       if (modePicker) settings.selects["Mode"] = modePicker.textContent.trim();
 
-      modal.querySelectorAll(".mods .custom-checkbox").forEach(cb => {
+      modal.querySelectorAll(".mods .custom-checkbox").forEach((cb) => {
         const label = cb.querySelector("span")?.textContent.trim();
         const input = cb.querySelector("input");
         if (label && input) settings.modes[label] = input.checked;
       });
 
-      modal.querySelectorAll(".maps .custom-checkbox").forEach(cb => {
+      modal.querySelectorAll(".maps .custom-checkbox").forEach((cb) => {
         const label = cb.querySelector("span")?.textContent.trim();
         const input = cb.querySelector("input");
         if (label && input) settings.maps[label] = input.checked;
       });
 
-      modal.querySelectorAll(".weapons-cont .custom-checkbox").forEach(cb => {
+      modal.querySelectorAll(".weapons-cont .custom-checkbox").forEach((cb) => {
         const label = cb.querySelector("span")?.textContent.trim();
         const input = cb.querySelector("input");
         if (label && input) settings.weapons[label] = input.checked;
@@ -398,9 +368,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       const teamSlider = modal.querySelector(".team-row .bots-range");
       if (teamSlider) settings.sliders.team = teamSlider.value;
 
-      const momentumRow = Array.from(modal.querySelectorAll(".element")).find(el =>
-        el.querySelector(".label")?.textContent.trim().startsWith("Momentum")
-      );
+      const momentumRow = Array.from(modal.querySelectorAll(".element")).find((el) => el.querySelector(".label")?.textContent.trim().startsWith("Momentum"));
       const momentumSlider = momentumRow?.querySelector(".bots-range");
       if (momentumSlider) settings.sliders.momentum = momentumSlider.value;
 
@@ -416,7 +384,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       clickTarget.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
       clickTarget.click();
 
-      await new Promise(resolve => setTimeout(resolve, 0));
+      await new Promise((resolve) => setTimeout(resolve, 0));
 
       let options = Array.from(scope.querySelectorAll(".items div"));
       if (options.length === 0) options = Array.from(document.querySelectorAll(".items div"));
@@ -430,7 +398,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         }
       }
 
-      await new Promise(resolve => setTimeout(resolve, 0));
+      await new Promise((resolve) => setTimeout(resolve, 0));
     };
 
     const setSliderValue = (slider, value) => {
@@ -442,7 +410,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     };
 
     const setCheckboxGroup = (modal, containerSelector, targetStates) => {
-      modal.querySelectorAll(`${containerSelector} .custom-checkbox`).forEach(cb => {
+      modal.querySelectorAll(`${containerSelector} .custom-checkbox`).forEach((cb) => {
         const label = cb.querySelector("span")?.textContent.trim();
         const input = cb.querySelector("input");
         if (!label || !input) return;
@@ -457,7 +425,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 
       if (toggleBtn && preset.settings.multiSelect !== undefined && preset.settings.multiSelect !== multiSelect) {
         toggleBtn.click();
-        await new Promise(resolve => setTimeout(resolve, 0));
+        await new Promise((resolve) => setTimeout(resolve, 0));
       }
 
       const elements = Array.from(modal.querySelectorAll(".element"));
@@ -476,7 +444,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       }
 
       setCheckboxGroup(modal, ".mods", preset.settings.modes);
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
       setCheckboxGroup(modal, ".maps", preset.settings.maps);
       setCheckboxGroup(modal, ".weapons-cont", preset.settings.weapons);
 
@@ -495,20 +463,16 @@ window.addEventListener("DOMContentLoaded", async () => {
       const botsSlider = modal.querySelector(".bots-right .bots-range");
       setSliderValue(botsSlider, preset.settings.sliders?.bots);
 
-      await new Promise(resolve => setTimeout(resolve, 50));
+      await new Promise((resolve) => setTimeout(resolve, 50));
 
-      const tierEl = Array.from(modal.querySelectorAll(".element")).find(el =>
-        el.querySelector(".label")?.textContent.trim().startsWith("Tier")
-      );
+      const tierEl = Array.from(modal.querySelectorAll(".element")).find((el) => el.querySelector(".label")?.textContent.trim().startsWith("Tier"));
       const tierTargetVal = preset.settings.selects["Tier"];
       if (tierEl && tierTargetVal) await setSelectValue(tierEl, tierTargetVal);
 
       const teamSlider = modal.querySelector(".team-row .bots-range");
       setSliderValue(teamSlider, preset.settings.sliders?.team);
 
-      const momentumRow = Array.from(modal.querySelectorAll(".element")).find(el =>
-        el.querySelector(".label")?.textContent.trim().startsWith("Momentum")
-      );
+      const momentumRow = Array.from(modal.querySelectorAll(".element")).find((el) => el.querySelector(".label")?.textContent.trim().startsWith("Momentum"));
       setSliderValue(momentumRow?.querySelector(".bots-range"), preset.settings.sliders?.momentum);
     };
 
@@ -548,13 +512,13 @@ window.addEventListener("DOMContentLoaded", async () => {
 
         item.addEventListener("dragend", () => {
           item.classList.remove("dragging");
-          list.querySelectorAll(".room-preset-item").forEach(el => el.classList.remove("drag-over"));
+          list.querySelectorAll(".room-preset-item").forEach((el) => el.classList.remove("drag-over"));
         });
 
         item.addEventListener("dragover", (e) => {
           e.preventDefault();
           e.dataTransfer.dropEffect = "move";
-          list.querySelectorAll(".room-preset-item").forEach(el => el.classList.remove("drag-over"));
+          list.querySelectorAll(".room-preset-item").forEach((el) => el.classList.remove("drag-over"));
           item.classList.add("drag-over");
         });
 
@@ -588,7 +552,10 @@ window.addEventListener("DOMContentLoaded", async () => {
           }, 1000);
         };
 
-        applyIcon.onclick = (e) => { e.stopPropagation(); runApply(); };
+        applyIcon.onclick = (e) => {
+          e.stopPropagation();
+          runApply();
+        };
 
         item.ondblclick = (e) => {
           if (e.target.closest(".room-preset-action") || e.target.closest(".room-preset-name-input")) return;
@@ -758,10 +725,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         valueInput.value = initialNum;
         valueDiv.replaceWith(valueInput);
 
-        const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
-          window.HTMLInputElement.prototype,
-          "value"
-        ).set;
+        const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
 
         function setSliderValue(num) {
           if (num < parseFloat(slider.min)) slider.min = num;
@@ -809,7 +773,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     });
   };
 
-  observeForElement(".settings", initSettingsSliderInputs)
+  observeForElement(".settings", initSettingsSliderInputs);
 
   const loadTheme = () => {
     const addedStyles = document.createElement("style");
@@ -839,9 +803,6 @@ window.addEventListener("DOMContentLoaded", async () => {
       const settings = ipcRenderer.sendSync("get-settings");
       const styles = [];
 
-      const killfeedColorRed = document.querySelector(".killfeed-color-picker.red").value;
-      const killfeedColorBlue = document.querySelector(".killfeed-color-picker.blue").value;
-
       if (settings.perm_tablist)
         styles.push(
           ".desktop-game-interface .tab-info, .tab-team-info { display: flex !important; border-radius: 0.5rem !important; max-width: 30rem !important; top: 0 !important; right: 0 !important; position: absolute; margin: 0.5rem !important; padding: 0.15rem !important; width: 35rem !important; box-shadow: none !important; }",
@@ -866,88 +827,44 @@ window.addEventListener("DOMContentLoaded", async () => {
           ".desktop-game-interface .player-list .list-value { color: #acfa70; }",
           ".desktop-game-interface .player-list .player-cont { background: #141414a3 !important; border-radius: 0.25rem; padding: 0.25rem }",
           ".desktop-game-interface .player-list .player-cont.dead .player-left { transform: translateX(2rem) }",
-          ".desktop-game-interface .player-cont .nickname.bolder { color: #edb846; }"
+          ".desktop-game-interface .player-cont .nickname.bolder { color: #edb846; }",
         );
-      if (settings.hide_chat)
-        styles.push(
-          ".desktop-game-interface > #bottom-left > .chat { display: none !important; }"
-        );
-      if (settings.hide_kill_text)
-        styles.push(
-          ".ach-cont .text { display: none !important; }"
-        );
-      if (settings.hide_interface)
-        styles.push(
-          ".desktop-game-interface, .crosshair-cont, .ach-cont, .hitme-cont, .sniper-mwNMW-cont, .team-score, .score { display: none !important; }"
-        );
-      if (settings.skip_loading)
-        styles.push(".loading-scene { display: none !important; }");
+      if (settings.hide_chat) styles.push(".desktop-game-interface > #bottom-left > .chat { display: none !important; }");
+      if (settings.hide_kill_text) styles.push(".ach-cont .text { display: none !important; }");
+      if (settings.hide_interface) styles.push(".desktop-game-interface, .crosshair-cont, .ach-cont, .hitme-cont, .sniper-mwNMW-cont, .team-score, .score { display: none !important; }");
+      if (settings.skip_loading) styles.push(".loading-scene { display: none !important; }");
       if (settings.chat_height) {
-        styles.push(`.desktop-game-interface #chat { bottom: calc(4.7em + ${settings.chat_height}em * 1.2) !important } .desktop-game-interface #chat .messages { min-height: calc(11.75em + ${settings.chat_height}em) !important }`)
-      }
-      if (settings.interface_opacity)
         styles.push(
-          `.desktop-game-interface { opacity: ${settings.interface_opacity}% !important; }`
+          `.desktop-game-interface #chat { bottom: calc(4.7em + ${settings.chat_height}em * 1.2) !important } .desktop-game-interface #chat .messages { min-height: calc(11.75em + ${settings.chat_height}em) !important }`,
         );
+      }
+      if (settings.interface_opacity) styles.push(`.desktop-game-interface { opacity: ${settings.interface_opacity}% !important; }`);
       if (settings.interface_bounds) {
-        let scale =
-          settings.interface_bounds === "1"
-            ? 0.9
-            : settings.interface_bounds === "0"
-              ? 0.8
-              : 1;
-        styles.push(
-          `.desktop-game-interface { transform: scale(${scale}) !important; }`
-        );
+        let scale = settings.interface_bounds === "1" ? 0.9 : settings.interface_bounds === "0" ? 0.8 : 1;
+        styles.push(`.desktop-game-interface { transform: scale(${scale}) !important; }`);
       }
-      if (settings.hitmarker_link !== "")
-        styles.push(
-          `.hitmark { content: url(${formatLink(
-            settings.hitmarker_link
-          )}) !important; }`
-        );
+      if (settings.hitmarker_link !== "") styles.push(`.hitmark { content: url(${formatLink(settings.hitmarker_link)}) !important; max-width: 48px; max-height: 48px; }`);
       if (settings.killicon_link !== "")
         styles.push(`.animate-cont::before { content: ""; 
       background: url(${formatLink(
-          settings.killicon_link
-        )}); width: 10rem; height: 10rem; margin-bottom: 2rem; display: inline-block; background-position: center; background-size: contain; background-repeat: no-repeat; }
+        settings.killicon_link,
+      )}); width: 10rem; height: 10rem; margin-bottom: 2rem; display: inline-block; background-position: center; background-size: contain; background-repeat: no-repeat; }
       .animate-cont svg { display: none; }`);
-      if (settings.perm_crosshair)
-        styles.push(".crosshair-static { opacity: 1 !important }")
-      if (!settings.ui_animations)
-        styles.push(
-          "* { transition: none !important; animation: none !important; }"
-        );
-      if (settings.rave_mode)
-        styles.push(
-          "canvas { animation: rotateHue 1s linear infinite !important; }"
-        );
-      if (!settings.lobby_keybind_reminder)
-        styles.push("#juice-keybind-reminder { display: none; }");
-      if (!settings.spectate_button)
-        styles.push(".spectate-eye { display: none !important; }");
-      if (!settings.info_region)
-        styles.push("#region { display: none !important; }");
-      if (!settings.info_version)
-        styles.push("#version { display: none !important; }");
-      if (!settings.info_triangles)
-        styles.push("#triangles { display: none !important; }");
-      if (!settings.info_fpsavg)
-        styles.push("#fpsAvg { display: none !important; }");
-      if (!settings.info_fps)
-        styles.push("#fps { display: none !important; }");
-      if (!settings.info_ping)
-        styles.push("#ping { display: none !important; }");
-      if (!settings.info_tick)
-        styles.push("#tickTime { display: none !important; }");
-      if (!settings.info_input)
-        styles.push("#inputDelay { display: none !important; }");
-      if (killfeedColorRed)
-        styles.push(`.desktop-game-interface .kill-bar-item { --red-kill: ${settings.killfeed_color_red}28 }`);
-      if (killfeedColorBlue)
-        styles.push(`.desktop-game-interface .kill-bar-item { --blue-kill: ${settings.killfeed_color_blue}cc }`);
-      if (!settings.ktiers_icon)
-        styles.push(".ktiers-rank-icon { display: none }")
+      if (settings.perm_crosshair) styles.push(".crosshair-static { opacity: 1 !important }");
+      if (!settings.ui_animations) styles.push("* { transition: none !important; animation: none !important; }");
+      if (settings.rave_mode) styles.push("canvas { animation: rotateHue 1s linear infinite !important; }");
+      if (!settings.lobby_keybind_reminder) styles.push("#juice-keybind-reminder { display: none; }");
+      if (!settings.spectate_button) styles.push(".spectate-eye { display: none !important; }");
+      if (!settings.info_region) styles.push("#region { display: none !important; }");
+      if (!settings.info_version) styles.push("#version { display: none !important; }");
+      if (!settings.info_triangles) styles.push("#triangles { display: none !important; }");
+      if (!settings.info_fpsavg) styles.push("#fpsAvg { display: none !important; }");
+      if (!settings.info_fps) styles.push("#fps { display: none !important; }");
+      if (!settings.info_ping) styles.push("#ping { display: none !important; }");
+      if (!settings.info_tick) styles.push("#tickTime { display: none !important; }");
+      if (settings.killfeed_color_red) styles.push(`.desktop-game-interface .kill-bar-item { --red-kill: ${settings.killfeed_color_red}aa }`);
+      if (settings.killfeed_color_blue) styles.push(`.desktop-game-interface .kill-bar-item { --blue-kill: ${settings.killfeed_color_blue}aa }`);
+      if (!settings.ktiers_icon) styles.push(".ktiers-rank-icon { display: none }");
 
       addedStyles.innerHTML = styles.join("");
     };
@@ -980,710 +897,37 @@ window.addEventListener("DOMContentLoaded", async () => {
         "info_ping",
         "info_tick",
         "info_input",
+        "killfeed_color_red",
+        "killfeed_color_blue",
         "ktiers_icon",
       ];
       if (relevantSettings.includes(e.detail.setting)) updateUIFeatures();
     });
     document.querySelectorAll(".killfeed-color-picker").forEach((killfeedColor) => {
-      killfeedColor.addEventListener("change", updateUIFeatures)
+      killfeedColor.addEventListener("change", updateUIFeatures);
     });
     updateUIFeatures();
   };
 
   const initWeaponMods = () => {
-    let inspectStart = null;
-    let inspectingWeaponId = null;
-
-    let latchedWeaponSig = null;
-    let settlerSig = null;
-    let settlerSince = 0;
-    const SETTLE_MS = 120;
-
-    const INSPECT_DURATIONS = {};
-
-    const updateInspectDurations = () => {
-      const weaponConfig = window.dawnWeaponConfig;
-      if (!weaponConfig) return;
-
-      const defaults = {
-        vita: 550,
-        rev: 550,
-        mac10: 800,
-        ar9: 550,
-        m60: 550,
-        scar: 550,
-        shark: 550,
-        lar: 550,
-        weatie: 550,
-        bayonet: 800,
-        tomahawk: 750,
-      };
-
-      if (weaponConfig.universalModeActive) {
-        const universalDuration = weaponConfig.weaponSettings?.universalSettings?.inspectDuration || 750;
-        for (const weaponId of Object.keys(defaults)) {
-          INSPECT_DURATIONS[weaponId] = universalDuration;
-        }
-      } else {
-        for (const weaponId of Object.keys(defaults)) {
-          const weaponSettings = weaponConfig.weaponSettings?.settings?.[weaponId];
-          INSPECT_DURATIONS[weaponId] = weaponSettings?.inspectDuration || defaults[weaponId];
-        }
-      }
+    const liveSettings = { ...settings };
+    const readSetting = (key, def) => {
+      const v = liveSettings[key];
+      if (v === undefined || v === null || v === "") return def;
+      return v;
+    };
+    const readNumber = (key, def) => {
+      const v = readSetting(key, def);
+      const n = parseFloat(v);
+      return isNaN(n) ? def : n;
     };
 
-    updateInspectDurations();
-
-    document.addEventListener("juice-settings-changed", () => {
-      updateInspectDurations();
+    document.addEventListener("juice-settings-changed", ({ detail }) => {
+      liveSettings[detail.setting] = detail.value;
     });
 
-    const inspectKeyframes_vita = (t) => {
-      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
-      const easeIn = (x) => x * x * x;
-
-      let offsetZ, offsetX, spinX;
-      if (t < 0.35) {
-        const p = easeOut(t / 0.35);
-        offsetZ = p * -0.3;
-        offsetX = p * -0.25;
-        spinX = p * -0.25;
-      } else if (t < 0.85) {
-        offsetZ = -0.3;
-        offsetX = -0.25;
-        spinX = - 0.25;
-      } else {
-        const p = easeIn((t - 0.85) / 0.15);
-        offsetZ = (1 - p) * -0.3;
-        offsetX = (1 - p) * -0.25;
-        spinX = (1 - easeOut(p)) * -0.25;
-      }
-
-      const spinZ = t * Math.PI * -2;
-
-      return {
-        offsetX,
-        offsetY: 0,
-        offsetZ,
-        scale: 1,
-        spinZ,
-        spinX,
-      };
-    };
-
-    const inspectKeyframes_rev = (t) => {
-      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
-      const easeIn = (x) => x * x * x;
-      const bump = t < 0.5 ? easeOut(t / 0.5) : 1 - easeIn((t - 0.5) / 0.5);
-      const spinZ = (1 - Math.pow(1 - Math.pow(t, 1.2), 3)) * Math.PI * 2.0;
-      return {
-        offsetX: bump * 0.02,
-        offsetY: bump * 0.15,
-        offsetZ: 0,
-        scale: 1 + bump * 0.05,
-        spinZ: spinZ,
-      };
-    };
-
-    const inspectKeyframes_mac10 = (t) => {
-      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
-      const easeIn = (x) => x * x * x;
-      const spinZ = (1 - Math.pow(1 - Math.pow(t, 1.2), 3)) * Math.PI * 2.0;
-      let spinX;
-
-      if (t < 0.1) {
-        spinX = easeOut(t / 0.1) * -0.25;
-      } else if (t < 0.5) {
-        spinX = -0.25;
-      } else {
-        spinX = (1 - easeIn((t - 0.5) / 0.5)) * -0.25;
-      }
-
-      return {
-        offsetX: 0,
-        offsetY: 0,
-        offsetZ: 0,
-        scale: 1 + 0,
-        spinZ: spinZ * 4,
-        spinX: spinX,
-      };
-    };
-
-    const inspectKeyframes_ar9 = (t) => {
-      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
-      const easeIn = (x) => x * x * x;
-
-      let offsetZ, offsetX, spinX;
-      if (t < 0.35) {
-        const p = easeOut(t / 0.35);
-        offsetZ = p * -0.2;
-        offsetX = p * -0.15;
-        spinX = p * -0.25;
-      } else if (t < 0.85) {
-        offsetZ = -0.2;
-        offsetX = -0.15;
-        spinX = - 0.25;
-      } else {
-        const p = easeIn((t - 0.85) / 0.15);
-        offsetZ = (1 - p) * -0.2;
-        offsetX = (1 - p) * -0.15;
-        spinX = (1 - easeOut(p)) * -0.25;
-      }
-
-      const spinY = t * Math.PI * 2;
-
-      return {
-        offsetX,
-        offsetY: 0,
-        offsetZ,
-        scale: 1,
-        spinY,
-        spinX,
-      };
-    };
-
-    const inspectKeyframes_m60 = (t) => {
-      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
-      const easeIn = (x) => x * x * x;
-
-      let offsetZ, offsetX, spinX;
-      if (t < 0.35) {
-        const p = easeOut(t / 0.35);
-        offsetZ = p * -0.2;
-        offsetX = p * -0.15;
-        spinX = p * -0.25;
-      } else if (t < 0.85) {
-        offsetZ = -0.2;
-        offsetX = -0.15;
-        spinX = - 0.25;
-      } else {
-        const p = easeIn((t - 0.85) / 0.15);
-        offsetZ = (1 - p) * -0.2;
-        offsetX = (1 - p) * -0.15;
-        spinX = (1 - easeOut(p)) * -0.25;
-      }
-
-      const spinZ = t * Math.PI * -2;
-
-      return {
-        offsetX,
-        offsetY: 0,
-        offsetZ,
-        scale: 1,
-        spinZ,
-        spinX,
-      };
-    };
-
-    const inspectKeyframes_scar = (t) => {
-      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
-      const easeIn = (x) => x * x * x;
-
-      let offsetZ, offsetX, spinX;
-      if (t < 0.35) {
-        const p = easeOut(t / 0.35);
-        offsetZ = p * -0.2;
-        offsetX = p * -0.15;
-        spinX = p * -0.25;
-      } else if (t < 0.85) {
-        offsetZ = -0.2;
-        offsetX = -0.15;
-        spinX = - 0.25;
-      } else {
-        const p = easeIn((t - 0.85) / 0.15);
-        offsetZ = (1 - p) * -0.2;
-        offsetX = (1 - p) * -0.15;
-        spinX = (1 - easeOut(p)) * -0.25;
-      }
-
-      const spinZ = t * Math.PI * -2;
-
-      return {
-        offsetX,
-        offsetY: 0,
-        offsetZ,
-        scale: 1,
-        spinZ,
-        spinX,
-      };
-    };
-
-    const inspectKeyframes_shark = (t) => {
-      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
-      const easeIn = (x) => x * x * x;
-      const bump = t < 0.5 ? easeOut(t / 0.5) : 1 - easeIn((t - 0.5) / 0.5);
-      const spinX = (1 - Math.pow(1 - Math.pow(t, 1.2), 3)) * Math.PI * 2.0;
-      return {
-        offsetX: bump * 0.04,
-        offsetY: bump * 0.20,
-        offsetZ: 0,
-        scale: 1 + bump * 0.08,
-        spinX: spinX,
-      };
-    };
-
-    const inspectKeyframes_lar = (t) => {
-      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
-      const easeIn = (x) => x * x * x;
-
-      let offsetZ, offsetX, spinX;
-      if (t < 0.35) {
-        const p = easeOut(t / 0.35);
-        offsetZ = p * -0.2;
-        offsetX = p * -0.15;
-        spinX = p * -0.25;
-      } else if (t < 0.85) {
-        offsetZ = -0.2;
-        offsetX = -0.15;
-        spinX = - 0.25;
-      } else {
-        const p = easeIn((t - 0.85) / 0.15);
-        offsetZ = (1 - p) * -0.2;
-        offsetX = (1 - p) * -0.15;
-        spinX = (1 - easeOut(p)) * -0.25;
-      }
-
-      const spinZ = t * Math.PI * -2;
-
-      return {
-        offsetX,
-        offsetY: 0,
-        offsetZ,
-        scale: 1,
-        spinZ,
-        spinX,
-      };
-    };
-
-    const inspectKeyframes_weatie = (t) => {
-      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
-      const easeIn = (x) => x * x * x;
-
-      let offsetZ, offsetX, spinX;
-      if (t < 0.35) {
-        const p = easeOut(t / 0.35);
-        offsetZ = p * -0.2;
-        offsetX = p * -0.15;
-        spinX = p * -0.25;
-      } else if (t < 0.85) {
-        offsetZ = -0.2;
-        offsetX = -0.15;
-        spinX = - 0.25;
-      } else {
-        const p = easeIn((t - 0.85) / 0.15);
-        offsetZ = (1 - p) * -0.2;
-        offsetX = (1 - p) * -0.15;
-        spinX = (1 - easeOut(p)) * -0.25;
-      }
-
-      const spinZ = t * Math.PI * -2;
-
-      return {
-        offsetX,
-        offsetY: 0,
-        offsetZ,
-        scale: 1,
-        spinZ,
-        spinX,
-      };
-    };
-
-    const inspectKeyframes_knife = (t) => {
-      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
-      const easeIn = (x) => x * x * x;
-      const bump = t < 0.5 ? easeOut(t / 0.5) : 1 - easeIn((t - 0.5) / 0.5);
-      const spinZ = (1 - Math.pow(1 - Math.pow(t, 1.2), 3)) * Math.PI * 2.0;
-      return {
-        offsetX: bump * 0,
-        offsetY: bump * 0,
-        offsetZ: 0,
-        scale: 1 + bump * 0.10,
-        spinZ: spinZ * 5,
-      };
-    };
-
-    const inspectKeyframes_tomahawk = (t) => {
-      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
-      const easeIn = (x) => x * x * x;
-      const spinZ = (1 - Math.pow(1 - Math.pow(t, 1.2), 3)) * Math.PI * 2.0;
-      return {
-        offsetX: 0,
-        offsetY: 0,
-        offsetZ: 0,
-        scale: 1,
-        spinZ: spinZ * -2,
-      };
-    };
-
-    const armKeyframes_disabled = (t) => {
-      return {
-        offsetX: 0,
-        offsetY: 0,
-        offsetZ: 0,
-        scale: 1,
-      };
-    };
-
-    const armKeyframes_rev = (t) => {
-      const arc = Math.sin(t * Math.PI);
-      return {
-        offsetX: arc * 0.02,
-        offsetY: arc * 0.06,
-        offsetZ: 0,
-        scale: 1,
-        spinZ: 0,
-      };
-    };
-
-    const armKeyframes_vita_right = (t) => {
-      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
-      const easeIn = (x) => x * x * x;
-
-      let offsetX, offsetY, offsetZ;
-
-      if (t < 0.55) {
-        const p = easeOut(t / 0.55);
-        const arch = 4 * p * (1 - p);
-        offsetX = p * -0.38;
-        offsetY = arch * 0.06;
-        offsetZ = p * -0.05;
-      } else if (t < 0.75) {
-        const p = easeIn((t - 0.55) / 0.2);
-        offsetX = -0.38 + p * 0.38;
-        offsetY = 0;
-        offsetZ = -0.05 + p * 0.05;
-      } else {
-        const p = easeOut((t - 0.75) / 0.25);
-        offsetX = 0;
-        offsetY = 0;
-        offsetZ = 0;
-      }
-
-      return {
-        offsetX,
-        offsetY,
-        offsetZ,
-        scale: 1,
-        spinZ: 0,
-      };
-    };
-
-    const armKeyframes_vita_left = (t) => {
-      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
-      const easeIn = (x) => x * x * x;
-
-      let offsetZ, offsetX;
-      if (t < 0.6) {
-        offsetZ = easeOut(t / 0.6) * 0.4;
-        offsetX = easeOut(t / 0.6) * -0.4;
-      } else {
-        offsetZ = (1 - easeIn((t - 0.4) / 0.6)) * 0.4;
-        offsetX = (1 - easeIn((t - 0.4) / 0.6)) * -0.4;
-      }
-
-      return {
-        offsetX,
-        offsetY: 0,
-        offsetZ,
-        scale: 1,
-        spinZ: 0,
-      };
-    };
-
-    const armKeyframes_ar9_right = (t) => {
-      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
-      const easeIn = (x) => x * x * x;
-
-      let offsetX, offsetY, offsetZ;
-
-      if (t < 0.55) {
-        const p = easeOut(t / 0.55);
-        const arch = 4 * p * (1 - p);
-        offsetX = p * -0.38;
-        offsetY = arch * 0.06;
-        offsetZ = p * -0.05;
-      } else if (t < 0.75) {
-        const p = easeIn((t - 0.55) / 0.2);
-        offsetX = -0.38 + p * 0.38;
-        offsetY = 0;
-        offsetZ = -0.05 + p * 0.05;
-      } else {
-        const p = easeOut((t - 0.75) / 0.25);
-        offsetX = 0;
-        offsetY = 0;
-        offsetZ = 0;
-      }
-
-      return {
-        offsetX,
-        offsetY,
-        offsetZ,
-        scale: 1,
-        spinZ: 0,
-      };
-    };
-
-    const armKeyframes_ar9_left = (t) => {
-      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
-      const easeIn = (x) => x * x * x;
-
-      let offsetZ, offsetX;
-      if (t < 0.6) {
-        offsetZ = easeOut(t / 0.6) * 0.4;
-        offsetX = easeOut(t / 0.6) * -0.4;
-      } else {
-        offsetZ = (1 - easeIn((t - 0.4) / 0.6)) * 0.4;
-        offsetX = (1 - easeIn((t - 0.4) / 0.6)) * -0.4;
-      }
-
-      return {
-        offsetX,
-        offsetY: 0,
-        offsetZ,
-        scale: 1,
-        spinZ: 0,
-      };
-    };
-
-    const armKeyframes_m60_right = (t) => {
-      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
-      const easeIn = (x) => x * x * x;
-
-      let offsetX, offsetY, offsetZ;
-
-      if (t < 0.55) {
-        const p = easeOut(t / 0.55);
-        const arch = 4 * p * (1 - p);
-        offsetX = p * -0.38;
-        offsetY = arch * 0.06;
-        offsetZ = p * -0.05;
-      } else if (t < 0.75) {
-        const p = easeIn((t - 0.55) / 0.2);
-        offsetX = -0.38 + p * 0.38;
-        offsetY = 0;
-        offsetZ = -0.05 + p * 0.05;
-      } else {
-        const p = easeOut((t - 0.75) / 0.25);
-        offsetX = 0;
-        offsetY = 0;
-        offsetZ = 0;
-      }
-
-      return {
-        offsetX,
-        offsetY,
-        offsetZ,
-        scale: 1,
-        spinZ: 0,
-      };
-    };
-
-    const armKeyframes_m60_left = (t) => {
-      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
-      const easeIn = (x) => x * x * x;
-
-      let offsetZ, offsetX;
-      if (t < 0.6) {
-        offsetZ = easeOut(t / 0.6) * 0.4;
-        offsetX = easeOut(t / 0.6) * -0.4;
-      } else {
-        offsetZ = (1 - easeIn((t - 0.4) / 0.6)) * 0.4;
-        offsetX = (1 - easeIn((t - 0.4) / 0.6)) * -0.4;
-      }
-
-      return {
-        offsetX,
-        offsetY: 0,
-        offsetZ,
-        scale: 1,
-        spinZ: 0,
-      };
-    };
-
-    const armKeyframes_weatie_right = (t) => {
-      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
-      const easeIn = (x) => x * x * x;
-
-      let offsetX, offsetY, offsetZ;
-
-      if (t < 0.55) {
-        const p = easeOut(t / 0.55);
-        const arch = 4 * p * (1 - p);
-        offsetX = p * -0.38;
-        offsetY = arch * 0.06;
-        offsetZ = p * -0.05;
-      } else if (t < 0.75) {
-        const p = easeIn((t - 0.55) / 0.2);
-        offsetX = -0.38 + p * 0.38;
-        offsetY = 0;
-        offsetZ = -0.05 + p * 0.05;
-      } else {
-        const p = easeOut((t - 0.75) / 0.25);
-        offsetX = 0;
-        offsetY = 0;
-        offsetZ = 0;
-      }
-
-      return {
-        offsetX,
-        offsetY,
-        offsetZ,
-        scale: 1,
-        spinZ: 0,
-      };
-    };
-
-    const armKeyframes_weatie_left = (t) => {
-      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
-      const easeIn = (x) => x * x * x;
-
-      let offsetZ, offsetX;
-      if (t < 0.6) {
-        offsetZ = easeOut(t / 0.6) * 0.4;
-        offsetX = easeOut(t / 0.6) * -0.4;
-      } else {
-        offsetZ = (1 - easeIn((t - 0.4) / 0.6)) * 0.4;
-        offsetX = (1 - easeIn((t - 0.4) / 0.6)) * -0.4;
-      }
-
-      return {
-        offsetX,
-        offsetY: 0,
-        offsetZ,
-        scale: 1,
-        spinZ: 0,
-      };
-    };
-
-    const armKeyframes_lar_right = (t) => {
-      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
-      const easeIn = (x) => x * x * x;
-
-      let offsetX, offsetY, offsetZ;
-
-      if (t < 0.55) {
-        const p = easeOut(t / 0.55);
-        const arch = 4 * p * (1 - p);
-        offsetX = p * -0.38;
-        offsetY = arch * 0.06;
-        offsetZ = p * -0.05;
-      } else if (t < 0.75) {
-        const p = easeIn((t - 0.55) / 0.2);
-        offsetX = -0.38 + p * 0.38;
-        offsetY = 0;
-        offsetZ = -0.05 + p * 0.05;
-      } else {
-        const p = easeOut((t - 0.75) / 0.25);
-        offsetX = 0;
-        offsetY = 0;
-        offsetZ = 0;
-      }
-
-      return {
-        offsetX,
-        offsetY,
-        offsetZ,
-        scale: 1,
-        spinZ: 0,
-      };
-    };
-
-    const armKeyframes_lar_left = (t) => {
-      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
-      const easeIn = (x) => x * x * x;
-
-      let offsetZ, offsetX;
-      if (t < 0.6) {
-        offsetZ = easeOut(t / 0.6) * 0.4;
-        offsetX = easeOut(t / 0.6) * -0.4;
-      } else {
-        offsetZ = (1 - easeIn((t - 0.4) / 0.6)) * 0.4;
-        offsetX = (1 - easeIn((t - 0.4) / 0.6)) * -0.4;
-      }
-
-      return {
-        offsetX,
-        offsetY: 0,
-        offsetZ,
-        scale: 1,
-        spinZ: 0,
-      };
-    };
-
-    const armKeyframes_scar_right = (t) => {
-      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
-      const easeIn = (x) => x * x * x;
-
-      let offsetX, offsetY, offsetZ;
-
-      if (t < 0.55) {
-        const p = easeOut(t / 0.55);
-        const arch = 4 * p * (1 - p);
-        offsetX = p * -0.38;
-        offsetY = arch * 0.06;
-        offsetZ = p * -0.05;
-      } else if (t < 0.75) {
-        const p = easeIn((t - 0.55) / 0.2);
-        offsetX = -0.38 + p * 0.38;
-        offsetY = 0;
-        offsetZ = -0.05 + p * 0.05;
-      } else {
-        const p = easeOut((t - 0.75) / 0.25);
-        offsetX = 0;
-        offsetY = 0;
-        offsetZ = 0;
-      }
-
-      return {
-        offsetX,
-        offsetY,
-        offsetZ,
-        scale: 1,
-        spinZ: 0,
-      };
-    };
-
-    const armKeyframes_scar_left = (t) => {
-      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
-      const easeIn = (x) => x * x * x;
-
-      let offsetZ, offsetX;
-      if (t < 0.6) {
-        offsetZ = easeOut(t / 0.6) * 0.4;
-        offsetX = easeOut(t / 0.6) * -0.4;
-      } else {
-        offsetZ = (1 - easeIn((t - 0.4) / 0.6)) * 0.4;
-        offsetX = (1 - easeIn((t - 0.4) / 0.6)) * -0.4;
-      }
-
-      return {
-        offsetX,
-        offsetY: 0,
-        offsetZ,
-        scale: 1,
-        spinZ: 0,
-      };
-    };
-
-    const armKeyframes_shark = armKeyframes_rev;
-    const armKeyframes_mac10 = armKeyframes_disabled;
-    const armKeyframes_ar9 = armKeyframes_disabled;
-    const armKeyframes_knife = armKeyframes_disabled;
-    const armKeyframes_tomahawk = armKeyframes_disabled;
-
-    const weaponIdToInspectKeyframes = {
-      vita: inspectKeyframes_vita,
-      scar: inspectKeyframes_scar,
-      rev: inspectKeyframes_rev,
-      ar9: inspectKeyframes_ar9,
-      mac10: inspectKeyframes_mac10,
-      m60: inspectKeyframes_m60,
-      weatie: inspectKeyframes_vita,
-      lar: inspectKeyframes_lar,
-      shark: inspectKeyframes_shark,
-      bayonet: inspectKeyframes_knife,
-      tomahawk: inspectKeyframes_tomahawk,
-    };
+    let inspectStart = null;
+    let inspectingWeaponId = null;
 
     const armSigs = new Set([
       "1.40,1.40,1.40",
@@ -1698,6 +942,276 @@ window.addEventListener("DOMContentLoaded", async () => {
       "1.08,1.10,1.77",
       "1.54,0.92,2.24",
     ]);
+
+    const armSigToType = {
+      "1.40,1.40,1.40": "right",
+      "1.99,1.68,2.11": "left",
+      "1.11,1.11,1.77": "right",
+      "1.50,1.40,1.76": "right",
+      "1.13,0.85,1.77": "left",
+      "0.81,1.08,1.38": "left",
+      "1.52,1.15,1.61": "right",
+      "1.16,1.48,0.94": "right",
+      "1.54,0.92,2.24": "right",
+      "1.08,1.10,1.77": "left",
+      "1.88,1.40,1.88": "left",
+    };
+
+    const getWeaponSetting = (weaponId, name, def) => readNumber(`${weaponId}_weapon_${name}`, def);
+
+    const getArmSetting = (weaponId, side, name, def) => readNumber(`${weaponId}_${side}_arm_${name}`, def);
+
+    const getInspectDuration = (weaponId) => liveSettings[weaponId + "_inspect_duration"];
+
+    const inspectKeyframes_vita = (t) => {
+      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+      const easeIn = (x) => x * x * x;
+      let offsetZ, offsetX, spinX;
+      if (t < 0.35) {
+        const p = easeOut(t / 0.35);
+        offsetZ = p * -0.3;
+        offsetX = p * -0.25;
+        spinX = p * -0.25;
+      } else if (t < 0.85) {
+        offsetZ = -0.3;
+        offsetX = -0.25;
+        spinX = -0.25;
+      } else {
+        const p = easeIn((t - 0.85) / 0.15);
+        offsetZ = (1 - p) * -0.3;
+        offsetX = (1 - p) * -0.25;
+        spinX = (1 - easeOut(p)) * -0.25;
+      }
+      const spinZ = t * Math.PI * -2;
+      return { offsetX, offsetY: 0, offsetZ, scale: 1, spinZ, spinX };
+    };
+
+    const inspectKeyframes_revolver = (t) => {
+      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+      const easeIn = (x) => x * x * x;
+      const bump = t < 0.5 ? easeOut(t / 0.5) : 1 - easeIn((t - 0.5) / 0.5);
+      const spinZ = (1 - Math.pow(1 - Math.pow(t, 1.2), 3)) * Math.PI * 2.0;
+      return { offsetX: bump * 0.02, offsetY: bump * 0.15, offsetZ: 0, scale: 1 + bump * 0.05, spinZ };
+    };
+
+    const inspectKeyframes_mac10 = (t) => {
+      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+      const easeIn = (x) => x * x * x;
+      const spinZ = (1 - Math.pow(1 - Math.pow(t, 1.2), 3)) * Math.PI * 2.0;
+      let spinX;
+      if (t < 0.1) spinX = easeOut(t / 0.1) * -0.25;
+      else if (t < 0.5) spinX = -0.25;
+      else spinX = (1 - easeIn((t - 0.5) / 0.5)) * -0.25;
+      return { offsetX: 0, offsetY: 0, offsetZ: 0, scale: 1, spinZ: spinZ * 4, spinX };
+    };
+
+    const inspectKeyframes_ar9 = (t) => {
+      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+      const easeIn = (x) => x * x * x;
+      let offsetZ, offsetX, spinX;
+      if (t < 0.35) {
+        const p = easeOut(t / 0.35);
+        offsetZ = p * -0.2;
+        offsetX = p * -0.15;
+        spinX = p * -0.25;
+      } else if (t < 0.85) {
+        offsetZ = -0.2;
+        offsetX = -0.15;
+        spinX = -0.25;
+      } else {
+        const p = easeIn((t - 0.85) / 0.15);
+        offsetZ = (1 - p) * -0.2;
+        offsetX = (1 - p) * -0.15;
+        spinX = (1 - easeOut(p)) * -0.25;
+      }
+      const spinY = t * Math.PI * 2;
+      return { offsetX, offsetY: 0, offsetZ, scale: 1, spinY, spinX };
+    };
+
+    const inspectKeyframes_m60 = (t) => {
+      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+      const easeIn = (x) => x * x * x;
+      let offsetZ, offsetX, spinX;
+      if (t < 0.35) {
+        const p = easeOut(t / 0.35);
+        offsetZ = p * -0.2;
+        offsetX = p * -0.15;
+        spinX = p * -0.25;
+      } else if (t < 0.85) {
+        offsetZ = -0.2;
+        offsetX = -0.15;
+        spinX = -0.25;
+      } else {
+        const p = easeIn((t - 0.85) / 0.15);
+        offsetZ = (1 - p) * -0.2;
+        offsetX = (1 - p) * -0.15;
+        spinX = (1 - easeOut(p)) * -0.25;
+      }
+      const spinZ = t * Math.PI * -2;
+      return { offsetX, offsetY: 0, offsetZ, scale: 1, spinZ, spinX };
+    };
+
+    const inspectKeyframes_scar = (t) => {
+      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+      const easeIn = (x) => x * x * x;
+      let offsetZ, offsetX, spinX;
+      if (t < 0.35) {
+        const p = easeOut(t / 0.35);
+        offsetZ = p * -0.2;
+        offsetX = p * -0.15;
+        spinX = p * -0.25;
+      } else if (t < 0.85) {
+        offsetZ = -0.2;
+        offsetX = -0.15;
+        spinX = -0.25;
+      } else {
+        const p = easeIn((t - 0.85) / 0.15);
+        offsetZ = (1 - p) * -0.2;
+        offsetX = (1 - p) * -0.15;
+        spinX = (1 - easeOut(p)) * -0.25;
+      }
+      const spinZ = t * Math.PI * -2;
+      return { offsetX, offsetY: 0, offsetZ, scale: 1, spinZ, spinX };
+    };
+
+    const inspectKeyframes_shark = (t) => {
+      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+      const easeIn = (x) => x * x * x;
+      const bump = t < 0.5 ? easeOut(t / 0.5) : 1 - easeIn((t - 0.5) / 0.5);
+      const spinX = (1 - Math.pow(1 - Math.pow(t, 1.2), 3)) * Math.PI * 2.0;
+      return { offsetX: bump * 0.04, offsetY: bump * 0.2, offsetZ: 0, scale: 1 + bump * 0.08, spinX };
+    };
+
+    const inspectKeyframes_lar = (t) => {
+      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+      const easeIn = (x) => x * x * x;
+      let offsetZ, offsetX, spinX;
+      if (t < 0.35) {
+        const p = easeOut(t / 0.35);
+        offsetZ = p * -0.2;
+        offsetX = p * -0.15;
+        spinX = p * -0.25;
+      } else if (t < 0.85) {
+        offsetZ = -0.2;
+        offsetX = -0.15;
+        spinX = -0.25;
+      } else {
+        const p = easeIn((t - 0.85) / 0.15);
+        offsetZ = (1 - p) * -0.2;
+        offsetX = (1 - p) * -0.15;
+        spinX = (1 - easeOut(p)) * -0.25;
+      }
+      const spinZ = t * Math.PI * -2;
+      return { offsetX, offsetY: 0, offsetZ, scale: 1, spinZ, spinX };
+    };
+
+    const inspectKeyframes_weatie = (t) => {
+      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+      const easeIn = (x) => x * x * x;
+      let offsetZ, offsetX, spinX;
+      if (t < 0.35) {
+        const p = easeOut(t / 0.35);
+        offsetZ = p * -0.2;
+        offsetX = p * -0.15;
+        spinX = p * -0.25;
+      } else if (t < 0.85) {
+        offsetZ = -0.2;
+        offsetX = -0.15;
+        spinX = -0.25;
+      } else {
+        const p = easeIn((t - 0.85) / 0.15);
+        offsetZ = (1 - p) * -0.2;
+        offsetX = (1 - p) * -0.15;
+        spinX = (1 - easeOut(p)) * -0.25;
+      }
+      const spinZ = t * Math.PI * -2;
+      return { offsetX, offsetY: 0, offsetZ, scale: 1, spinZ, spinX };
+    };
+
+    const inspectKeyframes_knife = (t) => {
+      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+      const easeIn = (x) => x * x * x;
+      const bump = t < 0.5 ? easeOut(t / 0.5) : 1 - easeIn((t - 0.5) / 0.5);
+      const spinZ = (1 - Math.pow(1 - Math.pow(t, 1.2), 3)) * Math.PI * 2.0;
+      return { offsetX: 0, offsetY: 0, offsetZ: 0, scale: 1 + bump * 0.1, spinZ: spinZ * 5 };
+    };
+
+    const inspectKeyframes_tomahawk = (t) => {
+      const spinZ = (1 - Math.pow(1 - Math.pow(t, 1.2), 3)) * Math.PI * 2.0;
+      return { offsetX: 0, offsetY: 0, offsetZ: 0, scale: 1, spinZ: spinZ * -2 };
+    };
+
+    const armKeyframes_disabled = () => ({ offsetX: 0, offsetY: 0, offsetZ: 0, scale: 1 });
+
+    const armKeyframes_revolver = (t) => {
+      const arc = Math.sin(t * Math.PI);
+      return { offsetX: arc * 0.02, offsetY: arc * 0.06, offsetZ: 0, scale: 1, spinZ: 0 };
+    };
+
+    const armKeyframes_vita_right = (t) => {
+      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+      const easeIn = (x) => x * x * x;
+      let offsetX, offsetY, offsetZ;
+      if (t < 0.55) {
+        const p = easeOut(t / 0.55);
+        const arch = 4 * p * (1 - p);
+        offsetX = p * -0.38;
+        offsetY = arch * 0.06;
+        offsetZ = p * -0.05;
+      } else if (t < 0.75) {
+        const p = easeIn((t - 0.55) / 0.2);
+        offsetX = -0.38 + p * 0.38;
+        offsetY = 0;
+        offsetZ = -0.05 + p * 0.05;
+      } else {
+        offsetX = 0;
+        offsetY = 0;
+        offsetZ = 0;
+      }
+      return { offsetX, offsetY, offsetZ, scale: 1, spinZ: 0 };
+    };
+
+    const armKeyframes_vita_left = (t) => {
+      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+      const easeIn = (x) => x * x * x;
+      let offsetZ, offsetX;
+      if (t < 0.6) {
+        offsetZ = easeOut(t / 0.6) * 0.4;
+        offsetX = easeOut(t / 0.6) * -0.4;
+      } else {
+        offsetZ = (1 - easeIn((t - 0.4) / 0.6)) * 0.4;
+        offsetX = (1 - easeIn((t - 0.4) / 0.6)) * -0.4;
+      }
+      return { offsetX, offsetY: 0, offsetZ, scale: 1, spinZ: 0 };
+    };
+
+    const armKeyframes_ar9_right = armKeyframes_vita_right;
+    const armKeyframes_ar9_left = armKeyframes_vita_left;
+    const armKeyframes_m60_right = armKeyframes_vita_right;
+    const armKeyframes_m60_left = armKeyframes_vita_left;
+    const armKeyframes_weatie_right = armKeyframes_vita_right;
+    const armKeyframes_weatie_left = armKeyframes_vita_left;
+    const armKeyframes_lar_right = armKeyframes_vita_right;
+    const armKeyframes_lar_left = armKeyframes_vita_left;
+    const armKeyframes_scar_right = armKeyframes_vita_right;
+    const armKeyframes_scar_left = armKeyframes_vita_left;
+    const armKeyframes_shark = armKeyframes_revolver;
+    const armKeyframes_mac10 = armKeyframes_disabled;
+    const armKeyframes_knife = armKeyframes_disabled;
+
+    const weaponIdToInspectKeyframes = {
+      vita: inspectKeyframes_vita,
+      scar: inspectKeyframes_scar,
+      revolver: inspectKeyframes_revolver,
+      ar9: inspectKeyframes_ar9,
+      mac10: inspectKeyframes_mac10,
+      m60: inspectKeyframes_m60,
+      lar: inspectKeyframes_lar,
+      weatie: inspectKeyframes_weatie,
+      shark: inspectKeyframes_shark,
+      bayonet: inspectKeyframes_knife,
+      tomahawk: inspectKeyframes_tomahawk,
+    };
 
     const armKeyframeMap = {
       vita_right: armKeyframes_vita_right,
@@ -1716,14 +1230,14 @@ window.addEventListener("DOMContentLoaded", async () => {
       weatie_left: armKeyframes_weatie_left,
       bayonet_right: armKeyframes_knife,
       bayonet_left: armKeyframes_knife,
-      rev_right: armKeyframes_rev,
+      revolver_right: armKeyframes_revolver,
       shark_right: armKeyframes_shark,
     };
 
     const weaponNameToId = {
       vita: "vita",
       scar: "scar",
-      revolver: "rev",
+      revolver: "revolver",
       ar9: "ar9",
       mac10: "mac10",
       m60: "m60",
@@ -1735,7 +1249,12 @@ window.addEventListener("DOMContentLoaded", async () => {
     };
 
     const normalizeWeaponName = (raw) =>
-      raw ? raw.trim().toLowerCase().replace(/[\s\-_]/g, "") : null;
+      raw
+        ? raw
+            .trim()
+            .toLowerCase()
+            .replace(/[\s\-_]/g, "")
+        : null;
 
     let domWeaponId = null;
 
@@ -1766,10 +1285,7 @@ window.addEventListener("DOMContentLoaded", async () => {
           }
         } else if (m.type === "childList") {
           for (const node of m.addedNodes) {
-            if (
-              node instanceof HTMLElement &&
-              (node.classList?.contains("weapon-cont") || node.querySelector?.(".weapon-cont"))
-            ) {
+            if (node instanceof HTMLElement && (node.classList?.contains("weapon-cont") || node.querySelector?.(".weapon-cont"))) {
               updateDomWeaponId();
               return;
             }
@@ -1793,45 +1309,84 @@ window.addEventListener("DOMContentLoaded", async () => {
     requestAnimationFrame(bumpGlobalFrame);
 
     const applyZSpin = (mat, angle) => {
-      const cos = Math.cos(angle), sin = Math.sin(angle);
+      const cos = Math.cos(angle),
+        sin = Math.sin(angle);
       const sx = Math.sqrt(mat[0] * mat[0] + mat[1] * mat[1] + mat[2] * mat[2]);
       const sy = Math.sqrt(mat[4] * mat[4] + mat[5] * mat[5] + mat[6] * mat[6]);
-      const x0 = mat[0] / sx, x1 = mat[1] / sx, x2 = mat[2] / sx;
-      const y0 = mat[4] / sy, y1 = mat[5] / sy, y2 = mat[6] / sy;
-      const nx0 = x0 * cos - y0 * sin, nx1 = x1 * cos - y1 * sin, nx2 = x2 * cos - y2 * sin;
-      const ny0 = x0 * sin + y0 * cos, ny1 = x1 * sin + y1 * cos, ny2 = x2 * sin + y2 * cos;
-      mat[0] = nx0 * sx; mat[1] = nx1 * sx; mat[2] = nx2 * sx;
-      mat[4] = ny0 * sy; mat[5] = ny1 * sy; mat[6] = ny2 * sy;
+      const x0 = mat[0] / sx,
+        x1 = mat[1] / sx,
+        x2 = mat[2] / sx;
+      const y0 = mat[4] / sy,
+        y1 = mat[5] / sy,
+        y2 = mat[6] / sy;
+      const nx0 = x0 * cos - y0 * sin,
+        nx1 = x1 * cos - y1 * sin,
+        nx2 = x2 * cos - y2 * sin;
+      const ny0 = x0 * sin + y0 * cos,
+        ny1 = x1 * sin + y1 * cos,
+        ny2 = x2 * sin + y2 * cos;
+      mat[0] = nx0 * sx;
+      mat[1] = nx1 * sx;
+      mat[2] = nx2 * sx;
+      mat[4] = ny0 * sy;
+      mat[5] = ny1 * sy;
+      mat[6] = ny2 * sy;
     };
 
     const applyXSpin = (mat, angle) => {
-      const cos = Math.cos(angle), sin = Math.sin(angle);
+      const cos = Math.cos(angle),
+        sin = Math.sin(angle);
       const sy = Math.sqrt(mat[4] * mat[4] + mat[5] * mat[5] + mat[6] * mat[6]);
       const sz = Math.sqrt(mat[8] * mat[8] + mat[9] * mat[9] + mat[10] * mat[10]);
-      const y0 = mat[4] / sy, y1 = mat[5] / sy, y2 = mat[6] / sy;
-      const z0 = mat[8] / sz, z1 = mat[9] / sz, z2 = mat[10] / sz;
-      const ny0 = y0 * cos - z0 * sin, ny1 = y1 * cos - z1 * sin, ny2 = y2 * cos - z2 * sin;
-      const nz0 = y0 * sin + z0 * cos, nz1 = y1 * sin + z1 * cos, nz2 = y2 * sin + z2 * cos;
-      mat[4] = ny0 * sy; mat[5] = ny1 * sy; mat[6] = ny2 * sy;
-      mat[8] = nz0 * sz; mat[9] = nz1 * sz; mat[10] = nz2 * sz;
+      const y0 = mat[4] / sy,
+        y1 = mat[5] / sy,
+        y2 = mat[6] / sy;
+      const z0 = mat[8] / sz,
+        z1 = mat[9] / sz,
+        z2 = mat[10] / sz;
+      const ny0 = y0 * cos - z0 * sin,
+        ny1 = y1 * cos - z1 * sin,
+        ny2 = y2 * cos - z2 * sin;
+      const nz0 = y0 * sin + z0 * cos,
+        nz1 = y1 * sin + z1 * cos,
+        nz2 = y2 * sin + z2 * cos;
+      mat[4] = ny0 * sy;
+      mat[5] = ny1 * sy;
+      mat[6] = ny2 * sy;
+      mat[8] = nz0 * sz;
+      mat[9] = nz1 * sz;
+      mat[10] = nz2 * sz;
     };
 
     const applyYSpin = (mat, angle) => {
-      const cos = Math.cos(angle), sin = Math.sin(angle);
+      const cos = Math.cos(angle),
+        sin = Math.sin(angle);
       const sx = Math.sqrt(mat[0] * mat[0] + mat[1] * mat[1] + mat[2] * mat[2]);
       const sz = Math.sqrt(mat[8] * mat[8] + mat[9] * mat[9] + mat[10] * mat[10]);
-      const x0 = mat[0] / sx, x1 = mat[1] / sx, x2 = mat[2] / sx;
-      const z0 = mat[8] / sz, z1 = mat[9] / sz, z2 = mat[10] / sz;
-      const nx0 = x0 * cos + z0 * sin, nx1 = x1 * cos + z1 * sin, nx2 = x2 * cos + z2 * sin;
-      const nz0 = -x0 * sin + z0 * cos, nz1 = -x1 * sin + z1 * cos, nz2 = -x2 * sin + z2 * cos;
-      mat[0] = nx0 * sx; mat[1] = nx1 * sx; mat[2] = nx2 * sx;
-      mat[8] = nz0 * sz; mat[9] = nz1 * sz; mat[10] = nz2 * sz;
+      const x0 = mat[0] / sx,
+        x1 = mat[1] / sx,
+        x2 = mat[2] / sx;
+      const z0 = mat[8] / sz,
+        z1 = mat[9] / sz,
+        z2 = mat[10] / sz;
+      const nx0 = x0 * cos + z0 * sin,
+        nx1 = x1 * cos + z1 * sin,
+        nx2 = x2 * cos + z2 * sin;
+      const nz0 = -x0 * sin + z0 * cos,
+        nz1 = -x1 * sin + z1 * cos,
+        nz2 = -x2 * sin + z2 * cos;
+      mat[0] = nx0 * sx;
+      mat[1] = nx1 * sx;
+      mat[2] = nx2 * sx;
+      mat[8] = nz0 * sz;
+      mat[9] = nz1 * sz;
+      mat[10] = nz2 * sz;
     };
 
     const WEAPON_AXIS_MAP = {
       vita: { rx: "x", ry: "y", rz: "z" },
       scar: { rx: "x", ry: "y", rz: "z" },
-      rev: { rx: "x", ry: "z", rz: "y" },
+      revolver: { rx: "x", ry: "z", rz: "y" },
       ar9: { rx: "x", ry: "z", rz: "y" },
       mac10: { rx: "x", ry: "y", rz: "z" },
       m60: { rx: "x", ry: "y", rz: "z" },
@@ -1844,37 +1399,35 @@ window.addEventListener("DOMContentLoaded", async () => {
 
     const applyMappedRotation = (mat, weaponId, rotX, rotY, rotZ) => {
       const map = WEAPON_AXIS_MAP[weaponId] || WEAPON_AXIS_MAP.vita;
-      const radX = rotX * Math.PI / 180;
-      const radY = rotY * Math.PI / 180;
-      const radZ = rotZ * Math.PI / 180;
-
-      const applyFunc = {
-        "x": applyXSpin,
-        "y": applyYSpin,
-        "z": applyZSpin,
-      };
-
+      const radX = (rotX * Math.PI) / 180;
+      const radY = (rotY * Math.PI) / 180;
+      const radZ = (rotZ * Math.PI) / 180;
+      const applyFunc = { x: applyXSpin, y: applyYSpin, z: applyZSpin };
       applyFunc[map.rx](mat, radX);
       applyFunc[map.ry](mat, radY);
       applyFunc[map.rz](mat, radZ);
     };
 
-    let currentInspectKeybind = settings.inspect_keybind;
+    let currentInspectKeybind = readSetting("inspect_keybind", "KeyF");
 
     const inspectKeybindHandler = (e) => {
       let inputName;
       if (e.type === "mousedown") {
         switch (e.button) {
-          case 3: inputName = "MouseButton4"; break;
-          case 4: inputName = "MouseButton5"; break;
-          default: inputName = `MouseButton${e.button + 1}`;
+          case 3:
+            inputName = "MouseButton4";
+            break;
+          case 4:
+            inputName = "MouseButton5";
+            break;
+          default:
+            inputName = `MouseButton${e.button + 1}`;
         }
       } else if (e.type === "keydown") {
         inputName = e.code;
       }
       if (inputName === currentInspectKeybind) {
         if (document.querySelector("input:focus")) return;
-        updateInspectDurations();
         inspectStart = performance.now();
         inspectingWeaponId = domWeaponId || null;
         e.preventDefault();
@@ -1893,21 +1446,26 @@ window.addEventListener("DOMContentLoaded", async () => {
     const hsvToRgb = (hue) => {
       hue = ((hue % 360) + 360) % 360;
       const sector = Math.floor(hue / 60);
-      const f = (hue / 60) - sector;
+      const f = hue / 60 - sector;
       const q = Math.round((1 - f) * 255);
       const t = Math.round(f * 255);
       switch (sector) {
-        case 0: return [255, t, 0];
-        case 1: return [q, 255, 0];
-        case 2: return [0, 255, t];
-        case 3: return [0, q, 255];
-        case 4: return [t, 0, 255];
-        default: return [255, 0, q];
+        case 0:
+          return [255, t, 0];
+        case 1:
+          return [q, 255, 0];
+        case 2:
+          return [0, 255, t];
+        case 3:
+          return [0, q, 255];
+        case 4:
+          return [t, 0, 255];
+        default:
+          return [255, 0, q];
       }
     };
 
-    const colMag = (m, i) =>
-      Math.sqrt(m[i] * m[i] + m[i + 1] * m[i + 1] + m[i + 2] * m[i + 2]);
+    const colMag = (m, i) => Math.sqrt(m[i] * m[i] + m[i + 1] * m[i + 1] + m[i + 2] * m[i + 2]);
 
     const hookedContexts = new WeakSet();
     const originalGetCtx = HTMLCanvasElement.prototype.getContext;
@@ -1935,24 +1493,18 @@ window.addEventListener("DOMContentLoaded", async () => {
       const origBindTexture = gl.bindTexture.bind(gl);
 
       let activeThisFrame = false;
-      let lastBoundTexture = null;
       let seenMatricesThisFrame = new Set();
       let lastFrameTime = -1;
       let tomahawkSigCount = 0;
-
       let lastTomahawkFrameId = -1;
-
       let lastClearMask = 0;
+
+      let pendingRestoreTex = undefined;
 
       const origClear = gl.clear.bind(gl);
       gl.clear = (mask) => {
         lastClearMask = mask;
         return origClear(mask);
-      };
-
-      gl.bindTexture = (target, texture) => {
-        if (target === gl.TEXTURE_2D) lastBoundTexture = texture;
-        return origBindTexture(target, texture);
       };
 
       gl.uniformMatrix4fv = (location, transpose, data, srcOffset, srcLength) => {
@@ -1971,20 +1523,15 @@ window.addEventListener("DOMContentLoaded", async () => {
 
         if (data && data.length >= 16) {
           const offset = srcOffset ?? 0;
-          const slice = (offset === 0 && data.length === 16)
-            ? data
-            : (data.subarray ? data.subarray(offset, offset + 16) : data.slice(offset, offset + 16));
+          const slice = offset === 0 && data.length === 16 ? data : data.subarray ? data.subarray(offset, offset + 16) : data.slice(offset, offset + 16);
 
-          if (
-            Math.abs(slice[3]) > 0.001 ||
-            Math.abs(slice[7]) > 0.001 ||
-            Math.abs(slice[11]) > 0.001 ||
-            Math.abs(slice[15] - 1.0) > 0.001
-          ) {
+          if (Math.abs(slice[3]) > 0.001 || Math.abs(slice[7]) > 0.001 || Math.abs(slice[11]) > 0.001 || Math.abs(slice[15] - 1.0) > 0.001) {
             return origUniformMatrix4fv(location, transpose, data, srcOffset, srcLength);
           }
 
-          const s0 = colMag(slice, 0), s1 = colMag(slice, 4), s2 = colMag(slice, 8);
+          const s0 = colMag(slice, 0),
+            s1 = colMag(slice, 4),
+            s2 = colMag(slice, 8);
           const sig = `${s0.toFixed(2)},${s1.toFixed(2)},${s2.toFixed(2)}`;
 
           const isCollidingSig = sig === "1.54,0.92,2.24";
@@ -2007,7 +1554,7 @@ window.addEventListener("DOMContentLoaded", async () => {
             }
             seenMatricesThisFrame.add(fp);
 
-            const currentWeaponId = domWeaponId || "vita";
+            const currentWeaponId = domWeaponId;
             window.currentWeaponId = currentWeaponId;
 
             if (inspectStart !== null && inspectingWeaponId !== null && inspectingWeaponId !== currentWeaponId) {
@@ -2015,48 +1562,45 @@ window.addEventListener("DOMContentLoaded", async () => {
               inspectingWeaponId = null;
             }
 
-            const weaponCfg = window.dawnWeaponConfig?.getSettings?.(currentWeaponId) || {
-              size: 1.0, offsetX: 0, offsetY: 0, offsetZ: 0,
-              rotationX: 0, rotationY: 0, rotationZ: 0
-            };
-            const globalCfg = window.dawnWeaponConfig || {
-              wireframe: false, colorEnabled: false, rgb: false, colorHex: "#FFFFFF"
-            };
-
-            if (globalCfg.colorEnabled) {
-              if (globalCfg.rgb) {
-                const [r, g, b] = hsvToRgb((now / 3000) * 360);
-                rgbPixel[0] = r; rgbPixel[1] = g; rgbPixel[2] = b; rgbPixel[3] = 255;
-                origBindTexture(gl.TEXTURE_2D, rgbTexture);
-                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, rgbPixel);
-              } else {
-                const hex = globalCfg.colorHex.replace("#", "");
-                rgbPixel[0] = parseInt(hex.substring(0, 2), 16);
-                rgbPixel[1] = parseInt(hex.substring(2, 4), 16);
-                rgbPixel[2] = parseInt(hex.substring(4, 6), 16);
-                rgbPixel[3] = 255;
-                origBindTexture(gl.TEXTURE_2D, rgbTexture);
-                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, rgbPixel);
-              }
-            } else if (gl.getParameter(gl.TEXTURE_BINDING_2D) === rgbTexture && lastBoundTexture) {
-              origBindTexture(gl.TEXTURE_2D, lastBoundTexture);
-            }
-
-            latchedWeaponSig = sig;
-            if (sig !== settlerSig) {
-              settlerSig = sig;
-              settlerSince = now;
-            }
-
-            let base = weaponCfg.size ?? 1.0;
+            const base = getWeaponSetting(currentWeaponId, "size", 1.0);
             matBuf.set(slice);
             let scale = base;
-            let ox = weaponCfg.offsetX ?? 0;
-            let oy = weaponCfg.offsetY ?? 0;
-            let oz = weaponCfg.offsetZ ?? 0;
+            let ox = getWeaponSetting(currentWeaponId, "offset_x", 0);
+            let oy = getWeaponSetting(currentWeaponId, "offset_y", 0);
+            let oz = getWeaponSetting(currentWeaponId, "offset_z", 0);
             let spinZAngle = 0;
             let spinXAngle = 0;
             let spinYAngle = 0;
+
+            const weaponWireframe = !!readSetting("weapon_wireframe", false);
+            const weaponColorEnabled = !!readSetting("weapon_color", false);
+            const weaponRgb = !!readSetting("weapon_rainbow", false);
+            const weaponColorHex = readSetting("weapon_color_hex", "#FFFFFF") || "#FFFFFF";
+
+            if (weaponColorEnabled) {
+              if (pendingRestoreTex === undefined) {
+                pendingRestoreTex = gl.getParameter(gl.TEXTURE_BINDING_2D);
+              }
+
+              if (weaponRgb) {
+                const [r, g, b] = hsvToRgb((now / 3000) * 360);
+                rgbPixel[0] = r;
+                rgbPixel[1] = g;
+                rgbPixel[2] = b;
+                rgbPixel[3] = 255;
+              } else {
+                const hex = String(weaponColorHex).replace("#", "");
+                const rVal = parseInt(hex.substring(0, 2), 16);
+                const gVal = parseInt(hex.substring(2, 4), 16);
+                const bVal = parseInt(hex.substring(4, 6), 16);
+                rgbPixel[0] = Number.isNaN(rVal) ? 255 : rVal;
+                rgbPixel[1] = Number.isNaN(gVal) ? 255 : gVal;
+                rgbPixel[2] = Number.isNaN(bVal) ? 255 : bVal;
+                rgbPixel[3] = 255;
+              }
+              origBindTexture(gl.TEXTURE_2D, rgbTexture);
+              gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, rgbPixel);
+            }
 
             if (inspectStart !== null && inspectingWeaponId === null) {
               inspectingWeaponId = currentWeaponId;
@@ -2064,7 +1608,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 
             if (inspectStart !== null && inspectingWeaponId === currentWeaponId) {
               const animFn = weaponIdToInspectKeyframes[currentWeaponId];
-              const inspectDuration = INSPECT_DURATIONS[currentWeaponId] ?? 1000;
+              const inspectDuration = getInspectDuration(currentWeaponId);
               if (animFn) {
                 const elapsed = now - inspectStart;
                 const t = Math.min(elapsed / inspectDuration, 1.0);
@@ -2086,20 +1630,32 @@ window.addEventListener("DOMContentLoaded", async () => {
               }
             }
 
-            matBuf[0] *= scale; matBuf[1] *= scale; matBuf[2] *= scale;
-            matBuf[4] *= scale; matBuf[5] *= scale; matBuf[6] *= scale;
-            matBuf[8] *= scale; matBuf[9] *= scale; matBuf[10] *= scale;
+            matBuf[0] *= scale;
+            matBuf[1] *= scale;
+            matBuf[2] *= scale;
+            matBuf[4] *= scale;
+            matBuf[5] *= scale;
+            matBuf[6] *= scale;
+            matBuf[8] *= scale;
+            matBuf[9] *= scale;
+            matBuf[10] *= scale;
             matBuf[12] += ox;
             matBuf[13] += oy;
             matBuf[14] += oz;
 
-            applyMappedRotation(matBuf, currentWeaponId, weaponCfg.rotationX || 0, weaponCfg.rotationY || 0, weaponCfg.rotationZ || 0);
+            applyMappedRotation(
+              matBuf,
+              currentWeaponId,
+              getWeaponSetting(currentWeaponId, "rotation_x", 0),
+              getWeaponSetting(currentWeaponId, "rotation_y", 0),
+              getWeaponSetting(currentWeaponId, "rotation_z", 0),
+            );
 
             if (spinZAngle !== 0) applyZSpin(matBuf, spinZAngle);
             if (spinXAngle !== 0) applyXSpin(matBuf, spinXAngle);
             if (spinYAngle !== 0) applyYSpin(matBuf, spinYAngle);
 
-            if (globalCfg.wireframe) activeThisFrame = true;
+            if (weaponWireframe) activeThisFrame = true;
 
             return origUniformMatrix4fv(location, transpose, matBuf, 0, 16);
           }
@@ -2117,22 +1673,8 @@ window.addEventListener("DOMContentLoaded", async () => {
 
             const currentWeaponId = domWeaponId || "vita";
 
-            const armSigToType = {
-              "1.40,1.40,1.40": "right",
-              "1.99,1.68,2.11": "left",
-              "1.11,1.11,1.77": "right",
-              "1.50,1.40,1.76": "right",
-              "1.13,0.85,1.77": "left",
-              "0.81,1.08,1.38": "left",
-              "1.52,1.15,1.61": "right",
-              "1.16,1.48,0.94": "right",
-              "1.54,0.92,2.24": "right",
-              "1.08,1.10,1.77": "left",
-              "1.88,1.40,1.88": "left"
-            };
-
             let armType = armSigToType[sig] || "left";
-            if (sig === "1.40,1.40,1.40" && window.currentWeaponId === "tomahawk") {
+            if (sig === "1.40,1.40,1.40" && currentWeaponId === "tomahawk") {
               armType = slice[12] > 0 ? "right" : "left";
             }
 
@@ -2140,18 +1682,12 @@ window.addEventListener("DOMContentLoaded", async () => {
               return origUniformMatrix4fv(location, transpose, data, srcOffset, srcLength);
             }
 
-            const armSettings = window.dawnWeaponConfig?.getArmSettings?.(currentWeaponId, armType) || {
-              size: 1.0, offsetX: 0, offsetY: 0, offsetZ: 0,
-              rotationX: 0, rotationY: 0, rotationZ: 0,
-              wireframe: false, colorEnabled: false, colorHex: "#FFFFFF", rgb: false
-            };
-
             matBuf.set(slice);
 
-            let armScale = armSettings.size ?? 1.0;
-            let ox = armSettings.offsetX ?? 0;
-            let oy = armSettings.offsetY ?? 0;
-            let oz = armSettings.offsetZ ?? 0;
+            let armScale = getArmSetting(currentWeaponId, armType, "size", 1.0);
+            let ox = getArmSetting(currentWeaponId, armType, "offset_x", 0);
+            let oy = getArmSetting(currentWeaponId, armType, "offset_y", 0);
+            let oz = getArmSetting(currentWeaponId, armType, "offset_z", 0);
 
             let armSpinX = 0;
             let armSpinY = 0;
@@ -2159,7 +1695,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 
             if (inspectStart !== null && inspectingWeaponId === currentWeaponId) {
               const armFn = armKeyframeMap[`${currentWeaponId}_${armType}`] ?? null;
-              const inspectDuration = INSPECT_DURATIONS[currentWeaponId] ?? 1000;
+              const inspectDuration = getInspectDuration(currentWeaponId);
               if (armFn !== null) {
                 const elapsed = now - inspectStart;
                 const t = Math.min(elapsed / inspectDuration, 1.0);
@@ -2173,39 +1709,62 @@ window.addEventListener("DOMContentLoaded", async () => {
               }
             }
 
-            matBuf[0] *= armScale; matBuf[1] *= armScale; matBuf[2] *= armScale;
-            matBuf[4] *= armScale; matBuf[5] *= armScale; matBuf[6] *= armScale;
-            matBuf[8] *= armScale; matBuf[9] *= armScale; matBuf[10] *= armScale;
+            matBuf[0] *= armScale;
+            matBuf[1] *= armScale;
+            matBuf[2] *= armScale;
+            matBuf[4] *= armScale;
+            matBuf[5] *= armScale;
+            matBuf[6] *= armScale;
+            matBuf[8] *= armScale;
+            matBuf[9] *= armScale;
+            matBuf[10] *= armScale;
             matBuf[12] += ox;
             matBuf[13] += oy;
             matBuf[14] += oz;
 
-            applyMappedRotation(matBuf, currentWeaponId, armSettings.rotationX || 0, armSettings.rotationY || 0, armSettings.rotationZ || 0);
+            applyMappedRotation(
+              matBuf,
+              currentWeaponId,
+              getArmSetting(currentWeaponId, armType, "rotation_x", 0),
+              getArmSetting(currentWeaponId, armType, "rotation_y", 0),
+              getArmSetting(currentWeaponId, armType, "rotation_z", 0),
+            );
 
             if (armSpinX !== 0) applyXSpin(matBuf, armSpinX);
             if (armSpinY !== 0) applyYSpin(matBuf, armSpinY);
             if (armSpinZ !== 0) applyZSpin(matBuf, armSpinZ);
 
-            if (armSettings.colorEnabled) {
-              if (armSettings.rgb) {
-                const [r, g, b] = hsvToRgb((now / 3000) * 360);
-                rgbPixel[0] = r; rgbPixel[1] = g; rgbPixel[2] = b; rgbPixel[3] = 255;
-                origBindTexture(gl.TEXTURE_2D, rgbTexture);
-                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, rgbPixel);
-              } else {
-                const hex = (armSettings.colorHex || "#FFFFFF").replace("#", "");
-                rgbPixel[0] = parseInt(hex.substring(0, 2), 16);
-                rgbPixel[1] = parseInt(hex.substring(2, 4), 16);
-                rgbPixel[2] = parseInt(hex.substring(4, 6), 16);
-                rgbPixel[3] = 255;
-                origBindTexture(gl.TEXTURE_2D, rgbTexture);
-                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, rgbPixel);
+            const armWireframe = !!readSetting("arm_wireframe", false);
+            const armColorEnabled = !!readSetting("arm_color", false);
+            const armRgb = !!readSetting("arm_rainbow", false);
+            const armColorHex = readSetting("arm_color_hex", "#FFFFFF") || "#FFFFFF";
+
+            if (armColorEnabled) {
+              if (pendingRestoreTex === undefined) {
+                pendingRestoreTex = gl.getParameter(gl.TEXTURE_BINDING_2D);
               }
-            } else if (lastBoundTexture) {
-              origBindTexture(gl.TEXTURE_2D, lastBoundTexture);
+
+              if (armRgb) {
+                const [r, g, b] = hsvToRgb((now / 3000) * 360);
+                rgbPixel[0] = r;
+                rgbPixel[1] = g;
+                rgbPixel[2] = b;
+                rgbPixel[3] = 255;
+              } else {
+                const hex = String(armColorHex).replace("#", "");
+                const rVal = parseInt(hex.substring(0, 2), 16);
+                const gVal = parseInt(hex.substring(2, 4), 16);
+                const bVal = parseInt(hex.substring(4, 6), 16);
+                rgbPixel[0] = Number.isNaN(rVal) ? 255 : rVal;
+                rgbPixel[1] = Number.isNaN(gVal) ? 255 : gVal;
+                rgbPixel[2] = Number.isNaN(bVal) ? 255 : bVal;
+                rgbPixel[3] = 255;
+              }
+              origBindTexture(gl.TEXTURE_2D, rgbTexture);
+              gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, rgbPixel);
             }
 
-            if (armSettings.wireframe) activeThisFrame = true;
+            if (armWireframe) activeThisFrame = true;
 
             return origUniformMatrix4fv(location, transpose, matBuf, 0, 16);
           }
@@ -2214,34 +1773,42 @@ window.addEventListener("DOMContentLoaded", async () => {
         return origUniformMatrix4fv(location, transpose, data, srcOffset, srcLength);
       };
 
-      const toWireframe = (mode) =>
-        (mode === gl.TRIANGLES || mode === gl.TRIANGLE_FAN || mode === gl.TRIANGLE_STRIP)
-          ? gl.LINES : mode;
+      const toWireframe = (mode) => (mode === gl.TRIANGLES || mode === gl.TRIANGLE_FAN || mode === gl.TRIANGLE_STRIP ? gl.LINES : mode);
 
       gl.drawArrays = (mode, first, count) => {
         if (activeThisFrame) mode = toWireframe(mode);
         activeThisFrame = false;
         seenMatricesThisFrame.clear();
-        return origDrawArrays(mode, first, count);
+        const r = origDrawArrays(mode, first, count);
+        if (pendingRestoreTex !== undefined) {
+          if (pendingRestoreTex !== null) origBindTexture(gl.TEXTURE_2D, pendingRestoreTex);
+          pendingRestoreTex = undefined;
+        }
+        return r;
       };
 
       gl.drawElements = (mode, count, type, offset) => {
         if (activeThisFrame) mode = toWireframe(mode);
         activeThisFrame = false;
         seenMatricesThisFrame.clear();
-        return origDrawElements(mode, count, type, offset);
+        const r = origDrawElements(mode, count, type, offset);
+        if (pendingRestoreTex !== undefined) {
+          if (pendingRestoreTex !== null) origBindTexture(gl.TEXTURE_2D, pendingRestoreTex);
+          pendingRestoreTex = undefined;
+        }
+        return r;
       };
 
       return ctx;
     };
-  }
+  };
 
   initWeaponMods();
 
   const handleLobby = () => {
     const warmupAPI = () => {
-      fetch("https://kirka.onrender.com")
-    }
+      fetch("https://kirka.onrender.com");
+    };
     warmupAPI();
 
     initRoomPresets();
@@ -2252,13 +1819,65 @@ window.addEventListener("DOMContentLoaded", async () => {
       lobbyNews(settings);
       juiceDiscordButton();
 
+      window.addLobbyPing = () => {
+        if (!ipcRenderer.sendSync("get-settings").lobby_ping) {
+          document.querySelector(".lobby-ping")?.remove();
+          return;
+        }
+        if (document.querySelector(".lobby-ping")) return;
+        const regionEl = document.querySelector(".select-region");
+        const pingEl = document.createElement("div");
+        pingEl.className = "lobby-ping";
+        pingEl.textContent = "FETCHING...";
+        regionEl.insertAdjacentElement("beforebegin", pingEl);
+
+        let running = false;
+        let intervalId = null;
+
+        const updatePing = async () => {
+          if (running) return;
+          running = true;
+          const region = regionEl.textContent.trim();
+          const ms = await ipcRenderer.invoke("ping-url", `https://${region}.kirka.io`);
+
+          if (!ipcRenderer.sendSync("get-settings").lobby_ping) {
+            clearInterval(intervalId);
+            pingEl.remove();
+            running = false;
+            return;
+          }
+
+          pingEl.classList.remove("good", "medium", "bad");
+
+          if (ms !== null) {
+            pingEl.textContent = `${ms} ms`;
+            if (ms <= 50) {
+              pingEl.classList.add("good");
+            } else if (ms <= 150) {
+              pingEl.classList.add("medium");
+            } else {
+              pingEl.classList.add("bad");
+            }
+          } else {
+            pingEl.textContent = "offline";
+            pingEl.classList.add("bad");
+          }
+
+          running = false;
+        };
+
+        updatePing();
+        intervalId = setInterval(updatePing, 1000);
+      };
+      addLobbyPing();
+
       window.createQuickJoin = () => {
         if (!settings.quickjoin_button) return;
-        const playContent = document.querySelector(".play-content")
+        const playContent = document.querySelector(".play-content");
         const playContentUp = playContent.querySelector(".play-content-up");
 
         const quickJoin = playContentUp.cloneNode(true);
-        quickJoin.classList.add("quickjoin-container")
+        quickJoin.classList.add("quickjoin-container");
         quickJoin.querySelector(".create-btn")?.remove();
         quickJoin.style.marginBottom = ".5rem";
 
@@ -2283,12 +1902,12 @@ window.addEventListener("DOMContentLoaded", async () => {
                 message: `Empty Clipboard!<br>Copy a lobby/game code first`,
               });
               return;
-            } else if (!text.startsWith("https://kirka.io/") && !regions.some(prefix => text.startsWith(prefix))) {
+            } else if (!text.startsWith("https://kirka.io/") && !regions.some((prefix) => text.startsWith(prefix))) {
               customNotification({
                 message: `<span style="color: gray;">${text.length > 100 ? text.slice(0, 100) + "…" : text}</span> is not a valid lobby/game code!`,
               });
               return;
-            };
+            }
 
             playContentUp.querySelector(".join-btn")?.click();
 
@@ -2307,12 +1926,12 @@ window.addEventListener("DOMContentLoaded", async () => {
         });
 
         playContent.insertBefore(quickJoin, playContentUp);
-      }
+      };
 
       document.addEventListener("juice-settings-changed", ({ detail }) => {
         if (detail.setting === "quickjoin_button") {
           settings.quickjoin_button = detail.value;
-          const el = document.querySelector(".quickjoin-container")
+          const el = document.querySelector(".quickjoin-container");
           if (el) el.remove();
           else createQuickJoin();
         }
@@ -2320,22 +1939,18 @@ window.addEventListener("DOMContentLoaded", async () => {
 
       createQuickJoin();
 
-      const customizations = JSON.parse(
-        localStorage.getItem("juice-customizations")
-      );
+      const customizations = JSON.parse(localStorage.getItem("juice-customizations"));
 
       shortIdCard = document.querySelector(".avatar-info .username").textContent.trim().split("#")[1];
       localStorage.setItem("user-id", shortIdCard);
 
-      const lobbyNickname = document.querySelector(
-        ".team-section .heads .nickname"
-      );
+      const lobbyNickname = document.querySelector(".team-section .heads .nickname");
 
       const nicknames = JSON.parse(localStorage.getItem("nicknames") || "{}");
       const entry = nicknames[shortIdCard];
 
       if (entry?.nickname) {
-        const textNode = [...lobbyNickname.childNodes].find(n => n.nodeType === Node.TEXT_NODE);
+        const textNode = [...lobbyNickname.childNodes].find((n) => n.nodeType === Node.TEXT_NODE);
         if (textNode) textNode.textContent = entry.nickname;
       }
 
@@ -2436,28 +2051,28 @@ window.addEventListener("DOMContentLoaded", async () => {
       };
 
       window.removeUserCustomizations = () => {
-        const nickname = document.querySelectorAll(".nickname").forEach((nick) => {
+        document.querySelectorAll(".nickname").forEach((nick) => {
           nick.style = "display: flex; align-items: flex-end; gap: 0.25rem;";
           nick.querySelector(".juice-badges")?.remove();
         });
       };
 
       window.removeClanCustomizations = () => {
-        const clan = document.querySelectorAll(".clan-tag").forEach((cl) => {
+        document.querySelectorAll(".clan-tag").forEach((cl) => {
           cl.style = "display: flex; align-items: flex-end; gap: 0.25rem;";
         });
       };
 
       window.removeGradientAnimations = () => {
-        const nickname = document.querySelectorAll(".nickname").forEach((nick) => {
+        document.querySelectorAll(".nickname").forEach((nick) => {
           nick.style.animation = "none";
           nick.style.backgroundSize = "100% 100%";
         });
-        const clan = document.querySelectorAll(".clan-tag").forEach((cl) => {
+        document.querySelectorAll(".clan-tag").forEach((cl) => {
           cl.style.animation = "none";
           cn.style.backgroundSize = "100% 100%";
         });
-      }
+      };
 
       if (settings.customizations) applyUserCustomizations();
       if (settings.customizations) applyClanCustomizations();
@@ -2473,17 +2088,13 @@ window.addEventListener("DOMContentLoaded", async () => {
       const formatExpValues = (expValues) => {
         if (!expValues.dataset.formatted) {
           const [current, max] = expValues.innerText.split("/");
-          expValues.innerText = `${parseInt(current).toLocaleString()}/${parseInt(
-            max
-          ).toLocaleString()}`;
+          expValues.innerText = `${parseInt(current).toLocaleString()}/${parseInt(max).toLocaleString()}`;
           expValues.dataset.formatted = true;
         }
       };
 
       const formatQuests = () => {
-        const quests = document.querySelectorAll(
-          ".right-interface > .quests .quest"
-        );
+        const quests = document.querySelectorAll(".right-interface > .quests .quest");
 
         quests.forEach((quest) => {
           const amounts = quest.querySelectorAll(".amount");
@@ -2491,21 +2102,14 @@ window.addEventListener("DOMContentLoaded", async () => {
 
           if (progress2 && !progress2.dataset.formatted) {
             const [progressAmt, progressMax] = progress2.innerText.split("/");
-            progress2.innerText = `${parseInt(
-              progressAmt
-            ).toLocaleString()}/${parseInt(progressMax).toLocaleString()}`;
+            progress2.innerText = `${parseInt(progressAmt).toLocaleString()}/${parseInt(progressMax).toLocaleString()}`;
             progress2.dataset.formatted = true;
           }
 
           amounts.forEach((amount) => {
             if (!amount.dataset.formatted) {
-              const formatted = parseInt(
-                amount.innerText.split(" ")[0]
-              ).toLocaleString();
-              amount.innerHTML = amount.innerHTML.replace(
-                amount.innerText.split(" ")[0],
-                formatted
-              );
+              const formatted = parseInt(amount.innerText.split(" ")[0]).toLocaleString();
+              amount.innerHTML = amount.innerHTML.replace(amount.innerText.split(" ")[0], formatted);
               amount.dataset.formatted = true;
             }
           });
@@ -2515,12 +2119,8 @@ window.addEventListener("DOMContentLoaded", async () => {
       const interval = setInterval(() => {
         const moneys = document.querySelectorAll(".moneys > .card-cont");
         const expValues = document.querySelector(".exp-values");
-        const quests = document.querySelectorAll(
-          ".right-interface > .quests .quest"
-        );
-        const questsTabs = document.querySelector(
-          ".right-interface > .quests .tabs"
-        );
+        const quests = document.querySelectorAll(".right-interface > .quests .quest");
+        const questsTabs = document.querySelector(".right-interface > .quests .tabs");
 
         if (moneys.length && expValues && quests.length && questsTabs) {
           clearInterval(interval);
@@ -2539,9 +2139,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   const handleServers = async () => {
     const settings = ipcRenderer.sendSync("get-settings");
 
-    const mapImages = await fetch(
-      "https://raw.githubusercontent.com/AwesomeSam9523/KirkaSkins/refs/heads/main/maps/full_mapimages.json"
-    ).then((res) => res.json());
+    const mapImages = await fetch("https://raw.githubusercontent.com/AwesomeSam9523/KirkaSkins/refs/heads/main/maps/full_mapimages.json").then((res) => res.json());
 
     for (const key of Object.keys(mapImages)) {
       if (!mapImages[key].includes("https")) {
@@ -2586,7 +2184,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 
       if (joinText.innerHTML === "spec") return;
       joinText.innerHTML = "spec";
-      joinBtn.style.filter = "grayscale(0.8)"
+      joinBtn.style.filter = "grayscale(0.8)";
 
       if (joinBtn._clickHandler) {
         joinBtn.removeEventListener("click", joinBtn._clickHandler);
@@ -2601,7 +2199,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       const joinText = joinBtn.querySelector(".text");
 
       joinText.innerHTML = "join";
-      joinBtn.style.filter = "none"
+      joinBtn.style.filter = "none";
 
       if (joinBtn._clickHandler) {
         joinBtn.removeEventListener("click", joinBtn._clickHandler);
@@ -2613,14 +2211,14 @@ window.addEventListener("DOMContentLoaded", async () => {
       document.querySelectorAll(".server").forEach((server) => {
         if (server.classList.contains("is-locked") && settings.spectate_full_games) addSpectateButton(server);
         else removeSpectateButton(server);
-      })
+      });
 
       new MutationObserver(() => {
         document.querySelectorAll(".server").forEach((server) => {
           if (server.classList.contains("is-locked") && settings.spectate_full_games) addSpectateButton(server);
           else removeSpectateButton(server);
-        })
-      }).observe(document.querySelector(".servers .list-cont>.list"), { childList: true, characterData: true })
+        });
+      }).observe(document.querySelector(".servers .list-cont>.list"), { childList: true, characterData: true });
     }
 
     if (!window.servers) {
@@ -2642,7 +2240,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         if (e.key === "Shift" || e.key === "Control") {
           isKeyPressed = false;
           if (hoveredAuthorEl) {
-            hoveredAuthorEl.style.textDecoration = "none";;
+            hoveredAuthorEl.style.textDecoration = "none";
           }
         }
       });
@@ -2778,7 +2376,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       container.appendChild(cancelDiv);
 
       chatLabel.insertAdjacentElement("afterend", container);
-    }
+    };
 
     if (settings.show_trade_buttons) createTradeButtons();
 
@@ -2808,10 +2406,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     }
 
     const setInputValue = (value, cursorPos) => {
-      const nativeSetter = Object.getOwnPropertyDescriptor(
-        window.HTMLInputElement.prototype,
-        "value"
-      ).set;
+      const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
       nativeSetter.call(input, value);
       input.dispatchEvent(new Event("input", { bubbles: true }));
       if (cursorPos != null) {
@@ -3130,7 +2725,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     });
   };
 
-  let disconnectObservers = () => { };
+  let disconnectObservers = () => {};
 
   const handleProfile = () => {
     disconnectObservers();
@@ -3225,9 +2820,13 @@ window.addEventListener("DOMContentLoaded", async () => {
 
         const closeModal = () => {
           overlay.classList.remove("visible");
-          overlay.addEventListener("transitionend", () => {
-            overlay.remove();
-          }, { once: true });
+          overlay.addEventListener(
+            "transitionend",
+            () => {
+              overlay.remove();
+            },
+            { once: true },
+          );
         };
 
         const resetNickname = () => {
@@ -3302,7 +2901,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 
       const statMap = {};
 
-      statistics.forEach(stat => {
+      statistics.forEach((stat) => {
         const name = stat.querySelector(".stat-name")?.innerText?.toLowerCase();
         const valueElem = stat.querySelector(".stat-value");
         if (!name || !valueElem) return;
@@ -3351,15 +2950,14 @@ window.addEventListener("DOMContentLoaded", async () => {
       const entry = nicknames[shortId];
 
       if (entry?.nickname) {
-        const textNode = [...nickname.childNodes].find(n => n.nodeType === Node.TEXT_NODE);
+        const textNode = [...nickname.childNodes].find((n) => n.nodeType === Node.TEXT_NODE);
         if (textNode) textNode.textContent = entry.nickname;
       }
 
       if (settings.customizations) {
         const clan = profile.querySelector(".clan-tag");
         profile.querySelector(".you").style = "width: 100%";
-        nickname.style.cssText +=
-          "display: flex; align-items: flex-end; gap: 0.25rem; overflow: unset !important;";
+        nickname.style.cssText += "display: flex; align-items: flex-end; gap: 0.25rem; overflow: unset !important;";
         profile.style = "width: unset; min-width: 60rem;";
         if (content) content.style = "width: 36.5rem; flex-shrink: 0;";
 
@@ -3394,11 +2992,15 @@ window.addEventListener("DOMContentLoaded", async () => {
         const savedBadges = JSON.parse(localStorage.getItem("badgeSettings") || "null");
         const savedShadow = JSON.parse(localStorage.getItem("gradientShadowSettings") || "null");
 
-        const gradientData = customs?.gradient || (settings.local_customizations && isOwnProfile && savedGradient ? {
-          rot: `${savedGradient.rotation}deg`,
-          stops: savedGradient.colors.map(c => c.hex),
-          shadow: savedShadow ? (savedShadow.intensity > 0 ? `0px 0px ${savedShadow.intensity}px ${savedShadow.color}` : "none") : "none"
-        } : null);
+        const gradientData =
+          customs?.gradient ||
+          (settings.local_customizations && isOwnProfile && savedGradient
+            ? {
+                rot: `${savedGradient.rotation}deg`,
+                stops: savedGradient.colors.map((c) => c.hex),
+                shadow: savedShadow ? (savedShadow.intensity > 0 ? `0px 0px ${savedShadow.intensity}px ${savedShadow.color}` : "none") : "none",
+              }
+            : null);
 
         const badgesData = customs?.badges || (settings.local_customizations && isOwnProfile ? savedBadges : null) || [];
         const isAnimated = customs?.animated ?? false;
@@ -3431,7 +3033,7 @@ window.addEventListener("DOMContentLoaded", async () => {
               box-shadow: inset 0 1px 0 5px rgba(0, 0, 0, 0.5),
                           inset 0 6px 0 -5px rgba(0, 0, 0, 0.5);
             `;
-            document.querySelectorAll(".profile-cont .card").forEach(card => {
+            document.querySelectorAll(".profile-cont .card").forEach((card) => {
               card.style.cssText = `
                 background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1));
                 backdrop-filter: blur(5px);
@@ -3483,22 +3085,23 @@ window.addEventListener("DOMContentLoaded", async () => {
     const addClanListener = () => {
       const clan = document.querySelector(".profile .clan-tag");
       const clanName = clan.textContent;
-      if (clan) clan.addEventListener("click", () => {
-        document.querySelector("#profile-modal-modal .close")?.click();
-        const url = `${base_url}hub/clans`;
-        window.history.pushState({}, "", url);
-        window.dispatchEvent(new PopStateEvent("popstate"));
-        waitForElement(".lookup-input", () => {
-          setTimeout(() => {
-            const lookup = document.querySelector(".lookup-input")
-            lookup.value = clanName;
-            lookup.click();
-            const event = new KeyboardEvent("keydown", { key: "Enter" });
-            lookup.dispatchEvent(event);
-          }, 10)
-        })
-      })
-    }
+      if (clan)
+        clan.addEventListener("click", () => {
+          document.querySelector("#profile-modal-modal .close")?.click();
+          const url = `${base_url}hub/clans`;
+          window.history.pushState({}, "", url);
+          window.dispatchEvent(new PopStateEvent("popstate"));
+          waitForElement(".lookup-input", () => {
+            setTimeout(() => {
+              const lookup = document.querySelector(".lookup-input");
+              lookup.value = clanName;
+              lookup.click();
+              const event = new KeyboardEvent("keydown", { key: "Enter" });
+              lookup.dispatchEvent(event);
+            }, 10);
+          });
+        });
+    };
 
     let loading = null;
     let polling = null;
@@ -3533,7 +3136,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 
     disconnectObservers = () => {
       obs?.disconnect();
-    }
+    };
   };
 
   observeForElement("#profile-modal-modal", handleProfile);
@@ -3543,12 +3146,16 @@ window.addEventListener("DOMContentLoaded", async () => {
     let settings = ipcRenderer.sendSync("get-settings");
     const nicknames = JSON.parse(localStorage.getItem("nicknames") || "{}");
 
-    document.addEventListener("keyup", (e) => {
-      if (e.key === "8") {
-        e.preventDefault();
-        e.stopImmediatePropagation();
-      }
-    }, true)
+    document.addEventListener(
+      "keyup",
+      (e) => {
+        if (e.key === "8") {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+        }
+      },
+      true,
+    );
 
     let red_players = [];
     let blue_players = [];
@@ -3584,7 +3191,7 @@ window.addEventListener("DOMContentLoaded", async () => {
             original: displayName,
             shortId: shortId || null,
             nickname: entry?.nickname,
-            isBot: !shortId
+            isBot: !shortId,
           };
 
           list.push(p);
@@ -3604,8 +3211,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     const findPlayer = (name) => {
       if (!name) return undefined;
       const all = [...red_players, ...blue_players, ...dm_players];
-      const fromList = all.find(p => p.display === name || p.original === name || p.nickname === name)
-        ?? playerCache.get(name);
+      const fromList = all.find((p) => p.display === name || p.original === name || p.nickname === name) ?? playerCache.get(name);
       if (fromList) return fromList;
       const entry = nicknameByOriginal.get(name) ?? nicknameByNickname.get(name);
       if (entry) return { display: name, original: entry.original, shortId: entry.shortId, nickname: entry.nickname };
@@ -3670,7 +3276,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       if (!body) return;
 
       const classes = [...body.classList];
-      const typeClass = classes.find(c => c !== "text");
+      const typeClass = classes.find((c) => c !== "text");
       if (!typeClass) return;
 
       const author = message.querySelector(".author-name");
@@ -3678,7 +3284,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       if (typeClass === "SERVER" || typeClass === "ERROR") {
         if (author) clearDisplay(author);
         if (typeClass === "SERVER") {
-          const textNode = [...body.childNodes].find(n => n.nodeType === Node.TEXT_NODE);
+          const textNode = [...body.childNodes].find((n) => n.nodeType === Node.TEXT_NODE);
           if (!textNode) return;
 
           let text = textNode.textContent;
@@ -3696,12 +3302,12 @@ window.addEventListener("DOMContentLoaded", async () => {
       }
 
       if (typeClass === "JOIN" || typeClass === "LEAVE") {
-        const textNode = [...body.childNodes].find(n => n.nodeType === Node.TEXT_NODE);
+        const textNode = [...body.childNodes].find((n) => n.nodeType === Node.TEXT_NODE);
         if (!textNode) return;
         const suffix = typeClass === "JOIN" ? " joined the game" : " left the game";
         const name = textNode.textContent.replace(suffix, "").trim();
         const match = findPlayer(name);
-        if (match?.nickname && textNode.textContent !== (match.nickname + suffix)) {
+        if (match?.nickname && textNode.textContent !== match.nickname + suffix) {
           textNode.textContent = match.nickname + suffix;
         }
         return;
@@ -3723,7 +3329,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       const body = last.querySelector(".text");
       if (!body || !body.classList.contains("STATUS")) return;
 
-      const textNode = [...body.childNodes].find(n => n.nodeType === Node.TEXT_NODE);
+      const textNode = [...body.childNodes].find((n) => n.nodeType === Node.TEXT_NODE);
       if (!textNode) return;
 
       if (textNode.textContent.includes("reset the match.")) {
@@ -3789,7 +3395,7 @@ window.addEventListener("DOMContentLoaded", async () => {
                 attributeFilter: ["class"],
                 childList: true,
                 characterData: true,
-                subtree: true
+                subtree: true,
               });
             }
 
@@ -3801,7 +3407,7 @@ window.addEventListener("DOMContentLoaded", async () => {
           new MutationObserver((mutations) => {
             if (!settings.customizations) return;
             for (const mutation of mutations) {
-              mutation.addedNodes.forEach(node => {
+              mutation.addedNodes.forEach((node) => {
                 if (node.nodeType !== Node.ELEMENT_NODE || !node.classList.contains("message")) return;
                 observeEndMessage(node);
               });
@@ -3814,11 +3420,11 @@ window.addEventListener("DOMContentLoaded", async () => {
     };
 
     const updateDeathCont = () => {
-      const deathCont = document.querySelector(".death-cont")
+      const deathCont = document.querySelector(".death-cont");
       if (!deathCont) return;
 
       const nickname = deathCont.querySelector(".nickname");
-      const textNode = [...nickname.childNodes].find(n => n.nodeType === Node.TEXT_NODE);
+      const textNode = [...nickname.childNodes].find((n) => n.nodeType === Node.TEXT_NODE);
       const userClan = deathCont.querySelector(".killer-clan")?.textContent.trim();
       const shortIdElem = deathCont.querySelector(".short-id");
       const shortId = deathCont.querySelector(".short-id")?.textContent.trim().split("#")[1];
@@ -3919,7 +3525,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       updatingSpectating = true;
 
       try {
-        spectatingObservers.forEach(o => o.disconnect());
+        spectatingObservers.forEach((o) => o.disconnect());
 
         const fpsElems = document.querySelectorAll(".infos .fps");
         fpsElems.forEach((fpsElem) => {
@@ -3931,7 +3537,7 @@ window.addEventListener("DOMContentLoaded", async () => {
           const entry = nicknames[shortId];
           if (!entry?.nickname) return;
 
-          const textNode = [...fpsElem.childNodes].find(n => n.nodeType === Node.TEXT_NODE);
+          const textNode = [...fpsElem.childNodes].find((n) => n.nodeType === Node.TEXT_NODE);
           if (textNode) {
             const nextText = textNode.textContent.replace(/\S+#[A-Z0-9]+/, `${entry.nickname}#${shortId}`);
             if (textNode.textContent !== nextText) {
@@ -3941,8 +3547,8 @@ window.addEventListener("DOMContentLoaded", async () => {
         });
 
         const infosElems = document.querySelectorAll(".infos");
-        spectatingObservers.forEach(o => {
-          infosElems.forEach(infosElem => o.observe(infosElem, { characterData: true, subtree: true, childList: true }));
+        spectatingObservers.forEach((o) => {
+          infosElems.forEach((infosElem) => o.observe(infosElem, { characterData: true, subtree: true, childList: true }));
         });
       } finally {
         updatingSpectating = false;
@@ -3957,7 +3563,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         const entry = nicknames[shortId];
 
         if (entry?.nickname && nickname) {
-          const textNode = [...nickname.childNodes].find(n => n.nodeType === Node.TEXT_NODE);
+          const textNode = [...nickname.childNodes].find((n) => n.nodeType === Node.TEXT_NODE);
           if (textNode && textNode.textContent !== entry.nickname) {
             textNode.textContent = entry.nickname;
           }
@@ -3981,7 +3587,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       if (!hsp || !killsEl) return;
 
       const killCount = killsEl.innerText;
-      const hsPercentage = parseFloat((headshotsCount / killCount * 100)).toFixed(0) || 0;
+      const hsPercentage = parseFloat((headshotsCount / killCount) * 100).toFixed(0) || 0;
 
       const nextHtml = `<span class="hs-percentage">${hsPercentage}</span> <span class="text-hs" style="font-size: 0.75rem;">HS%</span>`;
       if (hsp.innerHTML !== nextHtml) {
@@ -4228,7 +3834,7 @@ window.addEventListener("DOMContentLoaded", async () => {
             const entry = nicknames[shortId];
 
             if (entry?.nickname && nickname) {
-              const textNode = [...nickname.childNodes].find(n => n.nodeType === Node.TEXT_NODE);
+              const textNode = [...nickname.childNodes].find((n) => n.nodeType === Node.TEXT_NODE);
               if (textNode && textNode.textContent !== entry.nickname) textNode.textContent = entry.nickname;
             }
 
@@ -4338,7 +3944,7 @@ window.addEventListener("DOMContentLoaded", async () => {
             const entry = nicknames[shortId];
 
             if (entry?.nickname) {
-              const textNode = [...nickname.childNodes].find(n => n.nodeType === Node.TEXT_NODE);
+              const textNode = [...nickname.childNodes].find((n) => n.nodeType === Node.TEXT_NODE);
               if (textNode && textNode.textContent !== entry.nickname) textNode.textContent = entry.nickname;
             }
 
@@ -4459,7 +4065,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         applyingCustomizationsEsc = false;
       }
 
-      const escPlayersList = document.querySelector(".esc-interface .player-list")
+      const escPlayersList = document.querySelector(".esc-interface .player-list");
 
       if (escObserver) escObserver.disconnect();
       escObserver = new MutationObserver(applyCustomizationsEsc);
@@ -4499,26 +4105,28 @@ window.addEventListener("DOMContentLoaded", async () => {
 
       try {
         const tabPlayers = document.querySelectorAll(".desktop-game-interface .player-cont");
-        tabPlayers.forEach(player => {
+        tabPlayers.forEach((player) => {
           const shortIdElem = player.querySelector(".nickname");
           if (!shortIdElem || observers.has(shortIdElem)) return;
 
           const obs = new MutationObserver(() => {
-            observers.forEach(o => o.disconnect());
+            observers.forEach((o) => o.disconnect());
             applyCustomizationsTab();
             applyCustomizationsEsc();
-            observers.forEach((o, elem) => o.observe(elem, {
-              characterData: true,
-              subtree: true,
-              childList: true
-            }));
+            observers.forEach((o, elem) =>
+              o.observe(elem, {
+                characterData: true,
+                subtree: true,
+                childList: true,
+              }),
+            );
           });
 
           observers.set(shortIdElem, obs);
           obs.observe(shortIdElem, {
             characterData: true,
             subtree: true,
-            childList: true
+            childList: true,
           });
         });
       } finally {
@@ -4530,7 +4138,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     new MutationObserver(() => {
       if (location.href !== lastUrl) {
         lastUrl = location.href;
-        observers.forEach(o => o.disconnect());
+        observers.forEach((o) => o.disconnect());
         observers.clear();
       }
     }).observe(document, { subtree: true, childList: true });
@@ -4606,7 +4214,7 @@ window.addEventListener("DOMContentLoaded", async () => {
             attributeFilter: ["class"],
             childList: true,
             characterData: true,
-            subtree: true
+            subtree: true,
           });
         }
 
@@ -4617,7 +4225,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 
       new MutationObserver((mutations) => {
         for (const mutation of mutations) {
-          mutation.addedNodes.forEach(node => {
+          mutation.addedNodes.forEach((node) => {
             if (node.nodeType !== Node.ELEMENT_NODE || !node.classList.contains("message")) return;
             observeMessage(node);
           });
@@ -4673,7 +4281,7 @@ window.addEventListener("DOMContentLoaded", async () => {
           if (document.querySelector(".kill-death .hsp")) {
             document.querySelector(".kill-death .hsp").remove();
             createHeadshots();
-          };
+          }
           const observeElement = (selector, setting, execute) => {
             const elem = document.querySelector(selector);
             if (!elem) return;
@@ -4696,10 +4304,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       return clanData;
     }
 
-    const iconsSvg = fs.readFileSync(
-      path.join(__dirname, "../assets/img/icons.svg"),
-      "utf8"
-    );
+    const iconsSvg = fs.readFileSync(path.join(__dirname, "../assets/img/icons.svg"), "utf8");
 
     const spriteContainer = document.createElement("div");
     spriteContainer.style.display = "none";
@@ -4709,7 +4314,9 @@ window.addEventListener("DOMContentLoaded", async () => {
     function buildClanPage(data, container) {
       const sorted = [...data.members].sort((a, b) => b.monthScores - a.monthScores);
 
-      const memberRows = sorted.map((m, i) => `
+      const memberRows = sorted
+        .map(
+          (m, i) => `
         <div class="item">
           <div class="number">${i + 1}</div>
           <div class="item-content">
@@ -4727,7 +4334,9 @@ window.addEventListener("DOMContentLoaded", async () => {
             </div>
           </div>
         </div>
-      `).join("");
+      `,
+        )
+        .join("");
 
       container.innerHTML = `
         <div class="card-cont">
@@ -4759,14 +4368,18 @@ window.addEventListener("DOMContentLoaded", async () => {
             </div>
             <div class="right-info">
               <div class="description background">${data.description ?? ""}</div>
-              ${data.discordLink ? `
+              ${
+                data.discordLink
+                  ? `
                 <a class="discord-cont" href="${data.discordLink}" target="_blank">
                   <svg xmlns="http://www.w3.org/2000/svg" class="discord-icon svg-icon svg-icon--__discord-classic__">
                     <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#__discord-classic__"></use>
                   </svg>
                   DISCORD
                 </a>
-              ` : "<!---->"}
+              `
+                  : "<!---->"
+              }
             </div>
           </div>
         </div>
@@ -4830,7 +4443,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 
       clanTab._page = clanPage;
 
-      fetchClan(clanName).then(data => {
+      fetchClan(clanName).then((data) => {
         if (!data || data.error) {
           clanNotFound = true;
           loading.innerHTML = "CLAN NOT FOUND<span style='font-size: 50%; color: rgba(230, 224, 245, 0.5); display: block;'>Double-check the clan name and try again</span>";
@@ -4844,7 +4457,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       pagesNav.appendChild(clanTab);
       clansContainer.appendChild(clanPage);
 
-      clanTab.click()
+      clanTab.click();
     }
 
     applyClanCustomizations = () => {
@@ -4869,7 +4482,7 @@ window.addEventListener("DOMContentLoaded", async () => {
             clan.style.animation = "animated-gradient 3s linear infinite";
           }
         }
-      })
+      });
     };
 
     document.querySelectorAll(".champions-list .item").forEach((clan) => {
@@ -5009,10 +4622,10 @@ window.addEventListener("DOMContentLoaded", async () => {
       const championsContainer = document.querySelector(".champions-container");
       const myClanContainer = document.querySelector(".my-clan");
 
-      pagesNav.querySelectorAll(".nav").forEach(t => t.classList.remove("active"));
+      pagesNav.querySelectorAll(".nav").forEach((t) => t.classList.remove("active"));
       tab.classList.add("active");
 
-      clansContainer.querySelectorAll(".other-clan-page").forEach(p => p.style.display = "none");
+      clansContainer.querySelectorAll(".other-clan-page").forEach((p) => (p.style.display = "none"));
       if (championsContainer) championsContainer.style.display = "none";
       if (myClanContainer) myClanContainer.style.display = "none";
 
@@ -5074,7 +4687,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         });
       }
 
-      getItems().forEach((item, i) => item.dataset.origIndex = i);
+      getItems().forEach((item, i) => (item.dataset.origIndex = i));
 
       labels.forEach((label, colIndex) => {
         label.style.cursor = "pointer";
@@ -5091,23 +4704,19 @@ window.addEventListener("DOMContentLoaded", async () => {
     }
 
     observeForElement(".clans .my-clan .list-container", (el) => {
-      addSorting(el)
+      addSorting(el);
 
       waitForElement(".my-clan .clan-name", () => {
-        [
-          ".my-clan .stat",
-          ".my-clan .champions-values div",
-          ".my-clan .all-scores-value"
-        ].forEach(selector => {
-          document.querySelectorAll(selector).forEach(el => {
+        [".my-clan .stat", ".my-clan .champions-values div", ".my-clan .all-scores-value"].forEach((selector) => {
+          document.querySelectorAll(selector).forEach((el) => {
             const raw = parseInt(el.textContent.replace(/\D/g, ""));
             if (Number.isFinite(raw) && !isNaN(raw)) el.textContent = raw.toLocaleString();
           });
         });
         applyClanCustomizations();
-      })
+      });
     });
-  }
+  };
 
   const handleMarket = () => {
     const interval = setInterval(() => {
@@ -5141,7 +4750,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         if (e.key === "Shift") {
           isKeyPressed = false;
           if (hoveredAuthorEl) {
-            hoveredAuthorEl.style.textDecoration = "none";;
+            hoveredAuthorEl.style.textDecoration = "none";
           }
         }
       });
@@ -5384,10 +4993,8 @@ window.addEventListener("DOMContentLoaded", async () => {
       }
 
       document.querySelectorAll(".friend").forEach((div) => {
-        if (div.querySelector(".online")?.textContent.includes("in game"))
-          addSpectateButton(div.querySelector(".online"));
-        else
-          div.querySelector(".spectate-eye")?.remove();
+        if (div.querySelector(".online")?.textContent.includes("in game")) addSpectateButton(div.querySelector(".online"));
+        else div.querySelector(".spectate-eye")?.remove();
       });
     }, 250);
 
@@ -5396,9 +5003,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 
     const applyCustomizations = () => {
       if (settings.customizations) {
-        const customizations = JSON.parse(
-          localStorage.getItem("juice-customizations")
-        );
+        const customizations = JSON.parse(localStorage.getItem("juice-customizations"));
 
         document.querySelectorAll(".friend").forEach((friend) => {
           const shortId = friend.querySelector(".friend-id").innerText;
@@ -5408,7 +5013,7 @@ window.addEventListener("DOMContentLoaded", async () => {
           const entry = nicknames[shortId];
 
           if (entry?.nickname) {
-            const textNode = [...nickname.childNodes].find(n => n.nodeType === Node.TEXT_NODE);
+            const textNode = [...nickname.childNodes].find((n) => n.nodeType === Node.TEXT_NODE);
             if (textNode) {
               if (!nickname.dataset.ingameName) {
                 nickname.dataset.ingameName = textNode.textContent.trim();
@@ -5526,8 +5131,8 @@ window.addEventListener("DOMContentLoaded", async () => {
     if (priceMap) return priceMap;
     if (!priceMapPromise) {
       priceMapPromise = fetch(PRICE_SHEET_URL)
-        .then(res => res.json())
-        .then(rows => {
+        .then((res) => res.json())
+        .then((rows) => {
           const map = new Map();
           for (const row of rows) {
             if (!row || !row["Skin Name"]) continue;
@@ -5538,7 +5143,7 @@ window.addEventListener("DOMContentLoaded", async () => {
           priceMap = map;
           return map;
         })
-        .catch(err => {
+        .catch((err) => {
           console.error("Failed to load price sheet:", err);
           priceMap = new Map();
           return priceMap;
@@ -5555,7 +5160,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   function readOfferPanel(panelEl) {
     let total = 0;
 
-    panelEl.querySelectorAll(".offer-item").forEach(itemEl => {
+    panelEl.querySelectorAll(".offer-item").forEach((itemEl) => {
       const nameEl = itemEl.querySelector(".oi-name");
       const qtyEl = itemEl.querySelector(".oi-qty");
       if (!nameEl) return;
@@ -5651,7 +5256,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         });
 
         const grids = tradeWindow.querySelectorAll(".offer-grid");
-        grids.forEach(grid => {
+        grids.forEach((grid) => {
           tradeObserver.observe(grid, { childList: true, subtree: true });
         });
       }
@@ -5735,19 +5340,19 @@ window.addEventListener("DOMContentLoaded", async () => {
 
         if (keyOrder && keyOrder.length) {
           const byKey = new Map();
-          items.forEach(el => {
+          items.forEach((el) => {
             const k = getItemKey(el);
             if (!byKey.has(k)) byKey.set(k, []);
             byKey.get(k).push(el);
           });
 
           const ordered = [];
-          keyOrder.forEach(k => {
+          keyOrder.forEach((k) => {
             const queue = byKey.get(k);
             if (queue && queue.length) ordered.push(queue.shift());
           });
 
-          items.forEach(el => {
+          items.forEach((el) => {
             if (!ordered.includes(el)) ordered.push(el);
           });
 
@@ -5755,8 +5360,8 @@ window.addEventListener("DOMContentLoaded", async () => {
         }
 
         if (favoritesFirst) {
-          const favs = base.filter(el => el.classList.contains("favorite"));
-          const rest = base.filter(el => !el.classList.contains("favorite"));
+          const favs = base.filter((el) => el.classList.contains("favorite"));
+          const rest = base.filter((el) => !el.classList.contains("favorite"));
           sorted = [...favs, ...rest];
         } else {
           sorted = [...base];
@@ -5781,7 +5386,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         if (observer) observer.disconnect();
 
         const fragment = document.createDocumentFragment();
-        sorted.forEach(item => fragment.appendChild(item));
+        sorted.forEach((item) => fragment.appendChild(item));
         container.appendChild(fragment);
       } finally {
         requestAnimationFrame(() => {
@@ -5801,14 +5406,18 @@ window.addEventListener("DOMContentLoaded", async () => {
           subject.classList.add("favorite");
           if (subject.dataset.favoriteBound) return;
           subject.dataset.favoriteBound = "1";
-          subject.addEventListener("click", (e) => {
-            if (!ipcRenderer.sendSync("get-settings").prevent_selling_favorites) return;
-            const sellBtn = e.target.closest(".sell-btn");
-            if (sellBtn) {
-              e.stopImmediatePropagation();
-              return false;
-            }
-          }, true);
+          subject.addEventListener(
+            "click",
+            (e) => {
+              if (!ipcRenderer.sendSync("get-settings").prevent_selling_favorites) return;
+              const sellBtn = e.target.closest(".sell-btn");
+              if (sellBtn) {
+                e.stopImmediatePropagation();
+                return false;
+              }
+            },
+            true,
+          );
         } else {
           delete subject.dataset.favoriteBound;
         }
@@ -5828,12 +5437,12 @@ window.addEventListener("DOMContentLoaded", async () => {
           sortInventory();
         });
         toggleFavorite.addEventListener("mouseenter", () => {
-          subject.querySelectorAll(".bottom-inv").forEach(button => button.style.visibility = "hidden");
+          subject.querySelectorAll(".bottom-inv").forEach((button) => (button.style.visibility = "hidden"));
           const hoverBg = subject.querySelector(".hover-bg");
           if (hoverBg) hoverBg.style.visibility = "hidden";
         });
         toggleFavorite.addEventListener("mouseleave", () => {
-          subject.querySelectorAll(".bottom-inv").forEach(button => button.style.visibility = "visible");
+          subject.querySelectorAll(".bottom-inv").forEach((button) => (button.style.visibility = "visible"));
           const hoverBg = subject.querySelector(".hover-bg");
           if (hoverBg) hoverBg.style.visibility = "visible";
         });
@@ -5860,7 +5469,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     }
 
     function removeItemValues() {
-      document.querySelectorAll(".inventory .subject .item-value").forEach(el => el.remove());
+      document.querySelectorAll(".inventory .subject .item-value").forEach((el) => el.remove());
     }
 
     async function updateInventoryValue() {
@@ -5891,9 +5500,7 @@ window.addEventListener("DOMContentLoaded", async () => {
             valueEl.className = "item-value";
             bottomSubj.insertBefore(valueEl, bottomSubj.firstChild);
           }
-          valueEl.textContent = qty > 1
-            ? `${formatCompactValue(unitValue)} (${formatCompactValue(unitValue * qty)})`
-            : formatCompactValue(unitValue);
+          valueEl.textContent = qty > 1 ? `${formatCompactValue(unitValue)} (${formatCompactValue(unitValue * qty)})` : formatCompactValue(unitValue);
         } else if (valueEl) {
           valueEl.remove();
         }
@@ -5928,7 +5535,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       const stored = JSON.parse(localStorage.getItem("inventory_sort_settings") || "{}");
       return {
         sortBy: stored.sortBy || "rarity",
-        favoritesFirst: stored.favoritesFirst !== undefined ? stored.favoritesFirst : true
+        favoritesFirst: stored.favoritesFirst !== undefined ? stored.favoritesFirst : true,
       };
     }
 
@@ -5974,7 +5581,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         sorting.querySelector(".items").classList.toggle("selectHide");
       });
 
-      items.forEach(item => {
+      items.forEach((item) => {
         item.addEventListener("click", () => {
           const value = item.dataset.value;
           selectedLabel.textContent = item.textContent.trim();
@@ -6117,7 +5724,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       label.textContent = `Value: ${Math.round(value).toLocaleString()}`;
     }
 
-    waitForElement("#inspect-modal .name", updateInspectValue)
+    waitForElement("#inspect-modal .name", updateInspectValue);
   };
 
   observeForElement("#inspect-modal", handleInspect);
@@ -6125,8 +5732,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   window.customNotification = (data) => {
     const notifElement = document.createElement("div");
     notifElement.classList.add("vue-notification-wrapper");
-    notifElement.style =
-      "transition-timing-function: ease; transition-delay: 0s; transition-property: all;";
+    notifElement.style = "transition-timing-function: ease; transition-delay: 0s; transition-property: all;";
     notifElement.innerHTML = `
     <div
       style="
@@ -6142,7 +5748,8 @@ window.addEventListener("DOMContentLoaded", async () => {
         margin-left: 1rem;
         border: solid .15rem #ffb914;
         font-family: Exo\ 2;" class="alert-default"
-    > ${data.icon
+    > ${
+      data.icon
         ? `
         <img
           src="${data.icon}"
@@ -6152,28 +5759,29 @@ window.addEventListener("DOMContentLoaded", async () => {
             margin-right: .9rem;"
         />`
         : ""
-      }
-      <span style="font-size: 1rem; font-weight: 600; text-align: left;" class="text">${data.message
-      }</span>
+    }
+      <span style="font-size: 1rem; font-weight: 600; text-align: left;" class="text">${data.message}</span>
     </div>`;
 
     notifElement.addEventListener("click", () => {
-      notifElement.style.transition = "0.3s ease"
-      notifElement.style.opacity = "0"
+      notifElement.style.transition = "0.3s ease";
+      notifElement.style.opacity = "0";
       setTimeout(() => {
         notifElement.remove();
-      }, 300)
-    })
+      }, 300);
+    });
 
-    document
-      .getElementsByClassName("vue-notification-group")[0]
-      .children[0].appendChild(notifElement);
+    document.getElementsByClassName("vue-notification-group")[0].children[0].appendChild(notifElement);
 
     setTimeout(() => {
       try {
         notifElement.remove();
-      } catch { }
+      } catch {}
     }, 5000);
+  };
+
+  window.test = () => {
+    console.log(ipcRenderer.sendSync("get-settings").chat_height);
   };
 
   ipcRenderer.on("notification", (_, data) => customNotification(data));
@@ -6182,10 +5790,17 @@ window.addEventListener("DOMContentLoaded", async () => {
     const { setting, value } = detail;
 
     const directSettings = [
-      "weapon_offset_x", "weapon_offset_y", "weapon_offset_z",
-      "weapon_size", "weapon_wireframe", "weapon_rgb", "weapon_color",
-      "include_arms", "customizations",
-      "local_customizations", "map_backgrounds"
+      "weapon_offset_x",
+      "weapon_offset_y",
+      "weapon_offset_z",
+      "weapon_size",
+      "weapon_wireframe",
+      "weapon_rgb",
+      "weapon_color",
+      "include_arms",
+      "customizations",
+      "local_customizations",
+      "map_backgrounds",
     ];
 
     if (directSettings.includes(setting)) {
@@ -6195,17 +5810,18 @@ window.addEventListener("DOMContentLoaded", async () => {
     switch (setting) {
       case "menu_keybind":
         const keybindReminder = document.querySelector("#juice-keybind-reminder");
-        if (keybindReminder)
-          keybindReminder.innerText = `Press ${value} to open the client menu.`;
+        if (keybindReminder) keybindReminder.innerText = `Press ${value} to open the client menu.`;
         break;
 
       case "css_link":
       case "css_enabled":
-        window.updateTheme();
+        updateTheme();
         break;
 
+      case "lobby_ping":
+        addLobbyPing();
+
       case "customizations":
-        console.log("test")
         value ? window.applyUserCustomizations() : window.removeUserCustomizations();
         break;
 
@@ -6235,7 +5851,6 @@ window.addEventListener("DOMContentLoaded", async () => {
     console.info = originalConsole.info;
     console.trace = originalConsole.trace;
 
-    const previousUrl = window._currentUrl;
     window._currentUrl = url;
 
     if (url === `${base_url}`) {

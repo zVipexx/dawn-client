@@ -1,5 +1,16 @@
 [
   {
+    "version": "1.3.6",
+    "date": "15/9/2026",
+    "changelogs": [
+      "Added an option to view ping inside of the lobby",
+      "Added a toggle for Quick CSS",
+      "Overhauled Weapon Customizations menu to be more intuitive",
+      "Fixed [Sour Kandy] not getting swapped",
+      "Removed menu resizing"
+    ]
+  },
+  {
     "version": "1.3.5",
     "date": "9/9/2026",
     "changelogs": [

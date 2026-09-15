@@ -7,10 +7,8 @@
 // ==/UserScript==
 
 //Runs on the original BKC custom skin link feature (made by infi and boden)
-let localStoragekey1 =
-  "SETTINGS___SETTING/PLAYERS___SETTING/RENDER_TEXTURE___SETTING";
-let localStoragekey2 =
-  "SETTINGS___SETTING/PLAYERS___SETTING/RENDER_COLOR___SETTING";
+let localStoragekey1 = "SETTINGS___SETTING/PLAYERS___SETTING/RENDER_TEXTURE___SETTING";
+let localStoragekey2 = "SETTINGS___SETTING/PLAYERS___SETTING/RENDER_COLOR___SETTING";
 
 //HTML stuff
 let option_group = document.createElement("div");
@@ -38,18 +36,15 @@ colorpicker_output.id = "colorpicker_output";
 colorpicker_output.readOnly = true;
 let csl_enabled = document.createElement("div");
 csl_enabled.className = "option";
-csl_enabled.innerHTML =
-  '<div class="left"><span>Enabled</span></div><div class="checkbox"><input type="checkbox" id="csl_enabled"><label for="csl_enabled"></label></div>';
+csl_enabled.innerHTML = '<div class="left"><span>Enabled</span></div><div class="checkbox"><input type="checkbox" id="csl_enabled"><label for="csl_enabled"></label></div>';
 let csl_ingame_only = document.createElement("div");
 csl_ingame_only.className = "option";
-csl_ingame_only.innerHTML =
-  '<div class="left"><span>Only swap ingame</span></div><div class="checkbox"><input type="checkbox" id="csl_ingame_only"><label for="csl_ingame_only"></label></div>';
+csl_ingame_only.innerHTML = '<div class="left"><span>Only swap ingame</span></div><div class="checkbox"><input type="checkbox" id="csl_ingame_only"><label for="csl_ingame_only"></label></div>';
 let output_container = document.createElement("div");
 output_container.className = "option";
 let csl_url_or_base64 = document.createElement("div");
 csl_url_or_base64.className = "checkbox";
-csl_url_or_base64.innerHTML =
-  '<div class="checkbox"><input type="checkbox" id="csl_url_or_base64"><label for="csl_url_or_base64"></label></div>';
+csl_url_or_base64.innerHTML = '<div class="checkbox"><input type="checkbox" id="csl_url_or_base64"><label for="csl_url_or_base64"></label></div>';
 let csl_colorpicker_inputurl = document.createElement("input");
 csl_colorpicker_inputurl.type = "text";
 csl_colorpicker_inputurl.id = "csl_colorpicker_inputurl";
@@ -241,11 +236,9 @@ function displayNewImage(src) {
 function handleHighlight() {
   if (localStorage.csl_url_or_base64 == "true") {
     document.getElementById("colorpicker_output").className = "";
-    document.getElementById("csl_colorpicker_inputurl").className =
-      "highlight_textarea";
+    document.getElementById("csl_colorpicker_inputurl").className = "highlight_textarea";
   } else {
-    document.getElementById("colorpicker_output").className =
-      "highlight_textarea";
+    document.getElementById("colorpicker_output").className = "highlight_textarea";
     document.getElementById("csl_colorpicker_inputurl").className = "";
   }
 }
@@ -272,9 +265,7 @@ function startfunction() {
       }
       handleHighlight();
     });
-    let csl_colorpicker_inputurl = document.getElementById(
-      "csl_colorpicker_inputurl",
-    );
+    let csl_colorpicker_inputurl = document.getElementById("csl_colorpicker_inputurl");
     if (localStorage.csl_colorpicker_inputurl != undefined) {
       csl_colorpicker_inputurl.value = localStorage.csl_colorpicker_inputurl;
     }
@@ -492,8 +483,7 @@ Array.isArray = function (...args) {
   const height = image.height;
 
   const customSkinLink = getCurrentSkinUrl();
-  const isSkinTexture = (width === 64 || width === 42) &&
-    (height === 64 || height === 42 || height === 32);
+  const isSkinTexture = (width === 128 || width === 64 || width === 42) && (height === 128 || height === 64 || height === 42 || height === 32);
   const ingame = !!document.querySelector(".desktop-game-interface");
   const ingameOnly = localStorage.csl_ingame_only !== "false";
   const canSwap = ingameOnly ? ingame : true;
@@ -510,4 +500,4 @@ Array.isArray = function (...args) {
     }
   }
   return oldIsArr.apply(Array, args);
-}
+};

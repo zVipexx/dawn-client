@@ -1,4 +1,5 @@
 const { app, BrowserWindow, ipcMain } = require("electron");
+const { default_settings } = require("../util/defaults.json");
 const { autoUpdater } = require("electron-updater");
 const { initGame } = require("./game");
 const path = require("path");
@@ -12,6 +13,9 @@ autoUpdater.setFeedURL({
 
 let splashWindow;
 const store = new Store();
+if (!store.has("settings")) {
+  store.set("settings", default_settings);
+}
 
 const createWindow = () => {
   splashWindow = new BrowserWindow({

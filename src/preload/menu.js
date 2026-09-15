@@ -4,19 +4,12 @@ const path = require("path");
 const { version } = require("../../package.json");
 const { addOpenerList } = require("../addons/opener");
 const { initBrowser } = require("../addons/browser");
-const { clipboard } = require("electron");
 
 class Menu {
   constructor() {
     this.settings = ipcRenderer.sendSync("get-settings");
-    this.menuCSS = fs.readFileSync(
-      path.join(__dirname, "../assets/css/menu.css"),
-      "utf8"
-    );
-    this.menuHTML = fs.readFileSync(
-      path.join(__dirname, "../assets/html/menu.html"),
-      "utf8"
-    );
+    this.menuCSS = fs.readFileSync(path.join(__dirname, "../assets/css/menu.css"), "utf8");
+    this.menuHTML = fs.readFileSync(path.join(__dirname, "../assets/html/menu.html"), "utf8");
     this.menu = this.createMenu();
     this.localStorage = window.localStorage;
     this.menuToggle = this.menu.querySelector(".menu");
@@ -39,36 +32,13 @@ class Menu {
       about: this.menu.querySelector("#about-client"),
       changelogs: this.menu.querySelector("#client-changelogs"),
     };
-    this.weaponIds = ["vita", "scar", "rev", "ar9", "mac10", "m60", "weatie", "lar", "shark", "bayonet", "tomahawk"];
-    this.restingSigToWeaponId = {
-      "0.11,0.11,0.11": "vita",
-      "0.59,0.89,0.60": "scar",
-      "0.17,0.17,0.17": "rev",
-      "0.73,0.64,0.73": "ar9",
-      "0.77,0.77,0.77": "mac10",
-      "0.11,0.10,0.10": "m60",
-      "0.84,0.84,0.84": "weatie",
-      "0.77,1.01,0.77": "lar",
-      "0.01,0.01,0.01": "shark",
-      "1.27,1.05,1.62": "bayonet",
-      "1.54,0.92,2.24": "tomahawk"
-    };
-    this.weaponSettings = this.loadWeaponSettings();
-    this.selectedWeapon = "vita";
-    this.selectedArm = null;
-    this.universalModeActive = this.settings.universal_settings || false;
-    this.universalSettings = this.weaponSettings.universalSettings;
-    this.viewMode = "weapon";
-    this.universalArmActive = false;
-    this.updateGlobalWeaponConfig();
   }
 
   createMenu() {
     const menu = document.createElement("div");
     menu.innerHTML = this.menuHTML;
     menu.id = "juice-menu";
-    menu.style.cssText =
-      "z-index: 99999999; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);";
+    menu.style.cssText = "z-index: 99999999; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);";
     const menuCSS = document.createElement("style");
     menuCSS.innerHTML = this.menuCSS;
     menu.prepend(menuCSS);
@@ -81,7 +51,6 @@ class Menu {
     this.setUser();
     this.setKeybind();
     this.dragMenu();
-    this.resizeMenu();
     this.setLocalGradient();
     this.setLocalBadges();
     this.setLocalProfileBackground();
@@ -89,6 +58,8 @@ class Menu {
     this.handleKeyEvents();
     this.initMenu();
     this.initChangelogs();
+    this.convertOldConfig();
+    this.initWeaponCustomizations();
     this.handleSliderInputs();
     this.handleColorInputs();
     this.handleMenuKeybindChange();
@@ -100,7 +71,6 @@ class Menu {
     this.handleSelectorChanges();
     this.handleDropdowns();
     this.handleAppearance();
-    this.bindWeaponOptions();
     this.handleSearch();
     this.handleButtons();
     this.handleInfoTooltips();
@@ -121,798 +91,6 @@ class Menu {
     const savedSelector = this.localStorage.getItem("juice-menu-selector");
     const selectorEl = savedSelector ? this.menu.querySelector(`[data-selector="${savedSelector}"]`) : null;
     this.handleSelectorChange(selectorEl ?? this.menu.querySelector(".juice.selector"));
-
-    const savedWeaponState = this.localStorage.getItem("dawn-weapon-selection");
-    if (savedWeaponState) {
-      try {
-        const weaponState = JSON.parse(savedWeaponState);
-        const currentTab = this.localStorage.getItem("juice-menu-tab");
-        if (currentTab === "game" || currentTab === "weapons") {
-          if (weaponState.universalModeActive !== undefined) {
-            const universalCheckbox = this.menu.querySelector("#universal_settings");
-            if (universalCheckbox && universalCheckbox.checked !== weaponState.universalModeActive) {
-              universalCheckbox.click();
-            }
-          }
-
-          if (weaponState.viewMode === "universal") {
-            const universalSelector = this.menu.querySelector('[data-selector="universal"]');
-            if (universalSelector) {
-              universalSelector.click();
-            }
-          } else if (weaponState.selectedWeapon && !this.universalModeActive) {
-            const weaponSelector = this.menu.querySelector(`.selector[data-selector="${weaponState.selectedWeapon}"]`);
-            if (weaponSelector) {
-              weaponSelector.click();
-            }
-          }
-        }
-      } catch (e) {
-        console.error("Error restoring weapon selection:", e);
-      }
-    }
-  }
-
-  saveWeaponSelectionState() {
-    const state = {
-      selectedWeapon: this.selectedWeapon,
-      selectedArm: this.selectedArm,
-      universalModeActive: this.universalModeActive,
-      viewMode: this.viewMode
-    };
-    this.localStorage.setItem("dawn-weapon-selection", JSON.stringify(state));
-  }
-
-  updateGlobalWeaponConfig() {
-    const universalModeActive = this.universalModeActive;
-    const weaponSettings = this.weaponSettings;
-    const settings = this.settings;
-
-    window.dawnWeaponConfig = {
-      universal: universalModeActive,
-      wireframe: settings.weapon_wireframe || false,
-      colorEnabled: settings.weapon_color || false,
-      colorHex: localStorage.getItem("weapon_color_hex") || "#FFFFFF",
-      rgb: settings.weapon_rgb || false,
-      inspectKeybind: settings.inspect_keybind || "KeyI",
-      weaponSettings: weaponSettings,
-      universalModeActive: universalModeActive,
-
-      getSettings: function (weaponId) {
-        if (this.universalModeActive) {
-          return this.weaponSettings.universalSettings;
-        }
-        return this.weaponSettings.settings[weaponId] || this.weaponSettings.settings["vita"];
-      },
-
-      getArmSettings: function (weaponId, arm) {
-        const weapon = this.getSettings(weaponId);
-        const armKey = arm === "left" ? "leftArm" : "rightArm";
-        const armData = weapon[armKey] || {};
-        return {
-          size: armData.size ?? 1.0,
-          offsetX: armData.offsetX ?? 0,
-          offsetY: armData.offsetY ?? 0,
-          offsetZ: armData.offsetZ ?? 0,
-          rotationX: armData.rotationX ?? 0,
-          rotationY: armData.rotationY ?? 0,
-          rotationZ: armData.rotationZ ?? 0,
-          wireframe: armData.wireframe ?? false,
-          colorEnabled: armData.colorEnabled ?? false,
-          colorHex: armData.colorHex ?? "#FFFFFF",
-          rgb: armData.rgb ?? false
-        };
-      }
-    };
-  }
-
-  bindWeaponOptions() {
-    const sidebar = this.menu.querySelector(".weapons-sidebar");
-    const weaponSelectors = sidebar.querySelectorAll(".selector-group:first-child + .selector-group .selector");
-    const leftArmSelector = sidebar.querySelector('[data-selector="leftarm"]');
-    const rightArmSelector = sidebar.querySelector('[data-selector="rightarm"]');
-    const weaponsContent = this.menu.querySelector("#weapons-options .content.weapons");
-    const armsContent = this.menu.querySelector("#weapons-options .content.arms");
-    const universalCheckbox = weaponsContent.querySelector("#universal_settings");
-    const universalSelector = sidebar.querySelector('[data-selector="universal"]');
-    const mirrorArmCheckbox = armsContent.querySelector("#universal_arm_settings");
-    const resetWeaponSettingsBtn = weaponsContent.querySelector("#reset-weapon-settings");
-    const resetArmSettingsBtn = armsContent.querySelector("#reset-arm-settings");
-
-    const defaultWeaponSettings = {
-      size: 1.0,
-      offsetX: 0,
-      offsetY: 0,
-      offsetZ: 0,
-      rotationX: 0,
-      rotationY: 0,
-      rotationZ: 0,
-      inspectDuration: 750,
-      leftArm: {},
-      rightArm: {},
-      mirrorArm: false,
-      mirrorMaster: "left"
-    };
-
-    const weaponSizeInput = weaponsContent.querySelector("#weapon_size");
-    const offsetXInput = weaponsContent.querySelector("#weapon_offset_x");
-    const offsetYInput = weaponsContent.querySelector("#weapon_offset_y");
-    const offsetZInput = weaponsContent.querySelector("#weapon_offset_z");
-    const weaponRotationXSlider = weaponsContent.querySelector("#weapon_rotation_x");
-    const weaponRotationXInput = weaponsContent.querySelector(".weapon-rotation-x-value");
-    const weaponRotationYSlider = weaponsContent.querySelector("#weapon_rotation_y");
-    const weaponRotationYInput = weaponsContent.querySelector(".weapon-rotation-y-value");
-    const weaponRotationZSlider = weaponsContent.querySelector("#weapon_rotation_z");
-    const weaponRotationZInput = weaponsContent.querySelector(".weapon-rotation-z-value");
-
-    const armSizeInput = armsContent.querySelector("#arm_size");
-    const armOffsetXInput = armsContent.querySelector("#arm_offset_x");
-    const armOffsetYInput = armsContent.querySelector("#arm_offset_y");
-    const armOffsetZInput = armsContent.querySelector("#arm_offset_z");
-    const armRotationXSlider = armsContent.querySelector("#arm_rotation_x");
-    const armRotationXInput = armsContent.querySelector(".arm-rotation-x-value");
-    const armRotationYSlider = armsContent.querySelector("#arm_rotation_y");
-    const armRotationYInput = armsContent.querySelector(".arm-rotation-y-value");
-    const armRotationZSlider = armsContent.querySelector("#arm_rotation_z");
-    const armRotationZInput = armsContent.querySelector(".arm-rotation-z-value");
-    const armWireframeCheckbox = armsContent.querySelector("#arm_wireframe");
-    const armColorCheckbox = armsContent.querySelector("#arm_color");
-    const armColorHexInput = armsContent.querySelector(".arm-color .hex");
-    const armColorPicker = armsContent.querySelector(".arm-color .color-picker");
-    const armRgbCheckbox = armsContent.querySelector("#arm_rgb");
-    const weaponInspectDurationInput = weaponsContent.querySelector("#weapon_inspect_duration");
-    const inspectDurationValue = weaponsContent.querySelector(".weapon-inspect-duration-value");
-
-    if (!universalCheckbox) return;
-
-    const getActiveConfig = () => {
-      return this.viewMode === "universal"
-        ? this.weaponSettings.universalSettings
-        : this.weaponSettings.settings[this.selectedWeapon] || this.weaponSettings.settings["vita"];
-    };
-
-    const getWeaponConfig = (weaponId) => {
-      return this.viewMode === "universal"
-        ? this.weaponSettings.universalSettings
-        : this.weaponSettings.settings[weaponId] || this.weaponSettings.settings["vita"];
-    };
-
-    const setWeaponConfig = (weaponId, config) => {
-      if (this.viewMode === "universal") {
-        this.weaponSettings.universalSettings = { ...this.weaponSettings.universalSettings, ...config };
-      } else {
-        this.weaponSettings.settings[weaponId] = { ...this.weaponSettings.settings[weaponId], ...config };
-      }
-    };
-
-    const getArmSettings = (weaponId, arm) => {
-      const weapon = getWeaponConfig(weaponId);
-      const armKey = arm === "left" ? "leftArm" : "rightArm";
-      return weapon[armKey] || {
-        size: 1.0,
-        offsetX: 0,
-        offsetY: 0,
-        offsetZ: 0,
-        rotationX: 0,
-        rotationY: 0,
-        rotationZ: 0,
-        wireframe: false,
-        colorEnabled: false,
-        colorHex: "#FFFFFF",
-        rgb: false
-      };
-    };
-
-    const setArmSettings = (weaponId, arm, settings) => {
-      const armKey = arm === "left" ? "leftArm" : "rightArm";
-      const weapon = getWeaponConfig(weaponId);
-      if (!weapon[armKey]) weapon[armKey] = {};
-      weapon[armKey] = { ...weapon[armKey], ...settings };
-      this.saveWeaponSettings();
-    };
-
-    const getMirrorState = () => {
-      const config = getActiveConfig();
-      return config.mirrorArm || false;
-    };
-
-    const getMirrorMaster = () => {
-      const config = getActiveConfig();
-      return config.mirrorMaster || "left";
-    };
-
-    const setMirrorState = (enabled, master) => {
-      const config = getActiveConfig();
-      config.mirrorArm = enabled;
-      if (master) config.mirrorMaster = master;
-      this.saveWeaponSettings();
-    };
-
-    const updateArmSelectorsState = () => {
-      const singleArmWeapons = ["rev", "shark"];
-      const isSingleArm = this.viewMode !== "universal" && singleArmWeapons.includes(this.selectedWeapon);
-      const mirror = getMirrorState();
-
-      if (isSingleArm) {
-        leftArmSelector.style.opacity = "0.3";
-        leftArmSelector.style.pointerEvents = "none";
-        rightArmSelector.style.opacity = "1";
-        rightArmSelector.style.pointerEvents = "";
-        if (this.selectedArm === "left") this.selectedArm = "right";
-        return;
-      }
-
-      if (mirror) {
-        const master = getMirrorMaster();
-        if (master === "left") {
-          leftArmSelector.style.opacity = "1";
-          leftArmSelector.style.pointerEvents = "";
-          rightArmSelector.style.opacity = "0.3";
-          rightArmSelector.style.pointerEvents = "none";
-        } else {
-          rightArmSelector.style.opacity = "1";
-          rightArmSelector.style.pointerEvents = "";
-          leftArmSelector.style.opacity = "0.3";
-          leftArmSelector.style.pointerEvents = "none";
-        }
-      } else {
-        leftArmSelector.style.opacity = "1";
-        leftArmSelector.style.pointerEvents = "";
-        rightArmSelector.style.opacity = "1";
-        rightArmSelector.style.pointerEvents = "";
-      }
-    };
-
-    const loadWeaponToUI = (settings) => {
-      weaponSizeInput.value = settings.size ?? 1;
-      offsetXInput.value = settings.offsetX ?? 0;
-      offsetYInput.value = settings.offsetY ?? 0;
-      offsetZInput.value = settings.offsetZ ?? 0;
-      weaponRotationXSlider.value = settings.rotationX ?? 0;
-      weaponRotationXInput.value = settings.rotationX ?? 0;
-      weaponRotationYSlider.value = settings.rotationY ?? 0;
-      weaponRotationYInput.value = settings.rotationY ?? 0;
-      weaponRotationZSlider.value = settings.rotationZ ?? 0;
-      weaponRotationZInput.value = settings.rotationZ ?? 0;
-
-      const sizeVal = weaponsContent.querySelector(".weapon-size-value");
-      if (sizeVal) sizeVal.value = settings.size ?? 1;
-      const oxVal = weaponsContent.querySelector(".weapon-offset-x-value");
-      if (oxVal) oxVal.value = settings.offsetX ?? 0;
-      const oyVal = weaponsContent.querySelector(".weapon-offset-y-value");
-      if (oyVal) oyVal.value = settings.offsetY ?? 0;
-      const ozVal = weaponsContent.querySelector(".weapon-offset-z-value");
-      if (ozVal) ozVal.value = settings.offsetZ ?? 0;
-
-      if (this.viewMode === "universal") {
-        loadInspectDurationToUI(this.weaponSettings.universalSettings);
-      } else {
-        loadInspectDurationToUI(settings);
-      }
-    };
-
-    const loadArmToUI = (armSettings) => {
-      armSizeInput.value = armSettings.size;
-      armOffsetXInput.value = armSettings.offsetX;
-      armOffsetYInput.value = armSettings.offsetY;
-      armOffsetZInput.value = armSettings.offsetZ;
-      armRotationXSlider.value = armSettings.rotationX ?? 0;
-      armRotationXInput.value = armSettings.rotationX ?? 0;
-      armRotationYSlider.value = armSettings.rotationY ?? 0;
-      armRotationYInput.value = armSettings.rotationY ?? 0;
-      armRotationZSlider.value = armSettings.rotationZ ?? 0;
-      armRotationZInput.value = armSettings.rotationZ ?? 0;
-      if (armWireframeCheckbox) armWireframeCheckbox.checked = armSettings.wireframe || false;
-      if (armColorCheckbox) armColorCheckbox.checked = armSettings.colorEnabled || false;
-      if (armColorHexInput) armColorHexInput.value = armSettings.colorHex || "#FFFFFF";
-      if (armColorPicker) armColorPicker.value = armSettings.colorHex || "#FFFFFF";
-      if (armRgbCheckbox) armRgbCheckbox.checked = armSettings.rgb || false;
-      const sizeVal = armsContent.querySelector(".arm-size-value");
-      if (sizeVal) sizeVal.value = armSettings.size;
-      const oxVal = armsContent.querySelector(".arm-offset-x-value");
-      if (oxVal) oxVal.value = armSettings.offsetX;
-      const oyVal = armsContent.querySelector(".arm-offset-y-value");
-      if (oyVal) oyVal.value = armSettings.offsetY;
-      const ozVal = armsContent.querySelector(".arm-offset-z-value");
-      if (ozVal) ozVal.value = armSettings.offsetZ;
-    };
-
-    const saveCurrentWeaponUI = () => {
-      const newSettings = {
-        size: parseFloat(weaponSizeInput.value),
-        offsetX: parseFloat(offsetXInput.value),
-        offsetY: parseFloat(offsetYInput.value),
-        offsetZ: parseFloat(offsetZInput.value),
-        rotationX: parseFloat(weaponRotationXSlider.value),
-        rotationY: parseFloat(weaponRotationYSlider.value),
-        rotationZ: parseFloat(weaponRotationZSlider.value),
-        inspectDuration: weaponInspectDurationInput ? parseInt(weaponInspectDurationInput.value) || 750 : 750
-      };
-      const weaponId = this.viewMode === "universal" ? "universal" : this.selectedWeapon;
-      setWeaponConfig(weaponId, newSettings);
-      this.saveWeaponSettings();
-    };
-
-    const saveCurrentArmUI = () => {
-      if (!this.selectedArm) return;
-      const newSettings = {
-        size: parseFloat(armSizeInput.value),
-        offsetX: parseFloat(armOffsetXInput.value),
-        offsetY: parseFloat(armOffsetYInput.value),
-        offsetZ: parseFloat(armOffsetZInput.value),
-        rotationX: parseFloat(armRotationXSlider.value),
-        rotationY: parseFloat(armRotationYSlider.value),
-        rotationZ: parseFloat(armRotationZSlider.value),
-        wireframe: armWireframeCheckbox ? armWireframeCheckbox.checked : false,
-        colorEnabled: armColorCheckbox ? armColorCheckbox.checked : false,
-        colorHex: armColorHexInput ? armColorHexInput.value : "#FFFFFF",
-        rgb: armRgbCheckbox ? armRgbCheckbox.checked : false,
-      };
-      setArmSettings(this.selectedWeapon, this.selectedArm, newSettings);
-      const mirror = getMirrorState();
-      if (mirror) {
-        const master = getMirrorMaster();
-        if (this.selectedArm === master) {
-          const other = master === "left" ? "right" : "left";
-          setArmSettings(this.selectedWeapon, other, newSettings);
-        }
-      }
-    };
-
-    const refreshUI = () => {
-      universalCheckbox.checked = this.universalModeActive;
-      if (mirrorArmCheckbox) {
-        mirrorArmCheckbox.checked = getMirrorState();
-      }
-
-      const universalOnlyDiv = weaponsContent.querySelector(".universal-only");
-      const perWeaponOnlyDiv = weaponsContent.querySelector(".per-weapon-only");
-
-      if (this.viewMode === "universal") {
-        loadWeaponToUI(this.weaponSettings.universalSettings);
-        if (universalOnlyDiv) universalOnlyDiv.style.display = "flex";
-        if (perWeaponOnlyDiv) {
-          perWeaponOnlyDiv.style.display = this.universalModeActive ? "block" : "none";
-        }
-      } else {
-        if (this.selectedWeapon) {
-          const weapon = getWeaponConfig(this.selectedWeapon);
-          loadWeaponToUI(weapon);
-        }
-        if (universalOnlyDiv) universalOnlyDiv.style.display = "none";
-        if (perWeaponOnlyDiv) perWeaponOnlyDiv.style.display = "block";
-      }
-
-      if (this.universalModeActive) {
-        weaponSelectors.forEach(sel => {
-          sel.style.pointerEvents = "none";
-          sel.style.opacity = "0.5";
-        });
-        sidebar.classList.add("universal-enabled");
-      } else {
-        weaponSelectors.forEach(sel => {
-          sel.style.pointerEvents = "";
-          sel.style.opacity = "";
-        });
-        sidebar.classList.remove("universal-enabled");
-      }
-
-      updateArmSelectorsState();
-
-      if (this.selectedArm && armsContent) {
-        weaponsContent.style.display = "none";
-        armsContent.style.display = "flex";
-        const armSettings = getArmSettings(this.selectedWeapon, this.selectedArm);
-        loadArmToUI(armSettings);
-      } else if (armsContent) {
-        armsContent.style.display = "none";
-        weaponsContent.style.display = "flex";
-      }
-    };
-
-    const loadInspectDurationToUI = (settings) => {
-      if (weaponInspectDurationInput) {
-        weaponInspectDurationInput.value = settings.inspectDuration ?? 750;
-        if (inspectDurationValue) inspectDurationValue.value = settings.inspectDuration ?? 750;
-      }
-    };
-
-    const saveCurrentInspectDuration = () => {
-      if (!weaponInspectDurationInput) return;
-      const newSettings = {
-        inspectDuration: parseInt(weaponInspectDurationInput.value) || 750
-      };
-      if (this.viewMode === "universal") {
-        this.weaponSettings.universalSettings = { ...this.weaponSettings.universalSettings, ...newSettings };
-      } else {
-        this.weaponSettings.settings[this.selectedWeapon] = { ...this.weaponSettings.settings[this.selectedWeapon], ...newSettings };
-      }
-      this.saveWeaponSettings();
-    };
-
-    if (weaponInspectDurationInput) {
-      weaponInspectDurationInput.addEventListener("input", () => {
-        if (inspectDurationValue) inspectDurationValue.value = weaponInspectDurationInput.value;
-        saveCurrentInspectDuration();
-      });
-      weaponInspectDurationInput.addEventListener("change", saveCurrentInspectDuration);
-    }
-
-    universalSelector.addEventListener("click", () => {
-      this.viewMode = "universal";
-      this.selectedArm = null;
-      leftArmSelector.classList.remove("active");
-      rightArmSelector.classList.remove("active");
-
-      universalSelector.classList.add("active");
-      weaponSelectors.forEach(sel => sel.classList.remove("active"));
-
-      refreshUI();
-      this.saveWeaponSelectionState();
-    });
-
-    weaponSelectors.forEach(selector => {
-      selector.addEventListener("click", () => {
-        if (this.universalModeActive) return;
-        this.viewMode = "weapon";
-        this.selectedWeapon = selector.dataset.selector;
-        this.selectedArm = null;
-        universalSelector.classList.remove("active");
-        weaponSelectors.forEach(sel => sel.classList.remove("active"));
-        selector.classList.add("active");
-        leftArmSelector.classList.remove("active");
-        rightArmSelector.classList.remove("active");
-        refreshUI();
-        this.saveWeaponSelectionState();
-      });
-    });
-
-    const selectArm = (arm) => {
-      const mirror = getMirrorState();
-      if (mirror) {
-        const master = getMirrorMaster();
-        if (arm !== master) return;
-      }
-      if (this.selectedArm === arm) {
-        this.selectedArm = null;
-        leftArmSelector.classList.remove("active");
-        rightArmSelector.classList.remove("active");
-      } else {
-        this.selectedArm = arm;
-        leftArmSelector.classList.toggle("active", arm === "left");
-        rightArmSelector.classList.toggle("active", arm === "right");
-      }
-      refreshUI();
-      this.saveWeaponSelectionState();
-    };
-
-    leftArmSelector.addEventListener("click", () => selectArm("left"));
-    rightArmSelector.addEventListener("click", () => selectArm("right"));
-
-    universalCheckbox.addEventListener("change", (e) => {
-      this.universalModeActive = e.target.checked;
-      if (this.universalModeActive && !this.weaponSettings.universalSettings) {
-        this.weaponSettings.universalSettings = { ...this.weaponSettings.settings[this.selectedWeapon || "vita"] };
-      }
-      refreshUI();
-      this.saveWeaponSelectionState();
-    });
-
-    if (mirrorArmCheckbox) {
-      mirrorArmCheckbox.addEventListener("change", (e) => {
-        const enabled = e.target.checked;
-        let master = this.selectedArm || getMirrorMaster();
-        if (enabled) {
-          if (this.selectedArm) {
-            master = this.selectedArm;
-          } else {
-            master = getMirrorMaster();
-          }
-          const masterSettings = getArmSettings(this.selectedWeapon, master);
-          const other = master === "left" ? "right" : "left";
-          setArmSettings(this.selectedWeapon, other, masterSettings);
-        }
-        setMirrorState(enabled, master);
-        refreshUI();
-      });
-    }
-
-    if (resetWeaponSettingsBtn) {
-      resetWeaponSettingsBtn.addEventListener("click", () => {
-        const weaponId = this.viewMode === "universal" ? "universal" : this.selectedWeapon;
-        const defaultWeaponSettings = {
-          size: 1.0,
-          offsetX: 0,
-          offsetY: 0,
-          offsetZ: 0,
-          rotationX: 0,
-          rotationY: 0,
-          rotationZ: 0,
-          inspectDuration: 750
-        };
-
-        if (this.viewMode === "universal") {
-          this.weaponSettings.universalSettings = {
-            ...this.weaponSettings.universalSettings,
-            ...defaultWeaponSettings
-          };
-        } else {
-          this.weaponSettings.settings[weaponId] = {
-            ...this.weaponSettings.settings[weaponId],
-            ...defaultWeaponSettings
-          };
-        }
-
-        this.saveWeaponSettings();
-        loadWeaponToUI(defaultWeaponSettings);
-      });
-    }
-
-    if (resetArmSettingsBtn) {
-      resetArmSettingsBtn.addEventListener("click", () => {
-        if (!this.selectedArm) return;
-        const defaultArmSettings = {
-          size: 1.0,
-          offsetX: 0,
-          offsetY: 0,
-          offsetZ: 0,
-          rotationX: 0,
-          rotationY: 0,
-          rotationZ: 0,
-          wireframe: false,
-          colorEnabled: false,
-          colorHex: "#FFFFFF",
-          rgb: false
-        };
-
-        setArmSettings(this.selectedWeapon, this.selectedArm, defaultArmSettings);
-        const mirror = getMirrorState();
-        if (mirror) {
-          const master = getMirrorMaster();
-          if (this.selectedArm === master) {
-            const other = master === "left" ? "right" : "left";
-            setArmSettings(this.selectedWeapon, other, defaultArmSettings);
-          }
-        }
-
-        loadArmToUI(defaultArmSettings);
-      });
-    }
-
-    const weaponInputs = weaponsContent.querySelectorAll("input");
-    weaponInputs.forEach(input => {
-      input.addEventListener("change", saveCurrentWeaponUI);
-      input.addEventListener("input", saveCurrentWeaponUI);
-    });
-
-    const armInputs = armsContent.querySelectorAll("input");
-    armInputs.forEach(input => {
-      input.addEventListener("change", saveCurrentArmUI);
-      input.addEventListener("input", saveCurrentArmUI);
-    });
-
-    const syncRotationInput = (slider, input) => {
-      slider.addEventListener("input", () => {
-        input.value = slider.value;
-        saveCurrentWeaponUI();
-      });
-      input.addEventListener("input", () => {
-        const val = parseFloat(input.value);
-        if (!isNaN(val)) {
-          slider.value = Math.min(180, Math.max(-180, val));
-          saveCurrentWeaponUI();
-        }
-      });
-    };
-
-    const syncArmRotationInput = (slider, input) => {
-      slider.addEventListener("input", () => {
-        input.value = slider.value;
-        saveCurrentArmUI();
-      });
-      input.addEventListener("input", () => {
-        const val = parseFloat(input.value);
-        if (!isNaN(val)) {
-          slider.value = Math.min(180, Math.max(-180, val));
-          saveCurrentArmUI();
-        }
-      });
-    };
-
-    if (weaponRotationXSlider && weaponRotationXInput) syncRotationInput(weaponRotationXSlider, weaponRotationXInput);
-    if (weaponRotationYSlider && weaponRotationYInput) syncRotationInput(weaponRotationYSlider, weaponRotationYInput);
-    if (weaponRotationZSlider && weaponRotationZInput) syncRotationInput(weaponRotationZSlider, weaponRotationZInput);
-
-    if (armRotationXSlider && armRotationXInput) syncArmRotationInput(armRotationXSlider, armRotationXInput);
-    if (armRotationYSlider && armRotationYInput) syncArmRotationInput(armRotationYSlider, armRotationYInput);
-    if (armRotationZSlider && armRotationZInput) syncArmRotationInput(armRotationZSlider, armRotationZInput);
-
-    const exportBtn = sidebar.querySelector(".export");
-    if (exportBtn) {
-      exportBtn.addEventListener("click", () => {
-        const exportData = {
-          universal: this.weaponSettings.universal,
-          settings: this.weaponSettings.settings,
-          universalSettings: this.weaponSettings.universalSettings,
-          universalModeActive: this.universalModeActive,
-          weaponWireframe: this.settings.weapon_wireframe || false,
-          weaponColorEnabled: this.settings.weapon_color || false,
-          weaponColorHex: localStorage.getItem("weapon_color_hex") || "#FFFFFF",
-          weaponRgb: this.settings.weapon_rgb || false,
-          inspectKeybind: this.settings.inspect_keybind || "KeyZ"
-        };
-        clipboard.writeText(JSON.stringify(exportData));
-        alert("Weapon Settings copied to clipboard!");
-      });
-    }
-
-    const importBtn = sidebar.querySelector(".import");
-    if (importBtn) {
-      importBtn.addEventListener("click", () => {
-        if (sidebar.querySelector(".import-weapon-settings")) {
-          sidebar.querySelector(".import-weapon-settings").remove();
-          return
-        };
-
-        const modal = document.createElement("div");
-        modal.classList.add("import-weapon-settings");
-        modal.innerHTML = `
-          <input class="import-input" type="text" placeholder="Paste settings" />
-          <i class="fas fa-check room-preset-action confirm"></i>
-        `;
-
-        sidebar.appendChild(modal);
-
-        modal.querySelector(".confirm").addEventListener("click", () => {
-          const input = modal.querySelector(".import-input").value;
-          if (input) {
-            try {
-              const parsed = JSON.parse(input);
-              if (parsed && parsed.settings) {
-                const fullConfig = {
-                  universal: parsed.universal || parsed.universalModeActive || false,
-                  settings: parsed.settings,
-                  universalSettings: parsed.universalSettings || this.weaponSettings.universalSettings
-                };
-                localStorage.setItem("dawn_weapon_config", JSON.stringify(fullConfig));
-                this.weaponSettings = this.loadWeaponSettings();
-                this.updateGlobalWeaponConfig();
-
-                if (parsed.universalModeActive !== undefined) {
-                  this.universalModeActive = parsed.universalModeActive;
-                  if (universalCheckbox) {
-                    universalCheckbox.checked = this.universalModeActive;
-                  }
-                }
-
-                if (parsed.weaponWireframe !== undefined) {
-                  this.settings.weapon_wireframe = parsed.weaponWireframe;
-                }
-
-                if (parsed.weaponColorEnabled !== undefined) {
-                  this.settings.weapon_color = parsed.weaponColorEnabled;
-                }
-
-                if (parsed.weaponColorHex) {
-                  localStorage.setItem("weapon_color_hex", parsed.weaponColorHex);
-                }
-
-                if (parsed.weaponRgb !== undefined) {
-                  this.settings.weapon_rgb = parsed.weaponRgb;
-                }
-
-                if (parsed.inspectKeybind) {
-                  this.settings.inspect_keybind = parsed.inspectKeybind;
-                }
-
-                ipcRenderer.send("update-settings", this.settings);
-
-                refreshUI();
-              } else {
-                alert("Invalid weapon settings JSON.");
-              }
-            } catch (err) {
-              alert("Invalid JSON format.");
-            }
-          }
-          modal.remove();
-        });
-      });
-    }
-
-    this.universalModeActive = this.settings.universal_settings || false;
-    this.viewMode = "weapon";
-    universalCheckbox.checked = this.universalModeActive;
-    if (!this.universalModeActive) {
-      this.selectedWeapon = "vita";
-      weaponSelectors.forEach(sel => {
-        if (sel.dataset.selector === this.selectedWeapon) sel.classList.add("active");
-      });
-    }
-    refreshUI();
-  }
-
-  loadWeaponSettings() {
-    const defaultArmSettings = {
-      size: 1.0,
-      offsetX: 0,
-      offsetY: 0,
-      offsetZ: 0,
-      rotationX: 0,
-      rotationY: 0,
-      rotationZ: 0,
-      wireframe: false,
-      colorEnabled: false,
-      colorHex: "#FFFFFF",
-      rgb: false
-    };
-
-    const defaultWeaponSettings = {
-      size: 1.0,
-      offsetX: 0,
-      offsetY: 0,
-      offsetZ: 0,
-      rotationX: 0,
-      rotationY: 0,
-      rotationZ: 0,
-      inspectDuration: 750,
-      leftArm: { ...defaultArmSettings },
-      rightArm: { ...defaultArmSettings },
-      mirrorArm: false,
-      mirrorMaster: "left"
-    };
-
-    const defaultUniversalSettings = {
-      size: 1.0,
-      offsetX: 0,
-      offsetY: 0,
-      offsetZ: 0,
-      rotationX: 0,
-      rotationY: 0,
-      rotationZ: 0,
-      inspectDuration: 750,
-      wireframe: false,
-      colorEnabled: false,
-      colorHex: "#FFFFFF",
-      rgb: false,
-      inspectKeybind: "KeyZ",
-      leftArm: { ...defaultArmSettings },
-      rightArm: { ...defaultArmSettings },
-      mirrorArm: false,
-      mirrorMaster: "left"
-    };
-
-    let stored = localStorage.getItem("dawn_weapon_config");
-    let config = stored ? JSON.parse(stored) : { universal: false, settings: {} };
-    if (!config.universalSettings) {
-      config.universalSettings = { ...defaultUniversalSettings };
-    }
-    for (let id of this.weaponIds) {
-      if (!config.settings[id]) {
-        config.settings[id] = { ...defaultWeaponSettings };
-        if (this.settings) {
-          config.settings[id].size = this.settings.weapon_size ?? 1.0;
-          config.settings[id].offsetX = this.settings.weapon_offset_x ?? 0;
-          config.settings[id].offsetY = this.settings.weapon_offset_y ?? 0;
-          config.settings[id].offsetZ = this.settings.weapon_offset_z ?? 0;
-        }
-      }
-      if (config.settings[id].rotationX === undefined) config.settings[id].rotationX = 0;
-      if (config.settings[id].rotationY === undefined) config.settings[id].rotationY = 0;
-      if (config.settings[id].rotationZ === undefined) config.settings[id].rotationZ = 0;
-      if (!config.settings[id].leftArm) config.settings[id].leftArm = { ...defaultArmSettings };
-      if (!config.settings[id].rightArm) config.settings[id].rightArm = { ...defaultArmSettings };
-      if (config.settings[id].mirrorArm === undefined) config.settings[id].mirrorArm = false;
-      if (!config.settings[id].mirrorMaster) config.settings[id].mirrorMaster = "left";
-    }
-
-    localStorage.setItem("dawn_weapon_config", JSON.stringify(config));
-    return config;
-  }
-
-  saveWeaponSettings() {
-    localStorage.setItem("dawn_weapon_config", JSON.stringify(this.weaponSettings));
-    this.updateGlobalWeaponConfig();
   }
 
   setVersion() {
@@ -929,19 +107,11 @@ class Menu {
   }
 
   setKeybind() {
-    this.menu.querySelector(
-      ".keybind"
-    ).innerText = `Press ${this.settings.menu_keybind} to toggle menu`;
+    this.menu.querySelector(".keybind").innerText = `Press ${this.settings.menu_keybind} to toggle menu`;
     if (!this.localStorage.getItem("juice-menu")) {
-      this.localStorage.setItem(
-        "juice-menu",
-        this.menuToggle.getAttribute("data-active")
-      );
+      this.localStorage.setItem("juice-menu", this.menuToggle.getAttribute("data-active"));
     } else {
-      this.menuToggle.setAttribute(
-        "data-active",
-        this.localStorage.getItem("juice-menu")
-      );
+      this.menuToggle.setAttribute("data-active", this.localStorage.getItem("juice-menu"));
     }
   }
 
@@ -966,7 +136,7 @@ class Menu {
         const values = transform.match(/matrix.*\((.+)\)/)[1].split(",");
         return {
           x: parseFloat(values[4]) || 0,
-          y: parseFloat(values[5]) || 0
+          y: parseFloat(values[5]) || 0,
         };
       }
       return { x: 0, y: 0 };
@@ -1039,152 +209,6 @@ class Menu {
     });
   }
 
-  resizeMenu() {
-    const menu = document.querySelector(".menu");
-
-    const EDGE = 6;
-    const MIN_W = 700;
-    const MIN_H = 510;
-
-    let isResizing = false;
-    let edges = { left: false, right: false, top: false, bottom: false };
-    let startMouseX = 0;
-    let startMouseY = 0;
-    let startW = 0;
-    let startH = 0;
-    let startX = 0;
-    let startY = 0;
-    let savedTransition = "";
-
-    function getMenuPosition() {
-      const transform = getComputedStyle(menu).transform;
-      if (transform && transform !== "none") {
-        const values = transform.match(/matrix.*\((.+)\)/)[1].split(",");
-        return {
-          x: parseFloat(values[4]) || 0,
-          y: parseFloat(values[5]) || 0,
-        };
-      }
-      return { x: 0, y: 0 };
-    }
-
-    function setMenuPosition(x, y) {
-      menu.style.transform = `translate3d(${x}px, ${y}px, 0)`;
-    }
-
-    function saveSize(w, h) {
-      localStorage.setItem("menu-size", JSON.stringify({ w, h }));
-    }
-
-    function loadSize() {
-      try {
-        const saved = localStorage.getItem("menu-size");
-        if (saved) {
-          const { w, h } = JSON.parse(saved);
-          if (w >= MIN_W && h >= MIN_H) {
-            menu.style.width = `${w}px`;
-            menu.style.height = `${h}px`;
-          }
-        }
-      } catch { }
-    }
-
-    const handles = [
-      { cls: "n", cursor: "n-resize", edges: { top: true } },
-      { cls: "s", cursor: "s-resize", edges: { bottom: true } },
-      { cls: "e", cursor: "e-resize", edges: { right: true } },
-      { cls: "w", cursor: "w-resize", edges: { left: true } },
-      { cls: "nw", cursor: "nw-resize", edges: { top: true, left: true } },
-      { cls: "ne", cursor: "ne-resize", edges: { top: true, right: true } },
-      { cls: "sw", cursor: "sw-resize", edges: { bottom: true, left: true } },
-      { cls: "se", cursor: "se-resize", edges: { bottom: true, right: true } },
-    ];
-
-    handles.forEach(({ cls, cursor, edges: handleEdges }) => {
-      const el = document.createElement("div");
-      el.className = `menu-resize-handle menu-resize-${cls}`;
-      el.style.cssText = `position:absolute;z-index:10;`;
-
-      if (cls === "n") Object.assign(el.style, { top: `-${EDGE}px`, left: `${EDGE}px`, right: `${EDGE}px`, height: `${EDGE * 2}px`, cursor });
-      if (cls === "s") Object.assign(el.style, { bottom: `-${EDGE}px`, left: `${EDGE}px`, right: `${EDGE}px`, height: `${EDGE * 2}px`, cursor });
-      if (cls === "e") Object.assign(el.style, { top: `${EDGE}px`, bottom: `${EDGE}px`, right: `-${EDGE}px`, width: `${EDGE * 2}px`, cursor });
-      if (cls === "w") Object.assign(el.style, { top: `${EDGE}px`, bottom: `${EDGE}px`, left: `-${EDGE}px`, width: `${EDGE * 2}px`, cursor });
-      if (cls === "nw") Object.assign(el.style, { top: `-${EDGE}px`, left: `-${EDGE}px`, width: `${EDGE * 2}px`, height: `${EDGE * 2}px`, cursor });
-      if (cls === "ne") Object.assign(el.style, { top: `-${EDGE}px`, right: `-${EDGE}px`, width: `${EDGE * 2}px`, height: `${EDGE * 2}px`, cursor });
-      if (cls === "sw") Object.assign(el.style, { bottom: `-${EDGE}px`, left: `-${EDGE}px`, width: `${EDGE * 2}px`, height: `${EDGE * 2}px`, cursor });
-      if (cls === "se") Object.assign(el.style, { bottom: `-${EDGE}px`, right: `-${EDGE}px`, width: `${EDGE * 2}px`, height: `${EDGE * 2}px`, cursor });
-
-      el.addEventListener("mousedown", (e) => {
-        e.stopPropagation();
-
-        isResizing = true;
-        edges = { left: false, right: false, top: false, bottom: false, ...handleEdges };
-
-        savedTransition = menu.style.transition;
-        menu.style.transition = "none";
-
-        startMouseX = e.clientX;
-        startMouseY = e.clientY;
-        startW = menu.offsetWidth;
-        startH = menu.offsetHeight;
-
-        const pos = getMenuPosition();
-        startX = pos.x;
-        startY = pos.y;
-
-        document.body.style.userSelect = "none";
-        document.body.style.cursor = cursor;
-      });
-
-      menu.appendChild(el);
-    });
-
-    document.addEventListener("mousemove", (e) => {
-      if (!isResizing) return;
-
-      const dx = e.clientX - startMouseX;
-      const dy = e.clientY - startMouseY;
-
-      let newW = startW;
-      let newH = startH;
-      let newX = startX;
-      let newY = startY;
-
-      if (edges.right) newW = Math.max(MIN_W, startW + dx);
-      if (edges.bottom) newH = Math.max(MIN_H, startH + dy);
-
-      if (edges.left) {
-        newW = Math.max(MIN_W, startW - dx);
-        newX = startX + (startW - newW);
-      }
-
-      if (edges.top) {
-        newH = Math.max(MIN_H, startH - dy);
-        newY = startY + (startH - newH);
-      }
-
-      menu.style.width = `${newW}px`;
-      menu.style.height = `${newH}px`;
-      setMenuPosition(newX, newY);
-    });
-
-    document.addEventListener("mouseup", () => {
-      if (!isResizing) return;
-      isResizing = false;
-
-      menu.style.transition = savedTransition;
-      document.body.style.userSelect = "";
-      document.body.style.cursor = "";
-
-      saveSize(menu.offsetWidth, menu.offsetHeight);
-
-      const pos = getMenuPosition();
-      localStorage.setItem("menu-position", JSON.stringify(pos));
-    });
-
-    window.addEventListener("load", loadSize);
-  }
-
   setLocalGradient() {
     const self = this;
 
@@ -1240,17 +264,17 @@ class Menu {
       const previewCssLabel = previewDiv.querySelector(".preview-css-label");
 
       previewCssLabel.addEventListener("input", () => {
-        const lines = previewCssLabel.value.split("\n").map(l => l.trim());
-        const gradientLine = lines.find(l => l.startsWith("linear-gradient"));
-        const shadowLine = lines.find(l => l.startsWith("text-shadow:"));
-        const animatedLine = lines.find(l => l.startsWith("animated:"));
+        const lines = previewCssLabel.value.split("\n").map((l) => l.trim());
+        const gradientLine = lines.find((l) => l.startsWith("linear-gradient"));
+        const shadowLine = lines.find((l) => l.startsWith("text-shadow:"));
+        const animatedLine = lines.find((l) => l.startsWith("animated:"));
 
         if (gradientLine) {
           const match = gradientLine.match(/linear-gradient\(([^)]+)\)/);
           if (match) {
             try {
               previewText.style.backgroundImage = `linear-gradient(${match[1]})`;
-              const parts = match[1].split(",").map(s => s.trim());
+              const parts = match[1].split(",").map((s) => s.trim());
               const rotMatch = parts[0].match(/^(\d+)deg$/);
               if (rotMatch) {
                 rotationSlider.value = rotMatch[1];
@@ -1266,7 +290,7 @@ class Menu {
                 inputs[i].querySelector(".color-picker").value = m[1];
                 inputs[i].querySelector(".color-swatch").style.background = m[1];
               });
-            } catch (e) { }
+            } catch (e) {}
           }
         }
 
@@ -1325,15 +349,35 @@ class Menu {
         </div>
       `;
 
-      infoWrapper.querySelector(".info-btn").onmouseenter = () => infoWrapper.querySelector(".info-tooltip").style.display = "block";
-      infoWrapper.querySelector(".info-btn").onmouseleave = () => infoWrapper.querySelector(".info-tooltip").style.display = "none";
+      infoWrapper.querySelector(".info-btn").onmouseenter = () => (infoWrapper.querySelector(".info-tooltip").style.display = "block");
+      infoWrapper.querySelector(".info-btn").onmouseleave = () => (infoWrapper.querySelector(".info-tooltip").style.display = "none");
 
       const examples = [
-        { name: "Sunrise", stops: ["#ff512f", "#f09819", "#ff512f"], shadow: { intensity: 35, color: "#f07a19" } },
-        { name: "Aqua Marine", stops: ["#1a2980", "#26d0ce", "#1a2980"], shadow: { intensity: 30, color: "#1289A7" } },
-        { name: "Aurora", stops: ["#6c5ce7", "#a29bfe", "#fd79a8", "#fdcb6e", "#6c5ce7"], shadow: { intensity: 40, color: "#a29bfe" } },
-        { name: "Monte Carlo", stops: ["#cc95c0", "#dbd4b4", "#7aa1d2", "#cc95c0"], shadow: { intensity: 35, color: "#ffd200" } },
-        { name: "Hazel", stops: ["#77a1d3", "#79cbca", "#e684ae", "#77a1d3"], shadow: { intensity: 40, color: "#79cbca" } },
+        {
+          name: "Sunrise",
+          stops: ["#ff512f", "#f09819", "#ff512f"],
+          shadow: { intensity: 35, color: "#f07a19" },
+        },
+        {
+          name: "Aqua Marine",
+          stops: ["#1a2980", "#26d0ce", "#1a2980"],
+          shadow: { intensity: 30, color: "#1289A7" },
+        },
+        {
+          name: "Aurora",
+          stops: ["#6c5ce7", "#a29bfe", "#fd79a8", "#fdcb6e", "#6c5ce7"],
+          shadow: { intensity: 40, color: "#a29bfe" },
+        },
+        {
+          name: "Monte Carlo",
+          stops: ["#cc95c0", "#dbd4b4", "#7aa1d2", "#cc95c0"],
+          shadow: { intensity: 35, color: "#ffd200" },
+        },
+        {
+          name: "Hazel",
+          stops: ["#77a1d3", "#79cbca", "#e684ae", "#77a1d3"],
+          shadow: { intensity: 40, color: "#79cbca" },
+        },
       ];
 
       const examplesWrapper = document.createElement("div");
@@ -1346,7 +390,7 @@ class Menu {
       const examplesMenu = document.createElement("div");
       examplesMenu.className = "examples-menu";
 
-      examples.forEach(ex => {
+      examples.forEach((ex) => {
         const item = document.createElement("div");
         item.className = "examples-menu-item";
 
@@ -1356,8 +400,8 @@ class Menu {
 
         item.append(dot, document.createTextNode(ex.name));
         item.onclick = () => {
-          colorsContainer.querySelectorAll(".color-input").forEach(el => el.remove());
-          ex.stops.forEach(hex => {
+          colorsContainer.querySelectorAll(".color-input").forEach((el) => el.remove());
+          ex.stops.forEach((hex) => {
             colorsContainer.insertBefore(createColorInput(hex, ""), addButton);
           });
           rotationSlider.value = 90;
@@ -1380,11 +424,15 @@ class Menu {
       examplesBtn.onclick = () => {
         examplesMenu.style.display = examplesMenu.style.display === "none" ? "block" : "none";
       };
-      document.addEventListener("click", (e) => {
-        if (!examplesWrapper.contains(e.target)) {
-          examplesMenu.style.display = "none";
-        }
-      }, true);
+      document.addEventListener(
+        "click",
+        (e) => {
+          if (!examplesWrapper.contains(e.target)) {
+            examplesMenu.style.display = "none";
+          }
+        },
+        true,
+      );
 
       examplesWrapper.append(examplesBtn, examplesMenu);
 
@@ -1442,7 +490,10 @@ class Menu {
         const trash = document.createElement("i");
         trash.className = "fas fa-trash remove-color";
 
-        trash.addEventListener("click", () => { div.remove(); updateGradient(); });
+        trash.addEventListener("click", () => {
+          div.remove();
+          updateGradient();
+        });
 
         hexInput.addEventListener("input", () => {
           if (/^#[0-9A-Fa-f]{6}$/.test(hexInput.value)) {
@@ -1458,7 +509,7 @@ class Menu {
           updateGradient();
         });
 
-        animatedCheckbox.addEventListener("click", updateGradient)
+        animatedCheckbox.addEventListener("click", updateGradient);
 
         posInput.addEventListener("input", updateGradient);
 
@@ -1482,7 +533,7 @@ class Menu {
 
       colorsContainer.addEventListener("dragend", () => {
         dragSrcEl?.classList.remove("dragging");
-        colorsContainer.querySelectorAll(".color-input").forEach(el => el.classList.remove("drag-over"));
+        colorsContainer.querySelectorAll(".color-input").forEach((el) => el.classList.remove("drag-over"));
         dragSrcEl = null;
       });
 
@@ -1491,7 +542,7 @@ class Menu {
         e.dataTransfer.dropEffect = "move";
         const target = e.target.closest(".color-input");
         if (!target || target === dragSrcEl) return;
-        colorsContainer.querySelectorAll(".color-input").forEach(el => el.classList.remove("drag-over"));
+        colorsContainer.querySelectorAll(".color-input").forEach((el) => el.classList.remove("drag-over"));
         target.classList.add("drag-over");
       });
 
@@ -1503,7 +554,7 @@ class Menu {
         const srcIdx = items.indexOf(dragSrcEl);
         const tgtIdx = items.indexOf(target);
         colorsContainer.insertBefore(dragSrcEl, srcIdx < tgtIdx ? target.nextSibling : target);
-        colorsContainer.querySelectorAll(".color-input").forEach(el => el.classList.remove("drag-over"));
+        colorsContainer.querySelectorAll(".color-input").forEach((el) => el.classList.remove("drag-over"));
         updateGradient();
       });
 
@@ -1521,17 +572,20 @@ class Menu {
       function updateGradient() {
         const rotation = rotationSlider.value || 90;
         const stops = getStops();
-        const gradientCSS = `linear-gradient(${rotation}deg, ${stops.map(s => `${s.hex} ${s.pos}`).join(", ")})`;
+        const gradientCSS = `linear-gradient(${rotation}deg, ${stops.map((s) => `${s.hex} ${s.pos}`).join(", ")})`;
         previewText.style.backgroundImage = gradientCSS;
         const intensity = shadowSlider.value || 0;
         const shadowColor = shadowColorPicker.value || "#FFFFFF";
         const shadowCSS = intensity > 0 ? `0 0 ${intensity}px ${shadowColor}` : "none";
         const animatedVal = animatedCheckbox.checked;
         previewCssLabel.value = `${gradientCSS}\ntext-shadow: ${shadowCSS}\nanimated: ${animatedVal}`;
-        localStorage.setItem("gradientSettings", JSON.stringify({
-          rotation,
-          colors: stops.map(s => ({ hex: s.hex, position: s.pos }))
-        }));
+        localStorage.setItem(
+          "gradientSettings",
+          JSON.stringify({
+            rotation,
+            colors: stops.map((s) => ({ hex: s.hex, position: s.pos })),
+          }),
+        );
         saveToCustomizations();
       }
 
@@ -1551,27 +605,30 @@ class Menu {
         const shortId = localStorage.getItem("user-id");
         if (!shortId) return globalCustomizations;
 
-        const localStops = getStops().map(s => s.hex);
-        const localBadges = [...document.querySelectorAll(".badge-input")].map(input => input.querySelector(".badge-url")?.value.trim()).filter(Boolean);
+        const localStops = getStops().map((s) => s.hex);
+        const localBadges = [...document.querySelectorAll(".badge-input")].map((input) => input.querySelector(".badge-url")?.value.trim()).filter(Boolean);
         const localIntensity = shadowSlider.value || 0;
         const localColor = shadowColorPicker.value || "#FFFFFF";
         const localBackground = localStorage.getItem("backgroundSettings") || "";
 
-        const existingIndex = globalCustomizations.findIndex(c => c.shortId === shortId);
+        const existingIndex = globalCustomizations.findIndex((c) => c.shortId === shortId);
         const localData = {
           shortId,
           gradient: {
             rot: `${rotationSlider.value || 90}deg`,
             stops: localStops,
-            shadow: localIntensity > 0 ? `0px 0px ${localIntensity}px ${localColor}` : "none"
+            shadow: localIntensity > 0 ? `0px 0px ${localIntensity}px ${localColor}` : "none",
           },
           animated: self.settings.local_animated_gradient,
           badges: localBadges,
-          "profile-background": localBackground || null
+          "profile-background": localBackground || null,
         };
 
         if (existingIndex >= 0) {
-          globalCustomizations[existingIndex] = { ...globalCustomizations[existingIndex], ...localData };
+          globalCustomizations[existingIndex] = {
+            ...globalCustomizations[existingIndex],
+            ...localData,
+          };
         } else if (localStops.length > 0 || localBadges.length > 0 || localBackground) {
           globalCustomizations.push(localData);
         }
@@ -1593,7 +650,7 @@ class Menu {
         const data = JSON.parse(saved);
         rotationSlider.value = data.rotation;
         rotationInput.value = data.rotation;
-        data.colors.forEach(color => {
+        data.colors.forEach((color) => {
           colorsContainer.insertBefore(createColorInput(color.hex, color.position), addButton);
         });
         updateGradient();
@@ -1617,7 +674,10 @@ class Menu {
         updateGradient();
       });
 
-      rotationSlider.addEventListener("input", () => { rotationInput.value = rotationSlider.value; updateGradient(); });
+      rotationSlider.addEventListener("input", () => {
+        rotationInput.value = rotationSlider.value;
+        updateGradient();
+      });
       rotationInput.addEventListener("input", () => {
         const clamped = Math.max(0, Math.min(360, parseInt(rotationInput.value) || 0));
         rotationSlider.value = clamped;
@@ -1635,7 +695,10 @@ class Menu {
         saveToCustomizations();
       });
 
-      shadowSlider.addEventListener("input", () => { shadowInput.value = shadowSlider.value; updateTextShadow(); });
+      shadowSlider.addEventListener("input", () => {
+        shadowInput.value = shadowSlider.value;
+        updateTextShadow();
+      });
       shadowInput.addEventListener("input", () => {
         shadowSlider.value = Math.max(0, Math.min(100, parseInt(shadowInput.value) || 0));
         updateTextShadow();
@@ -1699,12 +762,15 @@ class Menu {
       const trash = document.createElement("i");
       trash.className = "fas fa-trash remove-badge";
 
-      trash.addEventListener("click", () => { div.remove(); saveBadges(); });
+      trash.addEventListener("click", () => {
+        div.remove();
+        saveBadges();
+      });
 
       urlInput.addEventListener("input", () => {
         const newUrl = urlInput.value.trim();
         preview.src = newUrl || "";
-        preview.onerror = () => preview.src = "";
+        preview.onerror = () => (preview.src = "");
         saveBadges();
       });
 
@@ -1716,11 +782,9 @@ class Menu {
       const shortId = localStorage.getItem("user-id");
       if (!shortId) return globalCustomizations;
 
-      const badges = [...badgesContent.querySelectorAll(".badge-input")]
-        .map(input => input.querySelector(".badge-url").value.trim())
-        .filter(Boolean);
+      const badges = [...badgesContent.querySelectorAll(".badge-input")].map((input) => input.querySelector(".badge-url").value.trim()).filter(Boolean);
 
-      const existingIndex = globalCustomizations.findIndex(c => c.shortId === shortId);
+      const existingIndex = globalCustomizations.findIndex((c) => c.shortId === shortId);
 
       if (existingIndex >= 0) {
         globalCustomizations[existingIndex].badges = badges;
@@ -1732,9 +796,7 @@ class Menu {
     }
 
     function saveBadges() {
-      const badges = [...badgesContent.querySelectorAll(".badge-input")]
-        .map(input => input.querySelector(".badge-url").value.trim())
-        .filter(Boolean);
+      const badges = [...badgesContent.querySelectorAll(".badge-input")].map((input) => input.querySelector(".badge-url").value.trim()).filter(Boolean);
 
       localStorage.setItem("badgeSettings", JSON.stringify(badges));
 
@@ -1749,7 +811,7 @@ class Menu {
     function loadBadges() {
       const saved = localStorage.getItem("badgeSettings");
       if (!saved) return;
-      JSON.parse(saved).forEach(url => {
+      JSON.parse(saved).forEach((url) => {
         badgesContent.insertBefore(createBadgeInput(url), addButton);
       });
       saveBadges();
@@ -1767,7 +829,7 @@ class Menu {
 
     badgesContent.addEventListener("dragend", () => {
       dragSrcEl?.classList.remove("dragging");
-      badgesContent.querySelectorAll(".badge-input").forEach(el => el.classList.remove("drag-over"));
+      badgesContent.querySelectorAll(".badge-input").forEach((el) => el.classList.remove("drag-over"));
       dragSrcEl = null;
     });
 
@@ -1776,7 +838,7 @@ class Menu {
       e.dataTransfer.dropEffect = "move";
       const target = e.target.closest(".badge-input");
       if (!target || target === dragSrcEl) return;
-      badgesContent.querySelectorAll(".badge-input").forEach(el => el.classList.remove("drag-over"));
+      badgesContent.querySelectorAll(".badge-input").forEach((el) => el.classList.remove("drag-over"));
       target.classList.add("drag-over");
     });
 
@@ -1788,7 +850,7 @@ class Menu {
       const srcIdx = items.indexOf(dragSrcEl);
       const tgtIdx = items.indexOf(target);
       badgesContent.insertBefore(dragSrcEl, srcIdx < tgtIdx ? target.nextSibling : target);
-      badgesContent.querySelectorAll(".badge-input").forEach(el => el.classList.remove("drag-over"));
+      badgesContent.querySelectorAll(".badge-input").forEach((el) => el.classList.remove("drag-over"));
       saveBadges();
     });
 
@@ -1812,7 +874,7 @@ class Menu {
 
       const url = urlInput.value.trim();
 
-      const existingIndex = globalCustomizations.findIndex(c => c.shortId === shortId);
+      const existingIndex = globalCustomizations.findIndex((c) => c.shortId === shortId);
 
       if (existingIndex >= 0) {
         globalCustomizations[existingIndex]["profile-background"] = url || null;
@@ -1849,7 +911,10 @@ class Menu {
 
     urlInput.addEventListener("input", () => {
       setUrl(urlInput.value.trim());
-      preview.onerror = () => { preview.src = ""; preview.style.display = "none"; };
+      preview.onerror = () => {
+        preview.src = "";
+        preview.style.display = "none";
+      };
       saveBackground();
     });
 
@@ -1866,9 +931,7 @@ class Menu {
   }
 
   setTheme() {
-    this.menu
-      .querySelector(".menu")
-      .setAttribute("data-theme", this.settings.menu_theme);
+    this.menu.querySelector(".menu").setAttribute("data-theme", this.settings.menu_theme);
   }
 
   handleKeyEvents() {
@@ -1913,13 +976,16 @@ class Menu {
 
     const options = this.menu.querySelectorAll(".option");
     options.forEach((option) => {
-      if (!Array.from(option.children).some(child => child.tagName === "INPUT")) return;
+      if (!Array.from(option.children).some((child) => child.tagName === "INPUT")) return;
       option.style.height = "24px";
-    })
+    });
+
+    const perWeaponOptions = this.menu.querySelectorAll(".per-weapon");
+    perWeaponOptions.forEach((option) => (option.title = "Per-Weapon setting"));
   }
 
   async initChangelogs() {
-    const changelogs = await fetch("https://raw.githubusercontent.com/zVipexx/dawn-client/refs/heads/main/changelogs.json").then((res) => res.json())
+    const changelogs = await fetch("https://raw.githubusercontent.com/zVipexx/dawn-client/refs/heads/main/changelogs.json").then((res) => res.json());
     const changelogsContent = document.querySelector("#client-changelogs");
 
     changelogsContent.innerHTML = "";
@@ -2003,7 +1069,7 @@ class Menu {
         }
 
         if (hasLinks) {
-          fragments.forEach(fragment => listContent.appendChild(fragment));
+          fragments.forEach((fragment) => listContent.appendChild(fragment));
         } else {
           listContent.textContent = item;
         }
@@ -2015,99 +1081,319 @@ class Menu {
       changelogContainer.appendChild(headerDiv);
       changelogContainer.appendChild(content);
       changelogsContent.appendChild(changelogContainer);
-    })
+    });
+  }
+
+  updateWeaponConfig() {
+    const armSelect = document.querySelector("#active-arm");
+    const isSingleArmWeapon = this.settings.active_weapon === "revolver" || this.settings.active_weapon === "shark";
+
+    if (isSingleArmWeapon) {
+      armSelect.innerHTML = `
+        <option value="right">Right Arm</option>
+      `;
+      if (this.settings.active_arm !== "right") {
+        this._lastFreeArm = this.settings.active_arm;
+        this.settings.active_arm = "right";
+      }
+      armSelect.value = "right";
+    } else {
+      armSelect.innerHTML = `
+        <option value="left">Left Arm</option>
+        <option value="right">Right Arm</option>
+      `;
+      if (this._lastFreeArm) {
+        this.settings.active_arm = this._lastFreeArm;
+        this._lastFreeArm = null;
+      }
+      armSelect.value = this.settings.active_arm;
+    }
+
+    const weaponInputs = this.menu.querySelectorAll("input[data-setting-weapon]");
+    weaponInputs.forEach((input) => {
+      const setting = `${this.settings.active_weapon}_${input.dataset.settingWeapon}`;
+      const value = this.settings[setting];
+      input.value = value;
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+
+    const armInputs = this.menu.querySelectorAll("input[data-setting-arm]");
+    armInputs.forEach((input) => {
+      const setting = `${this.settings.active_weapon}_${this.settings.active_arm}_${input.dataset.settingArm}`;
+      const value = this.settings[setting];
+      input.value = value;
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+  }
+
+  convertOldConfig() {
+    const oldWeaponConfig = this.localStorage.getItem("dawn_weapon_config");
+    if (!oldWeaponConfig) return;
+
+    try {
+      const raw = oldWeaponConfig.trim();
+      if (!raw) return;
+
+      const oldConfig = JSON.parse(raw);
+
+      const WEAPON_KEY_MAP = { rev: "revolver" };
+      const settings = oldConfig.settings || {};
+      const universal = oldConfig.universalSettings || {};
+      const universalLeft = universal.leftArm || {};
+      const universalRight = universal.rightArm || {};
+
+      const newConfig = {};
+
+      const set = (key, value, defaultValue) => {
+        if (value !== undefined && value !== null && value !== defaultValue) {
+          newConfig[key] = value;
+        }
+      };
+
+      set("weapon_wireframe", oldConfig.weaponWireframe, false);
+      set("weapon_color", oldConfig.weaponColorEnabled, false);
+      set("weapon_color_hex", oldConfig.weaponColorHex, "#FFFFFF");
+      set("weapon_rainbow", oldConfig.weaponRgb, false);
+
+      const writeArm = (prefix, arm) => {
+        arm = arm || {};
+        set(`${prefix}_size`, arm.size, 1);
+        set(`${prefix}_offset_x`, arm.offsetX, 0);
+        set(`${prefix}_offset_y`, arm.offsetY, 0);
+        set(`${prefix}_offset_z`, arm.offsetZ, 0);
+        set(`${prefix}_rotation_x`, arm.rotationX, 0);
+        set(`${prefix}_rotation_y`, arm.rotationY, 0);
+        set(`${prefix}_rotation_z`, arm.rotationZ, 0);
+      };
+      const writeArmAppearance = (prefix, arm) => {
+        arm = arm || {};
+        set(`${prefix}_wireframe`, arm.wireframe, false);
+        set(`${prefix}_color`, arm.colorEnabled, false);
+        set(`${prefix}_color_hex`, arm.colorHex, "#FFFFFF");
+        set(`${prefix}_rainbow`, arm.rgb, false);
+      };
+
+      writeArmAppearance("arm", universalLeft);
+      writeArmAppearance("right_arm", universalRight);
+
+      for (const [oldKey, cfg] of Object.entries(settings)) {
+        if (!cfg || typeof cfg !== "object") continue;
+
+        const name = WEAPON_KEY_MAP[oldKey] || oldKey;
+        const leftArm = cfg.leftArm || {};
+        const rightArm = cfg.rightArm || {};
+        const mirror = cfg.mirrorArm === true;
+
+        set(`${name}_inspect_duration`, cfg.inspectDuration, 750);
+        writeArm(`${name}_left_arm`, leftArm);
+        writeArm(`${name}_right_arm`, mirror ? leftArm : rightArm);
+        set(`${name}_weapon_size`, cfg.size, 1);
+        set(`${name}_weapon_offset_x`, cfg.offsetX, 0);
+        set(`${name}_weapon_offset_y`, cfg.offsetY, 0);
+        set(`${name}_weapon_offset_z`, cfg.offsetZ, 0);
+        set(`${name}_weapon_rotation_x`, cfg.rotationX, 0);
+        set(`${name}_weapon_rotation_y`, cfg.rotationY, 0);
+        set(`${name}_weapon_rotation_z`, cfg.rotationZ, 0);
+      }
+
+      for (const key in newConfig) {
+        this.settings[key] = newConfig[key];
+        ipcRenderer.send("update-setting", key, newConfig[key]);
+
+        const event = new CustomEvent("juice-settings-changed", {
+          detail: { setting: key, value: newConfig[key] },
+        });
+        document.dispatchEvent(event);
+      }
+      this.updateWeaponConfig();
+      this.localStorage.removeItem("dawn_weapon_config");
+    } catch (error) {
+      alert(error);
+    }
+  }
+
+  initWeaponCustomizations() {
+    const defaultWeaponSettings = {
+      weapon_size: 1,
+      weapon_offset_x: 0,
+      weapon_offset_y: 0,
+      weapon_offset_z: 0,
+      weapon_rotation_x: 0,
+      weapon_rotation_y: 0,
+      weapon_rotation_z: 0,
+    };
+
+    const defaultArmSettings = {
+      arm_size: 1,
+      arm_offset_x: 0,
+      arm_offset_y: 0,
+      arm_offset_z: 0,
+      arm_rotation_x: 0,
+      arm_rotation_y: 0,
+      arm_rotation_z: 0,
+    };
+
+    this.updateWeaponConfig();
+
+    document.addEventListener("juice-settings-changed", (e) => {
+      if (e.detail.setting === "active_weapon" || e.detail.setting === "active_arm") this.updateWeaponConfig();
+    });
+
+    let weaponClickCounter = 0;
+    const resetWeaponSettings = document.querySelector("#reset-weapon-settings");
+    resetWeaponSettings.addEventListener("click", () => {
+      weaponClickCounter++;
+      const text = resetWeaponSettings.querySelector(".text");
+      const description = resetWeaponSettings.querySelector(".description");
+      if (weaponClickCounter === 1) {
+        resetWeaponSettings.style.background = "rgba(var(--red), 0.25)";
+        text.innerText = "Are you sure?";
+        description.innerText = "This will wipe the size, offset and rotation";
+      } else if (weaponClickCounter === 2) {
+        Object.keys(defaultWeaponSettings).forEach((key) => {
+          const setting = `${this.settings.active_weapon}_${key}`;
+          const value = defaultWeaponSettings[key];
+          this.settings[setting] = value;
+
+          ipcRenderer.send("update-setting", setting, value);
+          const event = new CustomEvent("juice-settings-changed", {
+            detail: { setting: setting, value: value },
+          });
+          document.dispatchEvent(event);
+
+          this.updateWeaponConfig();
+        });
+
+        resetWeaponSettings.style.background = "rgba(var(--dark), 0.1)";
+        text.innerText = "Reset Weapon Settings";
+        description.innerText = "This action cannot be undone";
+        weaponClickCounter = 0;
+      }
+    });
+
+    let armClickCounter = 0;
+    const resetArmSettings = document.querySelector("#reset-arm-settings");
+    resetArmSettings.addEventListener("click", () => {
+      armClickCounter++;
+      const text = resetArmSettings.querySelector(".text");
+      const description = resetArmSettings.querySelector(".description");
+      if (armClickCounter === 1) {
+        resetArmSettings.style.background = "rgba(var(--red), 0.25)";
+        text.innerText = "Are you sure?";
+        description.innerText = "This will wipe the size, offset and rotation";
+      } else if (armClickCounter === 2) {
+        Object.keys(defaultArmSettings).forEach((key) => {
+          const setting = `${this.settings.active_weapon}_${this.settings.active_arm}_${key}`;
+          const value = defaultArmSettings[key];
+          this.settings[setting] = value;
+
+          ipcRenderer.send("update-setting", setting, value);
+          const event = new CustomEvent("juice-settings-changed", {
+            detail: { setting: setting, value: value },
+          });
+          document.dispatchEvent(event);
+
+          this.updateWeaponConfig();
+        });
+
+        resetArmSettings.style.background = "rgba(var(--dark), 0.1)";
+        text.innerText = "Reset Arm Settings";
+        description.innerText = "This action cannot be undone";
+        armClickCounter = 0;
+      }
+    });
   }
 
   handleSliderInputs() {
     const sliderMap = [
       {
-        slider: document.getElementById("weapon_size"),
-        input: document.querySelector(".weapon-size-value"),
+        slider: ".inspect-duration",
+        input: ".inspect-duration-value",
       },
       {
-        slider: document.getElementById("weapon_offset_x"),
-        input: document.querySelector(".weapon-offset-x-value"),
+        slider: ".weapon-size",
+        input: ".weapon-size-value",
       },
       {
-        slider: document.getElementById("weapon_offset_y"),
-        input: document.querySelector(".weapon-offset-y-value"),
+        slider: ".weapon-offset-x",
+        input: ".weapon-offset-x-value",
       },
       {
-        slider: document.getElementById("weapon_offset_z"),
-        input: document.querySelector(".weapon-offset-z-value"),
+        slider: ".weapon-offset-y",
+        input: ".weapon-offset-y-value",
       },
       {
-        slider: document.getElementById("weapon_rotation_x"),
-        input: document.querySelector(".weapon-rotation-x-value"),
+        slider: ".weapon-offset-z",
+        input: ".weapon-offset-z-value",
       },
       {
-        slider: document.getElementById("weapon_rotation_y"),
-        input: document.querySelector(".weapon-rotation-y-value"),
+        slider: ".weapon-rotation-x",
+        input: ".weapon-rotation-x-value",
       },
       {
-        slider: document.getElementById("weapon_rotation_z"),
-        input: document.querySelector(".weapon-rotation-z-value"),
+        slider: ".weapon-rotation-y",
+        input: ".weapon-rotation-y-value",
       },
       {
-        slider: document.getElementById("corner_roundness"),
-        input: document.querySelector(".corner-value"),
+        slider: ".weapon-rotation-z",
+        input: ".weapon-rotation-z-value",
       },
       {
-        slider: document.getElementById("menu_opacity"),
-        input: document.querySelector(".opacity-value"),
+        slider: ".arm-size",
+        input: ".arm-size-value",
       },
       {
-        slider: document.getElementById("menu_blur"),
-        input: document.querySelector(".blur-value"),
+        slider: ".arm-offset-x",
+        input: ".arm-offset-x-value",
       },
       {
-        slider: document.getElementById("arm_size"),
-        input: document.querySelector(".arm-size-value"),
+        slider: ".arm-offset-y",
+        input: ".arm-offset-y-value",
       },
       {
-        slider: document.getElementById("arm_offset_x"),
-        input: document.querySelector(".arm-offset-x-value"),
+        slider: ".arm-offset-z",
+        input: ".arm-offset-z-value",
       },
       {
-        slider: document.getElementById("arm_offset_y"),
-        input: document.querySelector(".arm-offset-y-value"),
+        slider: ".arm-rotation-x",
+        input: ".arm-rotation-x-value",
       },
       {
-        slider: document.getElementById("arm_offset_z"),
-        input: document.querySelector(".arm-offset-z-value"),
+        slider: ".arm-rotation-y",
+        input: ".arm-rotation-y-value",
       },
       {
-        slider: document.getElementById("arm_rotation_x"),
-        input: document.querySelector(".arm-rotation-x-value"),
+        slider: ".arm-rotation-z",
+        input: ".arm-rotation-z-value",
       },
       {
-        slider: document.getElementById("arm_rotation_y"),
-        input: document.querySelector(".arm-rotation-y-value"),
+        slider: ".range.corner-roundness",
+        input: ".value.corner-roundness",
       },
       {
-        slider: document.getElementById("arm_rotation_z"),
-        input: document.querySelector(".arm-rotation-z-value"),
+        slider: ".range.menu-opacity",
+        input: ".value.menu-opacity",
       },
       {
-        slider: document.getElementById("weapon_inspect_duration"),
-        input: document.querySelector(".weapon-inspect-duration-value"),
-      }
+        slider: ".range.menu-blur",
+        input: ".value.menu-blur",
+      },
     ];
 
     sliderMap.forEach(({ slider, input }) => {
-      if (!slider || !input) return;
+      if (!document.querySelector(slider) || !document.querySelector(input)) return;
 
-      input.value = slider.value;
+      document.querySelector(input).value = document.querySelector(slider).value;
 
-      slider.addEventListener("input", () => {
-        input.value = slider.value;
+      document.querySelector(slider).addEventListener("input", () => {
+        document.querySelector(input).value = document.querySelector(slider).value;
       });
 
-      input.addEventListener("input", () => {
-        const val = parseFloat(input.value);
+      document.querySelector(input).addEventListener("input", () => {
+        const val = parseFloat(document.querySelector(input).value);
         if (!isNaN(val)) {
-          slider.value = val;
-          slider.dispatchEvent(new Event("change"));
+          document.querySelector(slider).value = val;
+          document.querySelector(slider).dispatchEvent(new Event("change"));
         }
       });
     });
@@ -2116,52 +1402,53 @@ class Menu {
   handleColorInputs() {
     const colorMap = [
       {
-        picker: document.querySelector(".shadow-color .color-picker"),
-        hex: document.querySelector(".shadow-color .hex"),
-        storageKey: null,
+        picker: ".shadow-color .color-picker",
+        hex: ".shadow-color .hex",
       },
       {
-        picker: document.querySelector(".weapon-color .color-picker"),
-        hex: document.querySelector(".weapon-color .hex"),
-        storageKey: "weapon_color_hex",
+        picker: ".weapon-color-hex",
+        hex: ".weapon-color-hex-value",
       },
       {
-        picker: document.querySelector(".arm-color .color-picker"),
-        hex: document.querySelector(".arm-color .hex"),
-        storageKey: "arm_color_hex",
+        picker: ".arm-color-hex",
+        hex: ".arm-color-hex-value",
       },
       {
-        picker: document.querySelector(".killfeed-color-picker.red"),
-        hex: document.querySelector(".killfeed-color-value.red"),
-        storageKey: null,
+        picker: ".color-picker.killfeed-color-red",
+        hex: ".hex.killfeed-color-red",
       },
       {
-        picker: document.querySelector(".killfeed-color-picker.blue"),
-        hex: document.querySelector(".killfeed-color-value.blue"),
-        storageKey: null,
-      }
+        picker: ".color-picker.killfeed-color-blue",
+        hex: ".hex.killfeed-color-blue",
+      },
+      {
+        picker: ".color-picker.custom-primary-color",
+        hex: ".hex.custom-primary-color",
+      },
+      {
+        picker: ".color-picker.custom-background-color",
+        hex: ".hex.custom-background-color",
+      },
+      {
+        picker: ".color-picker.custom-text-color",
+        hex: ".hex.custom-text-color",
+      },
+      {
+        picker: ".color-picker.custom-border-color",
+        hex: ".hex.custom-border-color",
+      },
     ];
 
-    colorMap.forEach(({ picker, hex, storageKey }) => {
-      if (!picker || !hex) return;
+    colorMap.forEach(({ picker, hex }) => {
+      if (!document.querySelector(picker) || !document.querySelector(hex)) return;
 
-      if (storageKey) {
-        const saved = localStorage.getItem(storageKey) || "#FFFFFF";
-        hex.value = saved;
-        picker.value = saved;
-      }
-
-      picker.addEventListener("input", () => {
-        hex.value = picker.value.toUpperCase();
-        if (storageKey) localStorage.setItem(storageKey, picker.value);
-        this.updateGlobalWeaponConfig();
+      document.querySelector(picker).addEventListener("input", () => {
+        document.querySelector(hex).value = document.querySelector(picker).value.toUpperCase();
       });
 
-      hex.addEventListener("input", () => {
-        if (/^#[0-9A-Fa-f]{6}$/.test(hex.value)) {
-          picker.value = hex.value;
-          if (storageKey) localStorage.setItem(storageKey, hex.value);
-          this.updateGlobalWeaponConfig();
+      document.querySelector(hex).addEventListener("input", () => {
+        if (/^#[0-9A-Fa-f]{6}$/.test(document.querySelector(hex).value)) {
+          document.querySelector(picker).value = document.querySelector(hex).value;
         }
       });
     });
@@ -2182,9 +1469,7 @@ class Menu {
         });
         document.dispatchEvent(event);
 
-        this.menu.querySelector(
-          ".keybind"
-        ).innerText = `Press ${this.settings.menu_keybind} to toggle menu`;
+        this.menu.querySelector(".keybind").innerText = `Press ${this.settings.menu_keybind} to toggle menu`;
         document.removeEventListener("keydown", listener);
       };
       document.addEventListener("keydown", listener);
@@ -2200,9 +1485,14 @@ class Menu {
         let keyCode = e.code;
         if (e.type === "mousedown") {
           switch (e.button) {
-            case 3: keyCode = "MouseButton4"; break;
-            case 4: keyCode = "MouseButton5"; break;
-            default: keyCode = `MouseButton${e.button + 1}`;
+            case 3:
+              keyCode = "MouseButton4";
+              break;
+            case 4:
+              keyCode = "MouseButton5";
+              break;
+            default:
+              keyCode = `MouseButton${e.button + 1}`;
           }
         }
         this.settings.inspect_keybind = keyCode;
@@ -2223,12 +1513,31 @@ class Menu {
   handleMenuInputChange(input) {
     const setting = input.dataset.setting;
     const type = input.type;
-    let value =
-      type === "checkbox"
-        ? input.checked
-        : type === "range" || type === "number"
-          ? Number(input.value)
-          : input.value;
+    let value = type === "checkbox" ? input.checked : type === "range" || type === "number" ? Number(input.value) : input.value;
+    this.settings[setting] = value;
+    console.log(setting, value);
+    ipcRenderer.send("update-setting", setting, value);
+    const event = new CustomEvent("juice-settings-changed", {
+      detail: { setting: setting, value: value },
+    });
+    document.dispatchEvent(event);
+  }
+
+  handleMenuWeaponInputChange(input) {
+    const setting = this.settings.active_weapon + "_" + input.dataset.settingWeapon;
+    let value = input.value;
+    this.settings[setting] = value;
+    ipcRenderer.send("update-setting", setting, value);
+    const event = new CustomEvent("juice-settings-changed", {
+      detail: { setting: setting, value: value },
+    });
+    document.dispatchEvent(event);
+  }
+
+  handleMenuArmInputChange(input) {
+    const setting = this.settings.active_weapon + "_" + this.settings.active_arm + "_" + input.dataset.settingArm;
+    let value = input.value;
+    console.log(setting, value);
     this.settings[setting] = value;
     ipcRenderer.send("update-setting", setting, value);
     const event = new CustomEvent("juice-settings-changed", {
@@ -2238,16 +1547,26 @@ class Menu {
   }
 
   handleMenuInputChanges() {
-    const inputs = this.menu.querySelectorAll("input[data-setting]");
-    const textareas = this.menu.querySelectorAll("textarea[data-setting]");
+    const inputs = this.menu.querySelectorAll("input[data-setting]:not([type='text'])");
+    const weaponInputs = this.menu.querySelectorAll("input[data-setting-weapon]");
+    const armInputs = this.menu.querySelectorAll("input[data-setting-arm]");
     inputs.forEach((input) => {
-      input.addEventListener("change", () => this.handleMenuInputChange(input));
+      input.addEventListener("input", () => this.handleMenuInputChange(input));
+    });
+    weaponInputs.forEach((input) => {
+      input.addEventListener("input", () => this.handleMenuWeaponInputChange(input));
+    });
+    armInputs.forEach((input) => {
+      input.addEventListener("input", () => this.handleMenuArmInputChange(input));
     });
 
+    const textInputs = this.menu.querySelectorAll("input[data-setting][type='text']");
+    const textareas = this.menu.querySelectorAll("textarea[data-setting]");
+    textInputs.forEach((input) => {
+      input.addEventListener("change", () => this.handleMenuInputChange(input));
+    });
     textareas.forEach((textarea) => {
-      textarea.addEventListener("change", () =>
-        this.handleMenuInputChange(textarea)
-      );
+      textarea.addEventListener("change", () => this.handleMenuInputChange(textarea));
     });
   }
 
@@ -2268,9 +1587,7 @@ class Menu {
   handleMenuSelectChanges() {
     const selects = this.menu.querySelectorAll("select[data-setting]");
     selects.forEach((select) => {
-      select.addEventListener("change", () =>
-        this.handleMenuSelectChange(select)
-      );
+      select.addEventListener("change", () => this.handleMenuSelectChange(select));
     });
   }
 
@@ -2287,7 +1604,7 @@ class Menu {
 
     this.localStorage.setItem("juice-menu-tab", tabName);
 
-    const contents = [...this.menu.querySelectorAll(".juice.options")].filter(el => !el.classList.contains("inner"));
+    const contents = [...this.menu.querySelectorAll(".juice.options")].filter((el) => !el.classList.contains("inner"));
     tabs.forEach((tab) => {
       tab.classList.remove("active");
     });
@@ -2396,273 +1713,35 @@ class Menu {
   }
 
   handleAppearance() {
-    const self = this;
-
-    const cornerSlider = this.menu.querySelector("#corner_roundness");
-    const cornerInput = this.menu.querySelector(".corner-value");
-    const opacitySlider = this.menu.querySelector("#menu_opacity");
-    const opacityInput = this.menu.querySelector(".opacity-value");
-    const blurSlider = this.menu.querySelector("#menu_blur");
-    const blurInput = this.menu.querySelector(".blur-value");
-    const menuTheme = this.menu.querySelector("#menu_theme");
-    const customSettingsDiv = this.menu.querySelector("#custom-theme-settings");
-
-    const primaryHex = this.menu.querySelector(".custom-primary-hex");
-    const primaryPicker = this.menu.querySelector(".custom-primary-picker");
-    const darkHex = this.menu.querySelector(".custom-dark-hex");
-    const darkPicker = this.menu.querySelector(".custom-dark-picker");
-    const lightHex = this.menu.querySelector(".custom-light-hex");
-    const lightPicker = this.menu.querySelector(".custom-light-picker");
-    const borderHex = this.menu.querySelector(".custom-border-hex");
-    const borderPicker = this.menu.querySelector(".custom-border-picker");
-
-    const savedRoundness = this.localStorage.getItem("corner_roundness");
-    const savedOpacity = this.localStorage.getItem("menu_opacity");
-    const savedBlur = this.localStorage.getItem("menu_blur");
-
-    const roundness = savedRoundness !== null ? parseInt(savedRoundness) : 12;
-    const opacity = savedOpacity !== null ? parseInt(savedOpacity) : 100;
-    const blur = savedBlur !== null ? parseInt(savedBlur) : 0;
-
-    if (cornerSlider) cornerSlider.value = roundness;
-    if (cornerInput) cornerInput.value = roundness;
-    if (opacitySlider) opacitySlider.value = opacity;
-    if (opacityInput) opacityInput.value = opacity;
-    if (blurSlider) blurSlider.value = blur;
-    if (blurInput) blurInput.value = blur;
-
-    this.menuToggle.style.setProperty("--corner-roundness", roundness);
-    this.menuToggle.style.setProperty("--menu-opacity", opacity);
-    this.menuToggle.style.setProperty("--menu-blur", blur);
-
-    const updateRoundness = (value) => {
-      const val = parseInt(value);
-      if (!isNaN(val)) {
-        const clamped = Math.min(64, Math.max(0, val));
-        this.menuToggle.style.setProperty("--corner-roundness", clamped);
-        this.localStorage.setItem("corner_roundness", clamped);
-      }
-    };
-
-    const updateOpacity = (value) => {
-      const val = parseInt(value);
-      if (!isNaN(val)) {
-        const clamped = Math.min(100, Math.max(0, val));
-        this.menuToggle.style.setProperty("--menu-opacity", clamped);
-        this.localStorage.setItem("menu_opacity", clamped);
-      }
-    };
-
-    const updateBlur = (value) => {
-      const val = parseInt(value);
-      if (!isNaN(val)) {
-        const clamped = Math.min(20, Math.max(0, val));
-        this.menuToggle.style.setProperty("--menu-blur", clamped);
-        this.localStorage.setItem("menu_blur", clamped);
-      }
-    };
-
-    if (cornerSlider) {
-      cornerSlider.addEventListener("input", (e) => {
-        const val = e.target.value;
-        if (cornerInput) cornerInput.value = val;
-        updateRoundness(val);
-      });
+    function hexToRgb(hex) {
+      const num = parseInt(hex.replace("#", ""), 16);
+      return `${(num >> 16) & 255}, ${(num >> 8) & 255}, ${num & 255}`;
     }
-
-    if (cornerInput) {
-      cornerInput.addEventListener("input", (e) => {
-        let val = parseInt(e.target.value);
-        if (isNaN(val)) val = 12;
-        val = Math.min(32, Math.max(0, val));
-        if (cornerSlider) cornerSlider.value = val;
-        updateRoundness(val);
-      });
-    }
-
-    if (opacitySlider) {
-      opacitySlider.addEventListener("input", (e) => {
-        const val = e.target.value;
-        if (opacityInput) opacityInput.value = val;
-        updateOpacity(val);
-      });
-    }
-
-    if (opacityInput) {
-      opacityInput.addEventListener("input", (e) => {
-        let val = parseInt(e.target.value);
-        if (isNaN(val)) val = 100;
-        val = Math.min(100, Math.max(0, val));
-        if (opacitySlider) opacitySlider.value = val;
-        updateOpacity(val);
-      });
-    }
-
-    if (blurSlider) {
-      blurSlider.addEventListener("input", (e) => {
-        const val = e.target.value;
-        if (blurInput) blurInput.value = val;
-        updateBlur(val);
-      });
-    }
-
-    if (blurInput) {
-      blurInput.addEventListener("input", (e) => {
-        let val = parseInt(e.target.value);
-        if (isNaN(val)) val = 0;
-        val = Math.min(20, Math.max(0, val));
-        if (blurSlider) blurSlider.value = val;
-        updateBlur(val);
-      });
-    }
-
-    const hexToRgb = (hex) => {
-      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-      return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : null;
-    };
 
     const updateCustomTheme = () => {
-      if (menuTheme && menuTheme.value !== "custom") return;
+      const hiddenSettings = document.querySelector("#custom-theme-settings");
+      if (this.settings.menu_theme === "custom") hiddenSettings.style.display = "flex";
+      else hiddenSettings.style.display = "none";
 
-      const primary = primaryHex ? primaryHex.value : "#C391F5";
-      const dark = darkHex ? darkHex.value : "#1C1626";
-      const light = lightHex ? lightHex.value : "#E6E0F5";
-      const border = borderHex ? borderHex.value : "#E6E0F5";
+      this.menuToggle.style.setProperty("--custom-primary", hexToRgb(this.settings.custom_primary_color));
+      this.menuToggle.style.setProperty("--custom-dark", hexToRgb(this.settings.custom_background_color));
+      this.menuToggle.style.setProperty("--custom-light", hexToRgb(this.settings.custom_text_color));
+      this.menuToggle.style.setProperty("--custom-border", hexToRgb(this.settings.custom_border_color));
 
-      const primaryRgb = hexToRgb(primary);
-      const darkRgb = hexToRgb(dark);
-      const lightRgb = hexToRgb(light);
-      const borderRgb = hexToRgb(border);
-
-      if (primaryRgb && darkRgb && lightRgb && borderRgb) {
-        this.menuToggle.style.setProperty("--custom-primary", primaryRgb);
-        this.menuToggle.style.setProperty("--custom-dark", darkRgb);
-        this.menuToggle.style.setProperty("--custom-light", lightRgb);
-        this.menuToggle.style.setProperty("--custom-border", borderRgb);
-
-        this.localStorage.setItem("custom_primary", primary);
-        this.localStorage.setItem("custom_dark", dark);
-        this.localStorage.setItem("custom_light", light);
-        this.localStorage.setItem("custom_border", border);
-      }
+      this.menuToggle.style.setProperty("--corner-roundness", this.settings.corner_roundness);
+      this.menuToggle.style.setProperty("--menu-opacity", this.settings.menu_opacity);
+      this.menuToggle.style.setProperty("--menu-blur", this.settings.menu_blur);
     };
+    updateCustomTheme();
 
-    const loadCustomColors = () => {
-      const savedPrimary = this.localStorage.getItem("custom_primary");
-      const savedDark = this.localStorage.getItem("custom_dark");
-      const savedLight = this.localStorage.getItem("custom_light");
-      const savedBorder = this.localStorage.getItem("custom_border");
-
-      if (primaryHex && savedPrimary) {
-        primaryHex.value = savedPrimary;
-        if (primaryPicker) primaryPicker.value = savedPrimary;
-      }
-      if (darkHex && savedDark) {
-        darkHex.value = savedDark;
-        if (darkPicker) darkPicker.value = savedDark;
-      }
-      if (lightHex && savedLight) {
-        lightHex.value = savedLight;
-        if (lightPicker) lightPicker.value = savedLight;
-      }
-      if (borderHex && savedBorder) {
-        borderHex.value = savedBorder;
-        if (borderPicker) borderPicker.value = savedBorder;
-      }
-
+    document.addEventListener("juice-settings-changed", () => {
       updateCustomTheme();
-    };
-
-    if (primaryHex && primaryPicker) {
-      primaryHex.addEventListener("input", () => {
-        if (/^#[0-9A-Fa-f]{6}$/i.test(primaryHex.value)) {
-          primaryPicker.value = primaryHex.value;
-          updateCustomTheme();
-        }
-      });
-      primaryPicker.addEventListener("input", () => {
-        primaryHex.value = primaryPicker.value.toUpperCase();
-        updateCustomTheme();
-      });
-    }
-
-    if (darkHex && darkPicker) {
-      darkHex.addEventListener("input", () => {
-        if (/^#[0-9A-Fa-f]{6}$/i.test(darkHex.value)) {
-          darkPicker.value = darkHex.value;
-          updateCustomTheme();
-        }
-      });
-      darkPicker.addEventListener("input", () => {
-        darkHex.value = darkPicker.value.toUpperCase();
-        updateCustomTheme();
-      });
-    }
-
-    if (lightHex && lightPicker) {
-      lightHex.addEventListener("input", () => {
-        if (/^#[0-9A-Fa-f]{6}$/i.test(lightHex.value)) {
-          lightPicker.value = lightHex.value;
-          updateCustomTheme();
-        }
-      });
-      lightPicker.addEventListener("input", () => {
-        lightHex.value = lightPicker.value.toUpperCase();
-        updateCustomTheme();
-      });
-    }
-
-    if (borderHex && borderPicker) {
-      borderHex.addEventListener("input", () => {
-        if (/^#[0-9A-Fa-f]{6}$/i.test(borderHex.value)) {
-          borderPicker.value = borderHex.value;
-          updateCustomTheme();
-        }
-      });
-      borderPicker.addEventListener("input", () => {
-        borderHex.value = borderPicker.value.toUpperCase();
-        updateCustomTheme();
-      });
-    }
-
-    if (menuTheme) {
-      const handleThemeChange = () => {
-        const theme = menuTheme.value;
-
-        if (theme === "custom") {
-          customSettingsDiv.style.display = "flex";
-          loadCustomColors();
-          this.menuToggle.setAttribute("data-theme", "custom");
-        } else {
-          customSettingsDiv.style.display = "none";
-          this.menuToggle.setAttribute("data-theme", theme);
-
-          this.menuToggle.style.removeProperty("--custom-primary");
-          this.menuToggle.style.removeProperty("--custom-dark");
-          this.menuToggle.style.removeProperty("--custom-light");
-          this.menuToggle.style.removeProperty("--custom-border");
-        }
-      };
-
-      menuTheme.addEventListener("change", handleThemeChange);
-
-      if (menuTheme.value === "custom") {
-        customSettingsDiv.style.display = "flex";
-        loadCustomColors();
-      } else {
-        customSettingsDiv.style.display = "none";
-      }
-    }
+    });
   }
 
   handleSearch() {
     const searchInput = this.menu.querySelector(".juice.search");
     const settings = this.menu.querySelectorAll(".option:not(.custom)");
-
-    const resetSettings = () => {
-      settings.forEach((s) => (s.style.display = "flex"));
-      this.menu.querySelectorAll(".option-group").forEach((g) => (g.style.display = "flex"));
-    };
 
     searchInput.addEventListener("input", () => {
       const searchValue = searchInput.value.toLowerCase();
@@ -2709,7 +1788,7 @@ class Menu {
 
       observer.observe(chatContainer, {
         childList: true,
-        subtree: true
+        subtree: true,
       });
 
       highlightSelectedTrade();
@@ -2728,7 +1807,7 @@ class Menu {
 
     bodyObserver.observe(document.body, {
       childList: true,
-      subtree: true
+      subtree: true,
     });
 
     document.addEventListener("click", async (e) => {
@@ -2737,7 +1816,6 @@ class Menu {
         const tradeButtonElem = e.target.closest(".servers .trade .button");
         if (!tradeElem) return;
         if (tradeButtonElem) return;
-
 
         const text = tradeElem.querySelector(".bold").innerText;
         const match = text.match(/\/trade accept (\d+)/);
@@ -2788,10 +1866,7 @@ class Menu {
 
     const importSettings = this.menu.querySelector("#import-settings");
     importSettings.addEventListener("click", () => {
-      const modal = this.createModal(
-        "Import settings",
-        "Paste your settings here to import them"
-      );
+      const modal = this.createModal("Import settings", "Paste your settings here to import them");
 
       const bottom = modal.querySelector(".bottom");
 
@@ -2832,10 +1907,7 @@ class Menu {
 
     const exportSettings = this.menu.querySelector("#export-settings");
     exportSettings.addEventListener("click", () => {
-      const modal = this.createModal(
-        "Export settings",
-        "Copy your settings here to export them"
-      );
+      const modal = this.createModal("Export settings", "Copy your settings here to export them");
 
       const bottom = modal.querySelector(".bottom");
 
@@ -2855,6 +1927,71 @@ class Menu {
       this.menu.querySelector(".menu").appendChild(modal);
     });
 
+    const exportWeaponConfig = this.menu.querySelector(".weapon-config.export");
+    exportWeaponConfig.addEventListener("click", () => {
+      const modal = this.createModal("Export Weapon Config", "Copy your config here to export it");
+
+      const bottom = modal.querySelector(".bottom");
+
+      const weaponConfig = Object.fromEntries(Object.entries(this.settings).filter(([key]) => key.includes("weapon_") || key.includes("arm_") || key.includes("inspect_duration")));
+
+      const textarea = document.createElement("textarea");
+      textarea.value = JSON.stringify(weaponConfig, null, 2);
+      bottom.appendChild(textarea);
+
+      const copy = document.createElement("button");
+      copy.innerText = "Copy";
+      copy.classList.add("juice-button");
+      copy.addEventListener("click", () => {
+        navigator.clipboard.writeText(textarea.value);
+      });
+
+      bottom.appendChild(copy);
+
+      this.menu.querySelector(".menu").appendChild(modal);
+    });
+
+    const importWeaponConfig = this.menu.querySelector(".weapon-config.import");
+    importWeaponConfig.addEventListener("click", () => {
+      const modal = this.createModal("Import Weapon Config", "Paste your config here to import it");
+
+      const bottom = modal.querySelector(".bottom");
+
+      const input = document.createElement("input");
+      input.type = "text";
+      input.placeholder = "Paste config here";
+      bottom.appendChild(input);
+
+      const confirm = document.createElement("button");
+      confirm.innerText = "Confirm";
+      confirm.classList.add("juice-button");
+      confirm.addEventListener("click", () => {
+        try {
+          if (!input.value) return;
+
+          const settings = JSON.parse(input.value);
+          for (const key in settings) {
+            this.settings[key] = settings[key];
+            ipcRenderer.send("update-setting", key, settings[key]);
+
+            const event = new CustomEvent("juice-settings-changed", {
+              detail: { setting: key, value: settings[key] },
+            });
+            document.dispatchEvent(event);
+
+            this.updateWeaponConfig();
+          }
+          modal.remove();
+        } catch (error) {
+          console.error("Error importing weapon config:", error);
+        }
+      });
+
+      bottom.appendChild(confirm);
+
+      this.menu.querySelector(".menu").appendChild(modal);
+    });
+
     let clickCounter = 0;
     const resetJuiceSettings = this.menu.querySelector("#reset-juice-settings");
     resetJuiceSettings.addEventListener("click", () => {
@@ -2865,8 +2002,7 @@ class Menu {
         text.innerText = "Are you sure?";
 
         const description = resetJuiceSettings.querySelector(".description");
-        description.innerText =
-          "This will restart the client and reset all settings. Click again to confirm";
+        description.innerText = "This will restart the client and reset all settings. Click again to confirm";
       } else if (clickCounter === 2) {
         ipcRenderer.send("reset-juice-settings");
       }
@@ -2877,11 +2013,9 @@ class Menu {
       this.localStorage.removeItem("menu-position");
       this.localStorage.removeItem("menu-size");
       window.location.reload();
-    })
+    });
 
-    const remoteToStaticLinks = this.menu.querySelector(
-      "#remote-to-static-links"
-    );
+    const remoteToStaticLinks = this.menu.querySelector("#remote-to-static-links");
     remoteToStaticLinks.addEventListener("click", async () => {
       const localStorageKeys = [
         "SETTINGS___SETTING/CROSSHAIR___SETTING/STATIC_URL___SETTING",
@@ -2902,8 +2036,7 @@ class Menu {
 
         try {
           const response = await fetch(url);
-          if (!response.ok)
-            throw new Error(`Invalid response: ${response.status}`);
+          if (!response.ok) throw new Error(`Invalid response: ${response.status}`);
           const blob = await response.blob();
           return new Promise((resolve) => {
             const reader = new FileReader();
@@ -2939,9 +2072,9 @@ class Menu {
 
   handleInfoTooltips() {
     this.menu.querySelectorAll(".info-wrapper").forEach((wrapper) => {
-      wrapper.querySelector(".info-btn").onmouseenter = () => wrapper.querySelector(".info-tooltip").style.display = "block";
-      wrapper.querySelector(".info-btn").onmouseleave = () => wrapper.querySelector(".info-tooltip").style.display = "none";
-    })
+      wrapper.querySelector(".info-btn").onmouseenter = () => (wrapper.querySelector(".info-tooltip").style.display = "block");
+      wrapper.querySelector(".info-btn").onmouseleave = () => (wrapper.querySelector(".info-tooltip").style.display = "none");
+    });
   }
 
   handleQuickCSS() {
@@ -2953,7 +2086,11 @@ class Menu {
     document.head.appendChild(customStyles);
 
     const updateStyle = () => {
-      customStyles.innerHTML = this.settings.advanced_css;
+      if (quickCSSArea.value !== this.settings.advanced_css) {
+        quickCSSArea.value = this.settings.advanced_css;
+      }
+      if (this.settings.quickcss_enabled && this.settings.advanced_css) customStyles.innerHTML = this.settings.advanced_css;
+      else customStyles.innerHTML = "";
     };
 
     let lastKnownContent = this.settings.advanced_css || "";
@@ -2986,11 +2123,12 @@ class Menu {
     });
 
     document.addEventListener("juice-settings-changed", ({ detail }) => {
-      if (detail.setting !== "advanced_css") return;
-      if (detail.value === lastKnownContent) return;
-      lastKnownContent = detail.value;
-      quickCSSArea.value = detail.value;
-      updateStyle();
+      if (detail.setting === "advanced_css") {
+        saveCSS(detail.value);
+        quickCSSArea.value = detail.value;
+      } else if (detail.setting === "quickcss_enabled") {
+        updateStyle();
+      }
     });
 
     const quickCssDir = path.dirname(quickCSSPath);
@@ -3043,11 +2181,13 @@ class Menu {
 
     modal.innerHTML = `
     <div class="content">
-      <div class="close">
-        <i class="fas fa-times"></i>
-      </div>
       <div class="top">
-        <span class="title">${title}</span>
+        <span class="title">
+          ${title}
+          <div class="close">
+            <i class="fas fa-times"></i>
+          </div>
+        </span>
         <span class="description">${description}</span>
       </div>
       <div class="bottom">

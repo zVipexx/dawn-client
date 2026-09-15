@@ -36,16 +36,16 @@
         <i class="fas fa-file-code"></i>
         <span>Scripts</span>
       </div>
-      <div data-tab="about" class="juice tab">
-        <i class="fas fa-circle-info"></i>
-        <span>About</span>
-      </div>
     </div>
     <div class="sep"></div>
     <div class="tab-group">
       <div data-tab="changelogs" class="juice tab">
         <i class="fas fa-clipboard-list"></i>
         <span>Changelogs</span>
+      </div>
+      <div data-tab="about" class="juice tab">
+        <i class="fas fa-circle-info"></i>
+        <span>About</span>
       </div>
     </div>
     <div class="sep" style="background: none"></div>
@@ -73,15 +73,21 @@
           <input type="text" placeholder="https://.../.css" data-setting="css_link" />
         </div>
         <div class="option dropdown">
-          <div class="top">
+          <div class="option top" style="width:100%">
             <i class="fas fa-angle-down"></i>
-            <span>Quick CSS</span>
-          </div>
-          <div class="content">
-            <div class="css-buttons">
+            <div class="left" style="margin-right:auto">
+              <span>Quick CSS</span>
+            </div>
+            <div class="css-buttons" onclick="event.stopPropagation()">
               <i class="fas fa-upload import-css" title="Import from file"></i>
               <i class="fas fa-arrow-up-right-from-square open-css" title="Open in Editor"></i>
             </div>
+            <div class="checkbox">
+              <input type="checkbox" id="quickcss_enabled" data-setting="quickcss_enabled" />
+              <label for="quickcss_enabled"></label>
+            </div>
+          </div>
+          <div class="content">
             <textarea placeholder="input css here" data-setting="advanced_css"></textarea>
           </div>
         </div>
@@ -124,24 +130,18 @@
             </div>
           </div>
           <div class="content">
-            <div class="option killfeed-color red">
+            <div class="option">
               <span>Red Team</span>
-              <div class="color-input"
-                style="width: auto; min-width: 200px; display: flex; align-items: center; gap: 8px;">
-                <input type="text" class="killfeed-color-value red" placeholder="#ff4d42" maxlength="9" value="#ff4d42"
-                  style="width: 100px;" />
-                <input type="color" class="killfeed-color-picker red" value="#ff4d42"
-                  style="width: 32px; height: 32px; margin: 0;" data-setting="killfeed_color_red" />
+              <div class="color-input">
+                <input type="text" class="hex killfeed-color-red" placeholder="#FF4D42" maxlength="7" data-setting="killfeed_color_red" />
+                <input type="color" class="color-picker killfeed-color-red" data-setting="killfeed_color_red" />
               </div>
             </div>
-            <div class="option killfeed-color blue">
+            <div class="option">
               <span>Blue Team</span>
-              <div class="color-input"
-                style="width: auto; min-width: 200px; display: flex; align-items: center; gap: 8px;">
-                <input type="text" class="killfeed-color-value blue" placeholder="#0d6dc6" maxlength="9" value="#0d6dc6"
-                  style="width: 100px;" />
-                <input type="color" class="killfeed-color-picker blue" value="#0d6dc6"
-                  style="width: 32px; height: 32px; margin: 0;" data-setting="killfeed_color_blue" />
+              <div class="color-input">
+                <input type="text" class="hex killfeed-color-blue" placeholder="#0D6DC6" maxlength="7" data-setting="killfeed_color_blue" />
+                <input type="color" class="color-picker killfeed-color-blue" data-setting="killfeed_color_blue" />
               </div>
             </div>
           </div>
@@ -202,13 +202,6 @@
               <div class="checkbox">
                 <input type="checkbox" id="info_tick" data-setting="info_tick" />
                 <label for="info_tick"></label>
-              </div>
-            </div>
-            <div class="option">
-              <span>Input Delay</span>
-              <div class="checkbox">
-                <input type="checkbox" id="info_input" data-setting="info_input" />
-                <label for="info_input"></label>
               </div>
             </div>
           </div>
@@ -367,7 +360,7 @@
     </div>
     <div id="game-options" class="juice options">
       <div id="inner-tabs" class="juice tabs">
-        <div data-tab="visual" class="juice inner-tab">
+        <div data-tab="visual" class="juice inner-tab active">
           <i class="fas fa-gears"></i>
           General
         </div>
@@ -376,8 +369,18 @@
           Weapon Customization
         </div>
       </div>
-      <div id="visual-options" class="juice options inner">
+      <div id="visual-options" class="juice options inner active">
         <div class="option-group">
+          <div class="option">
+            <div class="left">
+              <span>Show Lobby Ping</span>
+              <div class="description">Shows Ping to your selected region, usually a bit lower ingame</div>
+            </div>
+            <div class="checkbox">
+              <input type="checkbox" id="lobby_ping" data-setting="lobby_ping" />
+              <label for="lobby_ping"></label>
+            </div>
+          </div>
           <div class="option">
             <div class="left">
               <span>Show Quick Join Button</span>
@@ -442,7 +445,7 @@
             </div>
           </div>
           <div class="option">
-            <div class="left requires-refresh">
+            <div class="left">
               <span>Show Trade Buttons</span>
               <span class="description">Show Offer, Bump and Cancel buttons above global chat</span>
             </div>
@@ -464,227 +467,85 @@
         </div>
       </div>
       <div id="weapons-options" class="juice options inner">
-        <div class="weapons-sidebar">
-          <div class="selector-group">
-            <div data-selector="universal" class="juice selector active">Universal</div>
+        <div class="wrapper weapon-config-buttons">
+          <i class="fas fa-share weapon-config export" title="Share Weapon Config"></i>
+          <i class="fas fa-file-import weapon-config import" title="Import Weapon Config"></i>
+        </div>
+        <div class="option">
+          <select id="active-weapon" data-setting="active_weapon">
+            <option value="vita">VITA</option>
+            <option value="scar">Scar</option>
+            <option value="revolver">Revolver</option>
+            <option value="ar9">AR-9</option>
+            <option value="mac10">MAC-10</option>
+            <option value="m60">M60</option>
+            <option value="weatie">Weatie</option>
+            <option value="lar">LAR</option>
+            <option value="shark">Shark</option>
+            <option value="bayonet">Bayonet</option>
+            <option value="tomahawk">Tomahawk</option>
+          </select>
+          <select id="active-arm" data-setting="active_arm">
+            <option value="left">Left Arm</option>
+            <option value="right">Right Arm</option>
+          </select>
+        </div>
+        <div class="option-group">
+          <div class="option">
+            <div class="left per-weapon">
+              <span>Inspect Duration (ms)</span>
+            </div>
+            <div class="right">
+              <input type="text" placeholder="550" maxlength="4" class="inspect-duration-value" />
+              <input type="range" min="50" max="2000" step="25" class="range inspect-duration" data-setting-weapon="inspect_duration">
+            </div>
           </div>
-          <div class="selector-group">
-            <div data-selector="vita" class="juice selector">Vita</div>
-            <div data-selector="scar" class="juice selector">Scar</div>
-            <div data-selector="rev" class="juice selector">Revolver</div>
-            <div data-selector="ar9" class="juice selector">AR-9</div>
-            <div data-selector="mac10" class="juice selector">MAC-10</div>
-            <div data-selector="m60" class="juice selector">M60</div>
-            <div data-selector="weatie" class="juice selector">Weatie</div>
-            <div data-selector="lar" class="juice selector">LAR</div>
-            <div data-selector="shark" class="juice selector">Shark</div>
-            <div data-selector="bayonet" class="juice selector">Bayonet</div>
-            <div data-selector="tomahawk" class="juice selector">Tomahawk</div>
-          </div>
-          <div class="selector-group">
-            <div data-selector="leftarm" class="juice selector">Left Arm</div>
-            <div data-selector="rightarm" class="juice selector">Right Arm</div>
-          </div>
-          <div class="bottom">
-            <i class="fas fa-share bottom-btn export" title="Share Weapon Settings"></i>
-            <i class="fas fa-file-import bottom-btn import" title="Import Weapon Settings"></i>
+          <div class="option custom">
+            <div class="left experimental">
+              <span>Custom Inspect Keybind</span>
+              <span class="description">animations are subject to change</span>
+            </div>
+            <button class="juice change-keybind inspect"></button>
           </div>
         </div>
-        <div class="content weapons">
-          <div class="universal-only">
-            <div class="option-group">
-              <div class="option">
-                <div class="left">
-                  <span>Universal Settings</span>
-                  <span class="description">Use the same size and offset for every weapon</span>
-                </div>
-                <div class="checkbox">
-                  <input type="checkbox" id="universal_settings" data-setting="universal_settings" />
-                  <label for="universal_settings"></label>
-                </div>
-              </div>
-            </div>
-            <div class="option-group">
-              <div class="option custom">
-                <div class="left experimental">
-                  <span>Custom Inspect Keybind</span>
-                  <span class="description">animations are subject to change</span>
-                </div>
-                <button class="juice change-keybind inspect"></button>
-              </div>
-            </div>
-            <div class="option-group">
-              <div class="option">
-                <span>Wireframe Weapon</span>
-                <div class="checkbox">
-                  <input type="checkbox" id="weapon_wireframe" data-setting="weapon_wireframe" />
-                  <label for="weapon_wireframe"></label>
-                </div>
-              </div>
-              <div class="option dropdown">
-                <div class="option top" style="width:100%">
-                  <i class=" fas fa-angle-down"></i>
-                  <span style="margin-right:auto">Weapon Color</span>
-                  <div class="checkbox">
-                    <input type="checkbox" id="weapon_color" data-setting="weapon_color" />
-                    <label for="weapon_color"></label>
-                  </div>
-                </div>
-                <div class="content">
-                  <div class="option weapon-color" style="justify-content: flex-end">
-                    <div class="color-input" style="display: flex; width: 38.4%">
-                      <input type="text" class="hex" placeholder="#FFFFFF" maxlength="7" />
-                      <input type="color" class="color-picker" value="#FFFFFF" />
-                    </div>
-                  </div>
-                  <div class="option">
-                    <span>Rainbow</span>
-                    <div class="checkbox">
-                      <input type="checkbox" id="weapon_rgb" data-setting="weapon_rgb" />
-                      <label for="weapon_rgb"></label>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="per-weapon-only">
-            <div class="option-group">
-              <div class="option">
-                <span>Weapon size</span>
-                <div class="right"
-                  style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
-                  <input type="text" class="weapon-size-value" placeholder="1" style="flex-basis: 21.5%"
-                    maxlength="5" />
-                  <div class="slider">
-                    <input type="range" id="weapon_size" class="slider-value" data-setting="weapon_size" min="0.15"
-                      step="0.05" max="2" />
-                    <label for="weapon_size"></label>
-                  </div>
-                </div>
-              </div>
-              <div class="option">
-                <span>Inspect Duration (ms)</span>
-                <div class="right"
-                  style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
-                  <input type="text" class="weapon-inspect-duration-value" placeholder="750" style="width: 21.5%"
-                    maxlength="4" />
-                  <div class="slider">
-                    <input type="range" id="weapon_inspect_duration" class="slider-value" min="100" step="50"
-                      max="2000" />
-                    <label for="weapon_inspect_duration"></label>
-                  </div>
-                </div>
-              </div>
-              <div class="option dropdown">
-                <div class="top">
-                  <i class="fas fa-angle-down"></i>
-                  <span>Weapon Offset</span>
-                </div>
-                <div class="content">
-                  <div class="option inner">X
-                    <div class="right"
-                      style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
-                      <input type="text" class="weapon-offset-x-value" placeholder="0" style="width: 21.5%"
-                        maxlength="5" />
-                      <div class="slider">
-                        <input type="range" id="weapon_offset_x" class="slider-value" data-setting="weapon_offset_x"
-                          min="-0.5" step="0.01" max="0.5" />
-                        <label for="weapon_offset_x"></label>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="option inner">Y
-                    <div class="right"
-                      style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
-                      <input type="text" class="weapon-offset-y-value" placeholder="0" style="width: 21.5%"
-                        maxlength="5" />
-                      <div class="slider">
-                        <input type="range" id="weapon_offset_y" class="slider-value" data-setting="weapon_offset_y"
-                          min="-0.5" step="0.01" max="0.5" />
-                        <label for="weapon_offset_y"></label>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="option inner">Z
-                    <div class="right"
-                      style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
-                      <input type="text" class="weapon-offset-z-value" placeholder="0" style="width: 21.5%"
-                        maxlength="5" />
-                      <div class="slider">
-                        <input type="range" id="weapon_offset_z" class="slider-value" data-setting="weapon_offset_z"
-                          min="-0.5" step="0.01" max="0.5" />
-                        <label for="weapon_offset_z"></label>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div class="option dropdown">
-                <div class="top">
-                  <i class="fas fa-angle-down"></i>
-                  <span>Weapon Rotation</span>
-                </div>
-                <div class="content">
-                  <div class="option inner">X
-                    <div class="right"
-                      style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
-                      <input type="text" class="weapon-rotation-x-value" placeholder="0" style="width: 21.5%"
-                        maxlength="5" />
-                      <div class="slider">
-                        <input type="range" id="weapon_rotation_x" class="slider-value" min="-180" step="1" max="180" />
-                        <label for="weapon_rotation_x"></label>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="option inner">Y
-                    <div class="right"
-                      style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
-                      <input type="text" class="weapon-rotation-y-value" placeholder="0" style="width: 21.5%"
-                        maxlength="5" />
-                      <div class="slider">
-                        <input type="range" id="weapon_rotation_y" class="slider-value" min="-180" step="1" max="180" />
-                        <label for="weapon_rotation_y"></label>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="option inner">Z
-                    <div class="right"
-                      style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
-                      <input type="text" class="weapon-rotation-z-value" placeholder="0" style="width: 21.5%"
-                        maxlength="5" />
-                      <div class="slider">
-                        <input type="range" id="weapon_rotation_z" class="slider-value" min="-180" step="1" max="180" />
-                        <label for="weapon_rotation_z"></label>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div class="option">
-                <button id="reset-weapon-settings" class="juice-button large">
-                  <div class="text">Reset Weapon Settings</div>
-                  <span class="description"> This action cannot be undone</span>
-                  <div class="custom-border"></div>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="content arms">
-          <div class="option-group">
+        <div class="option" style="align-items:flex-start;">
+          <div class="option-group" style="width:calc(50% - 0.5rem);">
             <div class="option">
-              <div class="left">
-                <span>Mirror Arm Settings</span>
-                <span class="description">Apply Settings to the other arm</span>
-              </div>
+              <span>Wireframe Weapon</span>
               <div class="checkbox">
-                <input type="checkbox" id="universal_arm_settings" data-setting="universal_arm_settings" />
-                <label for="universal_arm_settings"></label>
+                <input type="checkbox" id="weapon_wireframe" data-setting="weapon_wireframe" />
+                <label for="weapon_wireframe"></label>
+              </div>
+            </div>
+            <div class="option dropdown">
+              <div class="option top" style="width:100%">
+                <i class=" fas fa-angle-down"></i>
+                <span style="margin-right:auto">Weapon Color</span>
+                <div class="checkbox">
+                  <input type="checkbox" id="weapon_color" data-setting="weapon_color" />
+                  <label for="weapon_color"></label>
+                </div>
+              </div>
+              <div class="content">
+                <div class="option inner">Hex:
+                  <div class="right">
+                    <div class="color-input">
+                      <input type="text" class="hex weapon-color-hex-value" placeholder="#FFFFFF" maxlength="7" data-setting="weapon_color_hex" />
+                      <input type="color" class="color-picker weapon-color-hex" data-setting="weapon_color_hex" />
+                    </div>
+                  </div>
+                </div>
+                <div class="option">
+                  <span>Rainbow</span>
+                  <div class="checkbox">
+                    <input type="checkbox" id="weapon_rainbow" data-setting="weapon_rainbow" />
+                    <label for="weapon_rainbow"></label>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-          <div class="option-group">
+          <div class="option-group" style="width:calc(50% - 0.5rem); margin-bottom:0">
             <div class="option">
               <span>Wireframe Arm</span>
               <div class="checkbox">
@@ -702,114 +563,164 @@
                 </div>
               </div>
               <div class="content">
-                <div class="option arm-color" style="justify-content: flex-end">
-                  <div class="color-input"
-                    style="display: flex; width: 38.4%; margin-top: 0.5rem; margin-bottom: 1.5rem;">
-                    <input type="text" class="hex" placeholder="#FFFFFF" maxlength="7" />
-                    <input type="color" class="color-picker" value="#FFFFFF" />
+                <div class="option inner">Hex:
+                  <div class="right">
+                    <div class="color-input">
+                      <input type="text" class="hex arm-color-hex-value" placeholder="#FFFFFF" maxlength="7" data-setting="arm_color_hex" />
+                      <input type="color" class="color-picker arm-color-hex" data-setting="arm_color_hex" />
+                    </div>
                   </div>
                 </div>
                 <div class="option">
                   <span>Rainbow</span>
                   <div class="checkbox">
-                    <input type="checkbox" id="arm_rgb" data-setting="arm_rgb" />
-                    <label for="arm_rgb"></label>
+                    <input type="checkbox" id="arm_rainbow" data-setting="arm_rainbow" />
+                    <label for="arm_rainbow"></label>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-          <div class="option-group">
-            <div class="option">
-              <span>Arm size</span>
-              <div class="right"
-                style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
-                <input type="text" class="arm-size-value" placeholder="1" style="flex-basis: 21.5%" maxlength="5" />
-                <div class="slider">
-                  <input type="range" id="arm_size" class="slider-value" data-setting="arm_size" min="0.15" step="0.05"
-                    max="2" />
-                  <label for="arm_size"></label>
+        </div>
+        <div class="option" style="align-items:flex-start;">
+          <div class="option-group" style="width:calc(50% - 0.5rem);">
+            <div class="option per-weapon">
+              <span style="white-space:nowrap">Weapon size</span>
+              <div class="right">
+                <input type="text" placeholder="1" maxlength="4" class="weapon-size-value" />
+                <input type="range" min="0" max="2" step="0.05" class="range weapon-size"
+                  data-setting-weapon="weapon_size">
+              </div>
+            </div>
+            <div class="option dropdown">
+              <div class="top per-weapon">
+                <i class="fas fa-angle-down"></i>
+                <span>Weapon Offset</span>
+              </div>
+              <div class="content">
+                <div class="option inner">X
+                  <div class="right">
+                    <input type="text" placeholder="0" maxlength="5" class="weapon-offset-x-value" />
+                    <input type="range" min="-0.5" max="0.5" step="0.01" class="range weapon-offset-x"
+                      data-setting-weapon="weapon_offset_x">
+                  </div>
+                </div>
+                <div class="option inner">Y
+                  <div class="right">
+                    <input type="text" placeholder="0" maxlength="5" class="weapon-offset-y-value" />
+                    <input type="range" min="-0.5" max="0.5" step="0.01" class="range weapon-offset-y"
+                      data-setting-weapon="weapon_offset_y">
+                  </div>
+                </div>
+                <div class="option inner">Z
+                  <div class="right">
+                    <input type="text" placeholder="0" maxlength="5" class="weapon-offset-z-value" />
+                    <input type="range" min="-0.5" max="0.5" step="0.01" class="range weapon-offset-z"
+                      data-setting-weapon="weapon_offset_z">
+                  </div>
                 </div>
               </div>
             </div>
             <div class="option dropdown">
-              <div class="top">
+              <div class="top per-weapon">
+                <i class="fas fa-angle-down"></i>
+                <span>Weapon Rotation</span>
+              </div>
+              <div class="content">
+                <div class="option inner">X
+                  <div class="right">
+                    <input type="text" placeholder="0" maxlength="5" class="weapon-rotation-x-value" />
+                    <input type="range" min="-180" max="180" step="1" class="range weapon-rotation-x"
+                      data-setting-weapon="weapon_rotation_x">
+                  </div>
+                </div>
+                <div class="option inner">Y
+                  <div class="right">
+                    <input type="text" placeholder="0" maxlength="5" class="weapon-rotation-y-value" />
+                    <input type="range" min="-180" max="180" step="1" class="range weapon-rotation-y"
+                      data-setting-weapon="weapon_rotation_y">
+                  </div>
+                </div>
+                <div class="option inner">Z
+                  <div class="right">
+                    <input type="text" placeholder="0" maxlength="5" class="weapon-rotation-z-value" />
+                    <input type="range" min="-180" max="180" step="1" class="range weapon-rotation-z"
+                      data-setting-weapon="weapon_rotation_z">
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="option">
+              <button id="reset-weapon-settings" class="juice-button large">
+                <div class="text">Reset Weapon Settings</div>
+                <span class="description"> This action cannot be undone</span>
+                <div class="custom-border"></div>
+              </button>
+            </div>
+          </div>
+          <div class="option-group" style="width:calc(50% - 0.5rem); margin-bottom:0;">
+            <div class="option per-weapon">
+              <span>Arm size</span>
+              <div class="right">
+                <input type="text" placeholder="1" maxlength="4" class="arm-size-value" />
+                <input type="range" min="0" max="2" step="0.05" class="range arm-size"
+                  data-setting-arm="arm_size">
+              </div>
+            </div>
+            <div class="option dropdown">
+              <div class="top per-weapon">
                 <i class="fas fa-angle-down"></i>
                 <span>Arm Offset</span>
               </div>
               <div class="content">
-                <div class="option">X
-                  <div class="right"
-                    style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
-                    <input type="text" class="arm-offset-x-value" placeholder="0" style="width: 21.5%" maxlength="5" />
-                    <div class="slider">
-                      <input type="range" id="arm_offset_x" class="slider-value" data-setting="arm_offset_x" min="-0.5"
-                        step="0.01" max="0.5" />
-                      <label for="arm_offset_x"></label>
-                    </div>
+                <div class="option inner">X
+                  <div class="right">
+                    <input type="text" placeholder="0" maxlength="5" class="arm-offset-x-value" />
+                    <input type="range" min="-0.5" max="0.5" step="0.01" class="range arm-offset-x"
+                      data-setting-arm="arm_offset_x">
                   </div>
                 </div>
-                <div class="option">Y
-                  <div class="right"
-                    style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
-                    <input type="text" class="arm-offset-y-value" placeholder="0" style="width: 21.5%" maxlength="5" />
-                    <div class="slider">
-                      <input type="range" id="arm_offset_y" class="slider-value" data-setting="arm_offset_y" min="-0.5"
-                        step="0.01" max="0.5" />
-                      <label for="arm_offset_y"></label>
-                    </div>
+                <div class="option inner">Y
+                  <div class="right">
+                    <input type="text" placeholder="0" maxlength="5" class="arm-offset-y-value" />
+                    <input type="range" min="-0.5" max="0.5" step="0.01" class="range arm-offset-y"
+                      data-setting-arm="arm_offset_y">
                   </div>
                 </div>
-                <div class="option">Z
-                  <div class="right"
-                    style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
-                    <input type="text" class="arm-offset-z-value" placeholder="0" style="width: 21.5%" maxlength="5" />
-                    <div class="slider">
-                      <input type="range" id="arm_offset_z" class="slider-value" data-setting="arm_offset_z" min="-0.5"
-                        step="0.01" max="0.5" />
-                      <label for="arm_offset_z"></label>
-                    </div>
+                <div class="option inner">Z
+                  <div class="right">
+                    <input type="text" placeholder="0" maxlength="5" class="arm-offset-z-value" />
+                    <input type="range" min="-0.5" max="0.5" step="0.01" class="range arm-offset-z"
+                      data-setting-arm="arm_offset_z">
                   </div>
                 </div>
               </div>
             </div>
             <div class="option dropdown">
-              <div class="top">
+              <div class="top per-weapon">
                 <i class="fas fa-angle-down"></i>
                 <span>Arm Rotation</span>
               </div>
               <div class="content">
-                <div class="option">X
-                  <div class="right"
-                    style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
-                    <input type="text" class="arm-rotation-x-value" placeholder="0" style="width: 21.5%"
-                      maxlength="5" />
-                    <div class="slider">
-                      <input type="range" id="arm_rotation_x" class="slider-value" min="-180" step="1" max="180" />
-                      <label for="arm_rotation_x"></label>
-                    </div>
+                <div class="option inner">X
+                  <div class="right">
+                    <input type="text" placeholder="0" maxlength="5" class="arm-rotation-x-value" />
+                    <input type="range" min="-180" max="180" step="1" class="range arm-rotation-x"
+                      data-setting-arm="arm_rotation_x">
                   </div>
                 </div>
-                <div class="option">Y
-                  <div class="right"
-                    style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
-                    <input type="text" class="arm-rotation-y-value" placeholder="0" style="width: 21.5%"
-                      maxlength="5" />
-                    <div class="slider">
-                      <input type="range" id="arm_rotation_y" class="slider-value" min="-180" step="1" max="180" />
-                      <label for="arm_rotation_y"></label>
-                    </div>
+                <div class="option inner">Y
+                  <div class="right">
+                    <input type="text" placeholder="0" maxlength="5" class="arm-rotation-y-value" />
+                    <input type="range" min="-180" max="180" step="1" class="range arm-rotation-y"
+                      data-setting-arm="arm_rotation_y">
                   </div>
                 </div>
-                <div class="option">Z
-                  <div class="right"
-                    style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
-                    <input type="text" class="arm-rotation-z-value" placeholder="0" style="width: 21.5%"
-                      maxlength="5" />
-                    <div class="slider">
-                      <input type="range" id="arm_rotation_z" class="slider-value" min="-180" step="1" max="180" />
-                      <label for="arm_rotation_z"></label>
-                    </div>
+                <div class="option inner">Z
+                  <div class="right">
+                    <input type="text" placeholder="0" maxlength="5" class="arm-rotation-z-value" />
+                    <input type="range" min="-180" max="180" step="1" class="range arm-rotation-z"
+                      data-setting-arm="arm_rotation_z">
                   </div>
                 </div>
               </div>
@@ -827,7 +738,7 @@
     </div>
     <div id="browse-options" class="juice options">
       <div id="inner-tabs" class="juice tabs">
-        <div data-tab="community" class="juice inner-tab">
+        <div data-tab="community" class="juice inner-tab active">
           <i class="fas fa-users"></i>
           Community
           <a href="https://kirkacommunityhub.pages.dev/" target="_blank" class="about-kcl"
@@ -842,7 +753,7 @@
         </div>
       </div>
       <div id="content">
-        <div id="community-options" class="juice options inner">
+        <div id="community-options" class="juice options inner active">
           <div class="community-sidebar">
             <div class="selector-group">
               <span style="font-size: 12px; text-align: center; color: rgba(var(--red))">Require Restart</span>
@@ -913,7 +824,7 @@
     </div>
     <div id="client-options" class="juice options">
       <div id="inner-tabs" class="juice tabs">
-        <div data-tab="general" class="juice inner-tab">
+        <div data-tab="general" class="juice inner-tab active">
           <i class="fas fa-gears"></i>
           General
         </div>
@@ -922,7 +833,7 @@
           Appearance
         </div>
       </div>
-      <div id="general-options" class="juice options inner">
+      <div id="general-options" class="juice options inner active">
         <div class="option-group">
           <div class="option">
             <div class="left">
@@ -1153,7 +1064,7 @@
           </div>
           <div class="option">
             <button id="reset-menu-size" class="juice-button large">
-              <span class="text">Reset Menu Size and Position</span>
+              <span class="text">Reset Menu Position</span>
               <span class="description"> Reloads Client</span>
               <div class="custom-border"></div>
             </button>
@@ -1183,7 +1094,7 @@
             </select>
           </div>
         </div>
-        <div class="option-group" id="custom-theme-settings" style="display: none;">
+        <div class="option-group" id="custom-theme-settings" style="display:none">
           <div class="option">
             <div class="left">
               <span>Custom Theme Colors</span>
@@ -1192,84 +1103,57 @@
           </div>
           <div class="option">
             <span>Primary Color</span>
-            <div class="color-input"
-              style="width: auto; min-width: 200px; display: flex; align-items: center; gap: 8px;">
-              <input type="text" class="custom-primary-hex" placeholder="#C391F5" maxlength="7" value="#C391F5"
-                style="width: 100px;" />
-              <input type="color" class="custom-primary-picker" value="#C391F5"
-                style="width: 32px; height: 32px; margin: 0;" />
+            <div class="color-input">
+              <input type="text" class="hex custom-primary-color" placeholder="#ADBBFF" maxlength="7" data-setting="custom_primary_color" />
+              <input type="color" class="color-picker custom-primary-color" data-setting="custom_primary_color" />
             </div>
           </div>
           <div class="option">
             <span>Background Color</span>
-            <div class="color-input"
-              style="width: auto; min-width: 200px; display: flex; align-items: center; gap: 8px;">
-              <input type="text" class="custom-dark-hex" placeholder="#1C1626" maxlength="7" value="#1C1626"
-                style="width: 100px;" />
-              <input type="color" class="custom-dark-picker" value="#1C1626"
-                style="width: 32px; height: 32px; margin: 0;" />
+            <div class="color-input">
+              <input type="text" class="hex custom-background-color" placeholder="#171717" maxlength="7" data-setting="custom_background_color" />
+              <input type="color" class="color-picker custom-background-color" data-setting="custom_background_color" />
             </div>
           </div>
           <div class="option">
             <span>Text Color</span>
-            <div class="color-input"
-              style="width: auto; min-width: 200px; display: flex; align-items: center; gap: 8px;">
-              <input type="text" class="custom-light-hex" placeholder="#E6E0F5" maxlength="7" value="#E6E0F5"
-                style="width: 100px;" />
-              <input type="color" class="custom-light-picker" value="#E6E0F5"
-                style="width: 32px; height: 32px; margin: 0;" />
+            <div class="color-input">
+              <input type="text" class="hex custom-text-color" placeholder="#D4D4D4" maxlength="7" data-setting="custom_text_color" />
+              <input type="color" class="color-picker custom-text-color" data-setting="custom_text_color" />
             </div>
           </div>
           <div class="option">
             <span>Border Color</span>
-            <div class="color-input"
-              style="width: auto; min-width: 200px; display: flex; align-items: center; gap: 8px;">
-              <input type="text" class="custom-border-hex" placeholder="#E6E0F5" maxlength="7" value="#E6E0F5"
-                style="width: 100px; padding: 0 !important" />
-              <input type="color" class="custom-border-picker" value="#E6E0F5"
-                style="width: 32px; height: 32px; margin: 0;" />
+            <div class="color-input">
+              <input type="text" class="hex custom-border-color" placeholder="#FFFFFF" maxlength="7" data-setting="custom_border_color" />
+              <input type="color" class="color-picker custom-border-color" data-setting="custom_border_color" />
             </div>
           </div>
         </div>
         <div class="option-group">
           <div class="option">
             <span>Corner Roundness</span>
-            <div class="right"
-              style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
-              <input type="text" class="corner-value" placeholder="12" style="width: 21.5%" maxlength="3" />
-              <div class="slider">
-                <input type="range" id="corner_roundness" class="slider-value" data-setting="corner_roundness" min="0"
-                  max="64" step="1" value="12" />
-                <label for="corner_roundness"></label>
-              </div>
+            <div class="right">
+              <input type="text" placeholder="12" maxlength="2" class="value corner-roundness" data-setting="corner_roundness" />
+              <input type="range" min="0" max="64" step="1" class="range corner-roundness" data-setting="corner_roundness">
             </div>
           </div>
         </div>
         <div class="option-group">
           <div class="option">
             <span>Menu Opacity</span>
-            <div class="right"
-              style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
-              <input type="text" class="opacity-value" placeholder="100" style="width: 21.5%" maxlength="3" />
-              <div class="slider">
-                <input type="range" id="menu_opacity" class="slider-value" data-setting="menu_opacity" min="0" max="100"
-                  step="1" value="100" />
-                <label for="menu_opacity"></label>
-              </div>
+            <div class="right">
+              <input type="text" placeholder="100" maxlength="2" class="value menu-opacity" data-setting="menu_opacity" />
+              <input type="range" min="0" max="100" step="1" class="range menu-opacity" data-setting="menu_opacity">
             </div>
           </div>
         </div>
         <div class="option-group">
           <div class="option">
             <span>Menu Blur</span>
-            <div class="right"
-              style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 60%;">
-              <input type="text" class="blur-value" placeholder="0" style="width: 21.5%" maxlength="3" />
-              <div class="slider">
-                <input type="range" id="menu_blur" class="slider-value" data-setting="menu_blur" min="0" max="20"
-                  step="1" value="0" />
-                <label for="menu_blur"></label>
-              </div>
+            <div class="right">
+              <input type="text" placeholder="20" maxlength="2" class="value menu-blur" data-setting="menu_blur" />
+              <input type="range" min="0" max="20" step="1" class="range menu-blur" data-setting="menu_blur">
             </div>
           </div>
         </div>
@@ -1470,6 +1354,7 @@
       <div class="option-group">
         <div class="hotkeys">
           <span class="title">Shortcuts:</span>
+          <p>- F1: JS Debugger (needs devtools open)</p>
           <p>- F2: Screenshot and copy to clipboard</p>
           <p>- F4: Return to https://kirka.io</p>
           <p>- F5: Reload page</p>

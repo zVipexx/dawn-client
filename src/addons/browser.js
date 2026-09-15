@@ -23,15 +23,9 @@ const getData = async (key) => {
   if (cached[key]) return cached[key];
 
   if (key === "css") {
-    const [res1, res2] = await Promise.all([
-      fetch(dataUrls.css),
-      fetch(dataUrls.cssExtra),
-    ]);
+    const [res1, res2] = await Promise.all([fetch(dataUrls.css), fetch(dataUrls.cssExtra)]);
     const [json1, json2] = await Promise.all([res1.json(), res2.json()]);
-    const data = [
-      ...(Array.isArray(json1) ? json1 : []),
-      ...(Array.isArray(json2) ? json2 : []),
-    ];
+    const data = [...(Array.isArray(json1) ? json1 : []), ...(Array.isArray(json2) ? json2 : [])];
     cached[key] = data;
     return data;
   }
@@ -57,7 +51,7 @@ const getData = async (key) => {
 const filterItems = (data, key) => {
   let filtered = data;
   if (key === "css") {
-    filtered = data.filter(i => convert(i, key).availability === "free");
+    filtered = data.filter((i) => convert(i, key).availability === "free");
   }
 
   filtered.sort((a, b) => {
@@ -186,6 +180,7 @@ const toStyleUrl = (url) => {
 
 const applyCss = (downloadUrl) => {
   const styleUrl = toStyleUrl(downloadUrl);
+  document.querySelector("input[data-setting='css_link'").value = styleUrl;
   ipcRenderer.send("update-setting", "css_link", styleUrl);
   ipcRenderer.send("update-setting", "css_enabled", true);
   document.dispatchEvent(new CustomEvent("juice-settings-changed", { detail: { setting: "css_link", value: styleUrl } }));
@@ -228,16 +223,18 @@ const skyboxKeys = [
 
 const applySkybox = (raw) => {
   if (raw.isPack && raw.images) {
-    raw.images.forEach((img, i) => { if (skyboxKeys[i]) localStorage.setItem(skyboxKeys[i], img.url); });
+    raw.images.forEach((img, i) => {
+      if (skyboxKeys[i]) localStorage.setItem(skyboxKeys[i], img.url);
+    });
     ipcRenderer.send("update-setting", "skybox_url", raw.images[0].url);
   } else {
-    skyboxKeys.forEach(k => localStorage.setItem(k, raw.url));
+    skyboxKeys.forEach((k) => localStorage.setItem(k, raw.url));
     ipcRenderer.send("update-setting", "skybox_url", raw.url);
   }
 };
 
 const removeSkybox = () => {
-  skyboxKeys.forEach(k => localStorage.removeItem(k));
+  skyboxKeys.forEach((k) => localStorage.removeItem(k));
   ipcRenderer.send("update-setting", "skybox_url", "");
 };
 
@@ -252,7 +249,7 @@ const applyKillIcon = (url) => {
   } else {
     styleEl.innerHTML = styleEl.innerHTML.replace(
       /\.animate-cont::before \{[^}]*\}/,
-      `.animate-cont::before { content: ""; background: url(${url}); width: 10rem; height: 10rem; margin-bottom: 2rem; display: inline-block; background-position: center; background-size: contain; background-repeat: no-repeat; }`
+      `.animate-cont::before { content: ""; background: url(${url}); width: 10rem; height: 10rem; margin-bottom: 2rem; display: inline-block; background-position: center; background-size: contain; background-repeat: no-repeat; }`,
     );
   }
 };
@@ -262,14 +259,11 @@ const removeKillIcon = () => {
 
   const styleEl = document.getElementById("juice-styles-ui-features");
   if (styleEl) {
-    styleEl.innerHTML = styleEl.innerHTML
-      .replace(/\.animate-cont::before \{[^}]*\}/, "")
-      .replace(/\.animate-cont svg \{ display: none; \}/, "");
+    styleEl.innerHTML = styleEl.innerHTML.replace(/\.animate-cont::before \{[^}]*\}/, "").replace(/\.animate-cont svg \{ display: none; \}/, "");
   }
 };
 
 const soundsDir = ipcRenderer.sendSync("get-sounds-path");
-
 
 const installSounds = async (audioFiles) => {
   fs.mkdirSync(soundsDir, { recursive: true });
@@ -293,10 +287,7 @@ const isInstalled = (type, item) => {
   const settings = ipcRenderer.sendSync("get-settings");
   switch (type) {
     case "css":
-      return (
-        settings.css_enabled &&
-        (settings.css_link === item.downloadUrl || settings.css_link === toStyleUrl(item.downloadUrl))
-      );
+      return settings.css_enabled && (settings.css_link === item.downloadUrl || settings.css_link === toStyleUrl(item.downloadUrl));
     case "crosshairs":
       return localStorage.getItem("SETTINGS___SETTING/CROSSHAIR___SETTING/STATIC_URL___SETTING") === item.downloadUrl;
     case "textures":
@@ -307,10 +298,14 @@ const isInstalled = (type, item) => {
       return settings.killicon_link === item.downloadUrl;
     case "sounds": {
       if (!item.audioFiles?.length) return false;
-      const first = item.audioFiles.find(f => f.url.endsWith(".mp3"));
+      const first = item.audioFiles.find((f) => f.url.endsWith(".mp3"));
       if (!first) return false;
       const filename = path.basename(decodeURIComponent(first.url.split("?")[0]));
-      try { return fs.existsSync(path.join(soundsDir, filename)); } catch { return false; }
+      try {
+        return fs.existsSync(path.join(soundsDir, filename));
+      } catch {
+        return false;
+      }
     }
     default:
       return false;
@@ -354,12 +349,10 @@ window.openLightbox = (urls, index = 0) => {
           canvas.height = img.naturalHeight;
           const ctx = canvas.getContext("2d");
           ctx.drawImage(img, 0, 0);
-          canvas.toBlob(blob => {
-            navigator.clipboard.write([
-              new ClipboardItem({ "image/png": blob })
-            ]);
+          canvas.toBlob((blob) => {
+            navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
           });
-          overlay.querySelector("#info").textContent = "Copied to clipboard!"
+          overlay.querySelector("#info").textContent = "Copied to clipboard!";
           customNotification({
             message: "Image copied to clipboard!",
             icon: img.src,
@@ -386,7 +379,7 @@ const updateLightbox = () => {
 };
 
 const renderCards = (container, items, type, allRaw) => {
-  container.querySelectorAll(".community-card").forEach(el => el.remove());
+  container.querySelectorAll(".community-card").forEach((el) => el.remove());
 
   items.forEach((raw) => {
     const item = convert(raw, type);
@@ -458,9 +451,9 @@ const renderCards = (container, items, type, allRaw) => {
         <div class="card-info">
           <div class="card-title">${item.title}</div>
           ${item.description ? `<div class="card-desc">${item.description}</div>` : ""}
-          ${item.tags?.length ? `<div class="card-tags">${item.tags.map(t => `<span class="card-tag">${t}</span>`).join("")}</div>` : ""}
+          ${item.tags?.length ? `<div class="card-tags">${item.tags.map((t) => `<span class="card-tag">${t}</span>`).join("")}</div>` : ""}
           <div class="card-footer">
-            <span class="card-owner">${(item.owner && item.owner !== "Unknown") ? item.owner : ""}</span>
+            <span class="card-owner">${item.owner && item.owner !== "Unknown" ? item.owner : ""}</span>
             <div class="card-actions">
               ${soundsPreviewBtn}
               ${linkBtn}
@@ -494,7 +487,7 @@ const renderCards = (container, items, type, allRaw) => {
 
         const imgs = [];
         if (item.isPack && item.images?.length) {
-          item.images.forEach(img => imgs.push(img.url));
+          item.images.forEach((img) => imgs.push(img.url));
         } else if (hasIngame) {
           imgs.push(card.querySelector(".card-img").src);
         } else if (item.previewUrl) {
@@ -559,12 +552,24 @@ const renderCards = (container, items, type, allRaw) => {
 
         if (currentlyInstalled) {
           switch (type) {
-            case "css": removeCss(); break;
-            case "crosshairs": removeCrosshair(); break;
-            case "textures": removeTexture(); break;
-            case "skyboxes": removeSkybox(); break;
-            case "killicons": removeKillIcon(); break;
-            case "sounds": uninstallSounds(raw.audioFiles); break;
+            case "css":
+              removeCss();
+              break;
+            case "crosshairs":
+              removeCrosshair();
+              break;
+            case "textures":
+              removeTexture();
+              break;
+            case "skyboxes":
+              removeSkybox();
+              break;
+            case "killicons":
+              removeKillIcon();
+              break;
+            case "sounds":
+              uninstallSounds(raw.audioFiles);
+              break;
           }
           btn.textContent = isInstallType(type) ? "Install" : "Download";
           btn.className = `card-btn ${item.availability || "free"}`;
@@ -576,12 +581,24 @@ const renderCards = (container, items, type, allRaw) => {
           btn.disabled = true;
 
           switch (type) {
-            case "css": applyCss(item.downloadUrl); break;
-            case "crosshairs": applyCrosshair(item.downloadUrl); break;
-            case "textures": applyTexture(item.downloadUrl); break;
-            case "skyboxes": applySkybox(raw); break;
-            case "killicons": applyKillIcon(item.downloadUrl); break;
-            case "sounds": await installSounds(raw.audioFiles); break;
+            case "css":
+              applyCss(item.downloadUrl);
+              break;
+            case "crosshairs":
+              applyCrosshair(item.downloadUrl);
+              break;
+            case "textures":
+              applyTexture(item.downloadUrl);
+              break;
+            case "skyboxes":
+              applySkybox(raw);
+              break;
+            case "killicons":
+              applyKillIcon(item.downloadUrl);
+              break;
+            case "sounds":
+              await installSounds(raw.audioFiles);
+              break;
             default: {
               const ext = item.downloadUrl.split(".").pop().split("?")[0];
               const filename = `${item.title.replace(/[^a-z0-9]/gi, "_")}.${ext}`;
@@ -597,7 +614,7 @@ const renderCards = (container, items, type, allRaw) => {
           if (["css", "crosshairs", "textures", "skyboxes", "killicons"].includes(type)) {
             const container = btn.closest(`#${type}-options`);
             if (container) {
-              container.querySelectorAll(".card-btn.uninstall").forEach(otherBtn => {
+              container.querySelectorAll(".card-btn.uninstall").forEach((otherBtn) => {
                 if (otherBtn !== btn) {
                   otherBtn.textContent = "Install";
                   otherBtn.className = `card-btn free`;
@@ -605,7 +622,6 @@ const renderCards = (container, items, type, allRaw) => {
               });
             }
           }
-
         } catch (e) {
           console.error(e);
           btn.textContent = "Error";
@@ -638,7 +654,7 @@ const initBrowser = (menu) => {
       openLightbox(e.target.src, 0);
     } else if (e.target.tagName.toLowerCase() === "canvas" && e.target.closest("#community-options, #gallery-options")) {
       e.stopPropagation();
-      openLightbox(e.target.toDataURL(), 0)
+      openLightbox(e.target.toDataURL(), 0);
     }
   });
 
@@ -652,9 +668,9 @@ const initBrowser = (menu) => {
       const query = searchInput?.value?.toLowerCase() || "";
       let filtered;
       if (query) {
-        filtered = data.filter(i => {
+        filtered = data.filter((i) => {
           const n = convert(i, key);
-          return n.title?.toLowerCase().includes(query) || n.tags?.some(t => t.toLowerCase().includes(query));
+          return n.title?.toLowerCase().includes(query) || n.tags?.some((t) => t.toLowerCase().includes(query));
         });
       } else {
         filtered = data;
@@ -669,8 +685,8 @@ const initBrowser = (menu) => {
 
   selectors.forEach((sel) => {
     sel.addEventListener("click", () => {
-      selectors.forEach(s => s.classList.remove("active"));
-      panels.forEach(p => p.classList.remove("selected"));
+      selectors.forEach((s) => s.classList.remove("active"));
+      panels.forEach((p) => p.classList.remove("selected"));
       sel.classList.add("active");
       const key = sel.dataset.selector;
       const panel = menu.querySelector(`#${key}-options`);
@@ -686,9 +702,9 @@ const initBrowser = (menu) => {
       if (!container || !currentItems.length) return;
       let filtered;
       if (query) {
-        filtered = currentItems.filter(i => {
+        filtered = currentItems.filter((i) => {
           const n = convert(i, currentKey);
-          return n.title?.toLowerCase().includes(query) || n.tags?.some(t => t.toLowerCase().includes(query));
+          return n.title?.toLowerCase().includes(query) || n.tags?.some((t) => t.toLowerCase().includes(query));
         });
       } else {
         filtered = currentItems;

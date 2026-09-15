@@ -3,18 +3,18 @@ const { default_settings, allowed_urls } = require("../util/defaults.json");
 const { initResourceSwapper } = require("../addons/swapper.js");
 const { registerShortcuts } = require("../util/shortcuts");
 const { applySwitches } = require("../util/switches");
-const { nativeImage } = require("electron");
 const DiscordRPC = require("../addons/rpc");
 const path = require("path");
 const Store = require("electron-store");
 const fs = require("fs-extra");
 const ffmpeg = require("fluent-ffmpeg");
-const http = require("http");
-const https = require("https");
 let ffmpegPath = require("ffmpeg-static");
 
 protocol.registerSchemesAsPrivileged([
-  { scheme: "https", privileges: { bypassCSP: true, secure: true, supportFetchAPI: true } }
+  {
+    scheme: "https",
+    privileges: { bypassCSP: true, secure: true, supportFetchAPI: true },
+  },
 ]);
 
 const store = new Store();
@@ -25,10 +25,7 @@ if (!store.has("settings")) {
 const settings = store.get("settings");
 
 for (const key in default_settings) {
-  if (
-    !settings.hasOwnProperty(key) ||
-    typeof settings[key] !== typeof default_settings[key]
-  ) {
+  if (!settings.hasOwnProperty(key) || typeof settings[key] !== typeof default_settings[key]) {
     settings[key] = default_settings[key];
     store.set("settings", settings);
   }
@@ -44,15 +41,40 @@ ipcMain.on("get-settings", (e) => {
 });
 
 ipcMain.on("update-setting", (e, key, value) => {
+  if (typeof default_settings[key] === "number") value = Number(value);
   settings[key] = value;
   store.set("settings", settings);
 });
 
+ipcMain.handle("ping-url", async (_event, url) => {
+  return new Promise((resolve) => {
+    const start = Date.now();
+    let settled = false;
+
+    const done = (result) => {
+      if (settled) return;
+      settled = true;
+      resolve(result);
+    };
+
+    const request = net.request({ method: "HEAD", url });
+
+    request.on("response", () => done(Date.now() - start));
+    request.on("error", () => done(null));
+
+    setTimeout(() => {
+      try {
+        request.abort();
+      } catch {}
+      done(null);
+    }, 3000);
+
+    request.end();
+  });
+});
+
 ipcMain.on("open-swapper-folder", () => {
-  const swapperPath = path.join(
-    app.getPath("documents"),
-    "DawnClient/swapper/assets"
-  );
+  const swapperPath = path.join(app.getPath("documents"), "DawnClient/swapper/assets");
 
   if (!fs.existsSync(swapperPath)) {
     fs.mkdirSync(swapperPath, { recursive: true });
@@ -62,10 +84,7 @@ ipcMain.on("open-swapper-folder", () => {
   }
 });
 
-const scriptsPath = path.join(
-  app.getPath("documents"),
-  "DawnClient/scripts"
-);
+const scriptsPath = path.join(app.getPath("documents"), "DawnClient/scripts");
 
 if (!fs.existsSync(scriptsPath)) {
   fs.mkdirSync(scriptsPath, { recursive: true });
@@ -76,10 +95,7 @@ ipcMain.on("open-scripts-folder", () => {
 });
 
 ipcMain.on("open-skins-folder", () => {
-  const skinsPath = path.join(
-    app.getPath("documents"),
-    "DawnClient/swapper/assets/img"
-  );
+  const skinsPath = path.join(app.getPath("documents"), "DawnClient/swapper/assets/img");
 
   if (!fs.existsSync(skinsPath)) {
     fs.mkdirSync(skinsPath, { recursive: true });
@@ -90,10 +106,7 @@ ipcMain.on("open-skins-folder", () => {
 });
 
 ipcMain.on("get-sounds-path", (e) => {
-  const soundsPath = path.join(
-    app.getPath("documents"),
-    "DawnClient/swapper/assets/media"
-  );
+  const soundsPath = path.join(app.getPath("documents"), "DawnClient/swapper/assets/media");
   if (!fs.existsSync(soundsPath)) {
     fs.mkdirSync(soundsPath, { recursive: true });
   }
@@ -101,10 +114,7 @@ ipcMain.on("get-sounds-path", (e) => {
 });
 
 ipcMain.on("open-sounds-folder", () => {
-  const soundsPath = path.join(
-    app.getPath("documents"),
-    "DawnClient/swapper/assets/media"
-  );
+  const soundsPath = path.join(app.getPath("documents"), "DawnClient/swapper/assets/media");
 
   if (!fs.existsSync(soundsPath)) {
     fs.mkdirSync(soundsPath, { recursive: true });
@@ -148,7 +158,7 @@ function copyRecursiveSync(src, dest) {
 }
 
 fs.watch(galleryFolder, (eventType, filename) => {
-  if (filename) BrowserWindow.getAllWindows().forEach(win => win.webContents.send("gallery-updated"));
+  if (filename) BrowserWindow.getAllWindows().forEach((win) => win.webContents.send("gallery-updated"));
 });
 
 ipcMain.on("open-category-folder", (event, folderPath) => {
@@ -165,7 +175,12 @@ ipcMain.on("open-import", async (event, categoryPath) => {
     title: "Select file to import",
     defaultPath: categoryPath,
     properties: ["openFile"],
-    filters: [{ name: "All Supported", extensions: ["txt", "json", "css", "png", "jpg", "jpeg", "gif", "webp"] }]
+    filters: [
+      {
+        name: "All Supported",
+        extensions: ["txt", "json", "css", "png", "jpg", "jpeg", "gif", "webp"],
+      },
+    ],
   });
   if (!canceled && filePaths.length > 0) {
     const filePath = filePaths[0];
@@ -225,22 +240,29 @@ ipcMain.on("copy-file-content", (event, filePath) => {
 
 ipcMain.on("get-gallery", (event) => {
   const categories = [];
-  const subfolders = fs.readdirSync(galleryFolder, { withFileTypes: true }).filter(dirent => dirent.isDirectory()).map(dirent => dirent.name);
-  const rootFiles = fs.readdirSync(galleryFolder).filter(f => fs.statSync(path.join(galleryFolder, f)).isFile());
+  const subfolders = fs
+    .readdirSync(galleryFolder, { withFileTypes: true })
+    .filter((dirent) => dirent.isDirectory())
+    .map((dirent) => dirent.name);
+  const rootFiles = fs.readdirSync(galleryFolder).filter((f) => fs.statSync(path.join(galleryFolder, f)).isFile());
 
   if (rootFiles.length) {
     categories.push({
       name: "Root",
       path: galleryFolder,
-      files: rootFiles.map(f => ({ name: f, path: path.join(galleryFolder, f) }))
+      files: rootFiles.map((f) => ({
+        name: f,
+        path: path.join(galleryFolder, f),
+      })),
     });
   }
 
   for (const folder of subfolders) {
     const folderPath = path.join(galleryFolder, folder);
-    const files = fs.readdirSync(folderPath)
-      .filter(f => fs.statSync(path.join(folderPath, f)).isFile())
-      .map(f => ({ name: f, path: path.join(folderPath, f) }));
+    const files = fs
+      .readdirSync(folderPath)
+      .filter((f) => fs.statSync(path.join(folderPath, f)).isFile())
+      .map((f) => ({ name: f, path: path.join(folderPath, f) }));
     categories.push({ name: folder, path: folderPath, files });
   }
 
@@ -249,7 +271,7 @@ ipcMain.on("get-gallery", (event) => {
 
 ipcMain.on("open-file", (event, filePath) => {
   if (fs.existsSync(filePath)) {
-    shell.openPath(filePath).then(result => {
+    shell.openPath(filePath).then((result) => {
       if (result) console.error("Failed to open file:", result);
     });
   } else {
@@ -270,8 +292,18 @@ ipcMain.on("import-folder-recursive", (event, folderPath) => {
   }
 });
 
+const quickCssPath = path.join(app.getPath("documents"), "DawnClient", "quickcss.css");
+if (!fs.existsSync(quickCssPath)) {
+  fs.writeFileSync(quickCssPath, "", "utf8");
+}
+
+ipcMain.on("get-quickcss-path", (e) => {
+  e.returnValue = quickCssPath;
+});
+
 ipcMain.on("reset-juice-settings", () => {
   store.set("settings", default_settings);
+  fs.writeFileSync(quickCssPath, "", "utf8");
   app.relaunch();
   app.quit();
 });
@@ -294,10 +326,7 @@ ipcMain.on("save-skin-from-buffer", (event, skinname, buffer) => {
 });
 
 if (ffmpegPath.includes("app.asar")) {
-  ffmpegPath = ffmpegPath.replace(
-    "app.asar",
-    "app.asar.unpacked"
-  );
+  ffmpegPath = ffmpegPath.replace("app.asar", "app.asar.unpacked");
 }
 
 ffmpeg.setFfmpegPath(ffmpegPath);
@@ -360,24 +389,7 @@ const createWindow = () => {
     });
   }
 
-  const quickCssPath = path.join(
-    app.getPath("documents"),
-    "DawnClient",
-    "quickcss.css"
-  );
-  if (!fs.existsSync(quickCssPath)) {
-    fs.writeFileSync(quickCssPath, "", "utf8");
-  }
-
-  ipcMain.on("get-quickcss-path", (e) => {
-    e.returnValue = quickCssPath;
-  });
-
-  const scriptsPath = path.join(
-    app.getPath("documents"),
-    "DawnClient",
-    "scripts"
-  );
+  const scriptsPath = path.join(app.getPath("documents"), "DawnClient", "scripts");
   if (!fs.existsSync(scriptsPath)) {
     fs.mkdirSync(scriptsPath, { recursive: true });
   }
@@ -399,8 +411,7 @@ const createWindow = () => {
       const stateMap = {
         [`${base_url}`]: "In the lobby",
         [`${base_url}hub/leaderboard`]: "Viewing the leaderboard",
-        [`${base_url}hub/clans/champions-league`]:
-          "Viewing the clan leaderboard",
+        [`${base_url}hub/clans/champions-league`]: "Viewing the clan leaderboard",
         [`${base_url}hub/clans/my-clan`]: "Viewing their clan",
         [`${base_url}hub/market`]: "Viewing the market",
         [`${base_url}hub/live`]: "Viewing videos",
@@ -419,7 +430,7 @@ const createWindow = () => {
 
       if (stateMap[url]) {
         state = stateMap[url];
-      } else if (url.startsWith(`${base_url}games/`) || (url.startsWith(`${base_url}hub/ranked`))) {
+      } else if (url.startsWith(`${base_url}games/`) || url.startsWith(`${base_url}hub/ranked`)) {
         state = "In a match";
       } else if (url.startsWith(`${base_url}profile/`)) {
         state = "Viewing a profile";
@@ -454,16 +465,10 @@ const initGame = () => {
   const swap = initResourceSwapper();
 
   if (swap.filter.urls.length) {
-    session.defaultSession.webRequest.onBeforeRequest(
-      { urls: swap.filter.urls },
-      (details, callback) => {
-        const redirect =
-          "dawnclient://" +
-          (swap.files[details.url.replace(/https|http|(\?.*)|(#.*)|\_/gi, "")] ||
-            details.url);
-        return callback({ cancel: false, redirectURL: redirect });
-      }
-    );
+    session.defaultSession.webRequest.onBeforeRequest({ urls: swap.filter.urls }, (details, callback) => {
+      const redirect = "dawnclient://" + (swap.files[details.url.replace(/https|http|(\?.*)|(#.*)|\_/gi, "")] || details.url);
+      return callback({ cancel: false, redirectURL: redirect });
+    });
   }
 
   createWindow();
