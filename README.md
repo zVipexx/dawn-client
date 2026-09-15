@@ -55,7 +55,7 @@ The output will be in the `build/` folder.
 ## Features
 
 <details open>
-<summary><strong>🎨 Visuals & Rendering</strong></summary>
+<summary><strong>Visuals & Rendering</strong></summary>
 
 <br />
 
@@ -71,7 +71,7 @@ The output will be in the `build/` folder.
 <br />
 
 <details open>
-<summary><strong>🔫 Weapon Customization</strong></summary>
+<summary><strong>Weapon Customization</strong></summary>
 
 <br />
 
@@ -86,7 +86,7 @@ The output will be in the `build/` folder.
 <br />
 
 <details open>
-<summary><strong>🔧 HUD & Interface</strong></summary>
+<summary><strong>HUD & Interface</strong></summary>
 
 <br />
 
@@ -103,7 +103,7 @@ The output will be in the `build/` folder.
 <br />
 
 <details open>
-<summary><strong>🎭 Personalization</strong></summary>
+<summary><strong>Personalization</strong></summary>
 
 <br />
 
@@ -120,7 +120,7 @@ The output will be in the `build/` folder.
 <br />
 
 <details open>
-<summary><strong>🌐 Browse & Community</strong></summary>
+<summary><strong>Browse & Community</strong></summary>
 
 <br />
 
@@ -135,7 +135,7 @@ The output will be in the `build/` folder.
 <br />
 
 <details open>
-<summary><strong>🛠️ Client Tools</strong></summary>
+<summary><strong>Client Tools</strong></summary>
 
 <br />
 
