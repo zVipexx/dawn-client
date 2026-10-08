@@ -578,7 +578,15 @@
   },
   {
     "shortId": "Q9ULUE",
-    "profile-background": "https://i.imgur.com/C0rV13I.png"
+    "profile-background": "https://i.imgur.com/C0rV13I.png",
+    "gradient": {
+      "rot": "to right",
+      "stops": [
+        "#dfb1d4",
+        "#dfb1d4"
+      ],
+      "shadow": "0px 0px 20px #dfb1d4"
+    }
   },
   {
     "shortId": "XMNVRX",
