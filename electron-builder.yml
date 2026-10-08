@@ -6,6 +6,7 @@ npmRebuild: false
 asarUnpack:
   - "**/node_modules/ffmpeg-static/**"
 win:
+  executableName: DawnClientKirka
   target:
     - target: nsis
   icon: "src/assets/img/icon.png"

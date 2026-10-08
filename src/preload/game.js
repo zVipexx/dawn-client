@@ -15,6 +15,134 @@ const scripts = fs.readdirSync(scriptsPath);
 const settings = ipcRenderer.sendSync("get-settings");
 const base_url = settings.base_url;
 
+window.flagHidden = false;
+
+const initFlag = () => {
+  const hooked = new WeakSet();
+  const lives = new WeakSet();
+  const skip = ["constructor", "decode", "encode", "toJSON", "assign"];
+  let key, goodPath, lastSearch = 0;
+
+  const stateOf = (o) => {
+    const s = o?.serializer?.state;
+    return typeof s?.decode === "function" ? s : null;
+  };
+
+  const findStore = () => {
+    for (const vm of [window.app, ...Object.values(window.app)]) {
+      for (let v = vm; v?.$options; v = v.$options.parent) {
+        if (v.$options.store) return v.$options.store;
+      }
+    }
+  };
+
+  const search = (store) => {
+    const out = [];
+    const seen = new WeakSet([store]);
+    const queue = [[store, []]];
+    for (let i = 0; i < queue.length && i < 30000; i++) {
+      const [o, p] = queue[i];
+      const s = stateOf(o);
+      if (s) { out.push([p, s]); continue; }
+      if (p.length >= 10) continue;
+      for (const k in o) {
+        const c = o[k];
+        if (!c || typeof c !== "object" || seen.has(c) || c instanceof Node || c === window) continue;
+        seen.add(c);
+        queue.push([c, [...p, k]]);
+      }
+    }
+    return out;
+  };
+
+  const getLives = () => {
+    const store = findStore();
+    if (!store) return [];
+    if (goodPath) return [[goodPath, goodPath.reduce((o, k) => o[k], store).serializer.state]];
+    if (Date.now() - lastSearch < 1000) return [];
+    lastSearch = Date.now();
+    return search(store);
+  };
+
+  const hookKey = (live, k) => {
+    let desc;
+    for (let o = live; o && !desc; o = Object.getPrototypeOf(o)) {
+      desc = Object.getOwnPropertyDescriptor(o, k);
+    }
+    Object.defineProperty(live, k, {
+      configurable: true,
+      enumerable: true,
+      get: () => (window.flagHidden ? 0 : desc.get.call(live)),
+      set: (v) => desc.set.call(live, v),
+    });
+  };
+
+  const detect = (live, p) => {
+    const last = {};
+    const streak = {};
+    const t = setInterval(() => {
+      for (const k of Object.keys(live)) {
+        const v = live[k];
+        if (typeof v !== "number") continue;
+        if (last[k] !== undefined && v !== last[k]) {
+          streak[k] = v === last[k] - 1 ? (streak[k] || 0) + 1 : 0;
+          if (streak[k] >= 3) {
+            key = k;
+            goodPath = p;
+            hookKey(live, k);
+            return clearInterval(t);
+          }
+        }
+        last[k] = v;
+      }
+    }, 250);
+  };
+
+  const isClass = (f) =>
+    Object.getPrototypeOf(f) !== Function.prototype ||
+    Object.getOwnPropertyNames(f.prototype || {}).length > 1;
+
+  const hookListeners = (live) => {
+    const proto = Object.getPrototypeOf(Object.getPrototypeOf(live));
+    for (const n of Object.getOwnPropertyNames(proto)) {
+      const f = proto[n];
+      if (typeof f !== "function" || skip.includes(n) || f.__w) continue;
+      const w = function (...a) {
+        if (lives.has(this) && typeof a[0] === "string" && typeof a[1] === "function" && !isClass(a[1])) {
+          const [field, cb] = a;
+          a[1] = function (v, ...r) {
+            return cb.call(this, field === key && window.flagHidden ? 0 : v, ...r);
+          };
+        }
+        return f.apply(this, a);
+      };
+      w.__w = true;
+      proto[n] = w;
+    }
+  };
+
+  setInterval(() => {
+    for (const [p, live] of getLives()) {
+      if (hooked.has(live)) continue;
+      hooked.add(live);
+      lives.add(live);
+      key ? hookKey(live, key) : detect(live, p);
+      hookListeners(live);
+    }
+  }, 50);
+
+  let hideTimer;
+  document.addEventListener("mousedown", (e) => {
+    if (e.button !== 2) return;
+    clearTimeout(hideTimer);
+    window.flagHidden = true;
+  });
+  document.addEventListener("mouseup", (e) => {
+    if (e.button !== 2) return;
+    hideTimer = setTimeout(() => (window.flagHidden = false), 50);
+  });
+};
+
 if (!window.location.href.startsWith(base_url)) {
   delete window.process;
   delete window.require;
@@ -88,11 +216,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   initGallery();
 
   const fetchAll = async () => {
-    const [customizations, clan, ktiers] = await Promise.all([
-      fetch("https://raw.githubusercontent.com/zVipexx/dawn-client/refs/heads/main/badges.json").then((r) => r.json()),
-      fetch("https://raw.githubusercontent.com/zVipexx/dawn-client/refs/heads/main/clans.json").then((r) => r.json()),
-      fetch("https://ktiers-production.up.railway.app/api/players").then((r) => r.json()),
-    ]);
+    const [customizations, clan, ktiers] = await Promise.all([fetch("https://raw.githubusercontent.com/zVipexx/dawn-client/refs/heads/main/badges.json").then((r) => r.json()), fetch("https://raw.githubusercontent.com/zVipexx/dawn-client/refs/heads/main/clans.json").then((r) => r.json()), fetch("https://ktiers-production.up.railway.app/api/players").then((r) => r.json())]);
 
     const shortId = localStorage.getItem("user-id");
     const existingLocal = JSON.parse(localStorage.getItem("juice-customizations") || "[]");
@@ -834,9 +958,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       if (settings.hide_interface) styles.push(".desktop-game-interface, .crosshair-cont, .ach-cont, .hitme-cont, .sniper-mwNMW-cont, .team-score, .score { display: none !important; }");
       if (settings.skip_loading) styles.push(".loading-scene { display: none !important; }");
       if (settings.chat_height) {
-        styles.push(
-          `.desktop-game-interface #chat { bottom: calc(4.7em + ${settings.chat_height}em * 1.2) !important } .desktop-game-interface #chat .messages { min-height: calc(11.75em + ${settings.chat_height}em) !important }`,
-        );
+        styles.push(`.desktop-game-interface #chat { bottom: calc(4.7em + ${settings.chat_height}em * 1.2) !important } .desktop-game-interface #chat .messages { min-height: calc(11.75em + ${settings.chat_height}em) !important }`);
       }
       if (settings.interface_opacity) styles.push(`.desktop-game-interface { opacity: ${settings.interface_opacity}% !important; }`);
       if (settings.interface_bounds) {
@@ -846,9 +968,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       if (settings.hitmarker_link !== "") styles.push(`.hitmark { content: url(${formatLink(settings.hitmarker_link)}) !important; max-width: 48px; max-height: 48px; }`);
       if (settings.killicon_link !== "")
         styles.push(`.animate-cont::before { content: ""; 
-      background: url(${formatLink(
-        settings.killicon_link,
-      )}); width: 10rem; height: 10rem; margin-bottom: 2rem; display: inline-block; background-position: center; background-size: contain; background-repeat: no-repeat; }
+      background: url(${formatLink(settings.killicon_link)}); width: 10rem; height: 10rem; margin-bottom: 2rem; display: inline-block; background-position: center; background-size: contain; background-repeat: no-repeat; }
       .animate-cont svg { display: none; }`);
       if (settings.perm_crosshair) styles.push(".crosshair-static { opacity: 1 !important }");
       if (!settings.ui_animations) styles.push("* { transition: none !important; animation: none !important; }");
@@ -900,6 +1020,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         "killfeed_color_red",
         "killfeed_color_blue",
         "ktiers_icon",
+        "killicon_link"
       ];
       if (relevantSettings.includes(e.detail.setting)) updateUIFeatures();
     });
@@ -929,19 +1050,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     let inspectStart = null;
     let inspectingWeaponId = null;
 
-    const armSigs = new Set([
-      "1.40,1.40,1.40",
-      "1.99,1.68,2.11",
-      "1.88,1.40,1.88",
-      "1.11,1.11,1.77",
-      "1.50,1.40,1.76",
-      "1.13,0.85,1.77",
-      "0.81,1.08,1.38",
-      "1.52,1.15,1.61",
-      "1.16,1.48,0.94",
-      "1.08,1.10,1.77",
-      "1.54,0.92,2.24",
-    ]);
+    const armSigs = new Set(["1.40,1.40,1.40", "1.99,1.68,2.11", "1.88,1.40,1.88", "1.11,1.11,1.77", "1.50,1.40,1.76", "1.13,0.85,1.77", "0.81,1.08,1.38", "1.52,1.15,1.61", "1.16,1.48,0.94", "1.08,1.10,1.77", "1.54,0.92,2.24"]);
 
     const armSigToType = {
       "1.40,1.40,1.40": "right",
@@ -1251,9 +1360,9 @@ window.addEventListener("DOMContentLoaded", async () => {
     const normalizeWeaponName = (raw) =>
       raw
         ? raw
-            .trim()
-            .toLowerCase()
-            .replace(/[\s\-_]/g, "")
+          .trim()
+          .toLowerCase()
+          .replace(/[\s\-_]/g, "")
         : null;
 
     let domWeaponId = null;
@@ -1643,13 +1752,7 @@ window.addEventListener("DOMContentLoaded", async () => {
             matBuf[13] += oy;
             matBuf[14] += oz;
 
-            applyMappedRotation(
-              matBuf,
-              currentWeaponId,
-              getWeaponSetting(currentWeaponId, "rotation_x", 0),
-              getWeaponSetting(currentWeaponId, "rotation_y", 0),
-              getWeaponSetting(currentWeaponId, "rotation_z", 0),
-            );
+            applyMappedRotation(matBuf, currentWeaponId, getWeaponSetting(currentWeaponId, "rotation_x", 0), getWeaponSetting(currentWeaponId, "rotation_y", 0), getWeaponSetting(currentWeaponId, "rotation_z", 0));
 
             if (spinZAngle !== 0) applyZSpin(matBuf, spinZAngle);
             if (spinXAngle !== 0) applyXSpin(matBuf, spinXAngle);
@@ -1722,13 +1825,7 @@ window.addEventListener("DOMContentLoaded", async () => {
             matBuf[13] += oy;
             matBuf[14] += oz;
 
-            applyMappedRotation(
-              matBuf,
-              currentWeaponId,
-              getArmSetting(currentWeaponId, armType, "rotation_x", 0),
-              getArmSetting(currentWeaponId, armType, "rotation_y", 0),
-              getArmSetting(currentWeaponId, armType, "rotation_z", 0),
-            );
+            applyMappedRotation(matBuf, currentWeaponId, getArmSetting(currentWeaponId, armType, "rotation_x", 0), getArmSetting(currentWeaponId, armType, "rotation_y", 0), getArmSetting(currentWeaponId, armType, "rotation_z", 0));
 
             if (armSpinX !== 0) applyXSpin(matBuf, armSpinX);
             if (armSpinY !== 0) applyYSpin(matBuf, armSpinY);
@@ -1819,13 +1916,25 @@ window.addEventListener("DOMContentLoaded", async () => {
       lobbyNews(settings);
       juiceDiscordButton();
 
+      document.addEventListener("click", (e) => {
+        if (!e.target.closest(".leave-btn")) return;
+        localStorage.setItem("current-region", localStorage.getItem("solo-region"));
+      })
+
       window.addLobbyPing = () => {
         if (!ipcRenderer.sendSync("get-settings").lobby_ping) {
           document.querySelector(".lobby-ping")?.remove();
           return;
         }
         if (document.querySelector(".lobby-ping")) return;
+
         const regionEl = document.querySelector(".select-region");
+        if (regionEl) {
+          new MutationObserver(() => {
+            localStorage.setItem("current-region", regionEl.textContent.trim());
+          }).observe(regionEl, { subtree: true, characterData: true });
+        }
+
         const pingEl = document.createElement("div");
         pingEl.className = "lobby-ping";
         pingEl.textContent = "FETCHING...";
@@ -1833,12 +1942,13 @@ window.addEventListener("DOMContentLoaded", async () => {
 
         let running = false;
         let intervalId = null;
+        localStorage.setItem("current-region", regionEl.textContent.trim());
 
         const updatePing = async () => {
           if (running) return;
           running = true;
-          const region = regionEl.textContent.trim();
-          const ms = await ipcRenderer.invoke("ping-url", `https://${region}.kirka.io`);
+          const region = localStorage.getItem("current-region");
+          const ms = await ipcRenderer.invoke("ping-url", `https://${region}.kirka.io/ping`);
 
           if (!ipcRenderer.sendSync("get-settings").lobby_ping) {
             clearInterval(intervalId);
@@ -1875,6 +1985,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         if (!settings.quickjoin_button) return;
         const playContent = document.querySelector(".play-content");
         const playContentUp = playContent.querySelector(".play-content-up");
+        const interface = document.querySelector(".interface");
 
         const quickJoin = playContentUp.cloneNode(true);
         quickJoin.classList.add("quickjoin-container");
@@ -1891,38 +2002,54 @@ window.addEventListener("DOMContentLoaded", async () => {
         if (quickJoinBtn.dataset.listenerAttached) return;
         quickJoinBtn.dataset.listenerAttached = "true";
 
+        const regions = ["EU~", "NA~", "ASIA~", "SA~", "OCEANIA~", "INDIA~"];
+
+        const isValidLink = (text) => {
+          text = (text || "").trim();
+          return text.startsWith("https://kirka.io/") || regions.some((r) => text.startsWith(r));
+        };
+
+        const joinWithCode = (text) => {
+          if (!isValidLink(text)) {
+            customNotification({ message: `Copy a valid lobby/game link` });
+            return;
+          }
+
+          playContentUp.querySelector(".join-btn")?.click();
+
+          waitForElement("#join-modal-modal .input", (input) => {
+            input.value = text;
+            input.dispatchEvent(new Event("input", { bubbles: true }));
+            input.dispatchEvent(new Event("change", { bubbles: true }));
+            document.querySelector(".btn")?.click();
+          })
+        };
+
         quickJoinBtn.addEventListener("click", (e) => {
           e.stopPropagation();
+          navigator.clipboard.readText().then(joinWithCode);
+        });
 
-          navigator.clipboard.readText().then((text) => {
-            const regions = ["EU~", "NA~", "ASIA~", "SA~", "OCEANIA~", "INDIA~"];
+        interface.addEventListener("dragover", (e) => {
+          if (!e.dataTransfer.types.includes("text/plain")) return;
+          e.preventDefault();
+          e.dataTransfer.dropEffect = "copy";
+          interface.classList.add("dragover");
+          quickJoinBtn.textContent = "DROP LINK";
+        });
 
-            if (text === "") {
-              customNotification({
-                message: `Empty Clipboard!<br>Copy a lobby/game code first`,
-              });
-              return;
-            } else if (!text.startsWith("https://kirka.io/") && !regions.some((prefix) => text.startsWith(prefix))) {
-              customNotification({
-                message: `<span style="color: gray;">${text.length > 100 ? text.slice(0, 100) + "…" : text}</span> is not a valid lobby/game code!`,
-              });
-              return;
-            }
+        interface.addEventListener("dragleave", () => {
+          interface.classList.remove("dragover");
+          quickJoinBtn.textContent = "QUICKJOIN";
+        })
 
-            playContentUp.querySelector(".join-btn")?.click();
-
-            const observer = new MutationObserver(() => {
-              const input = document.querySelector("#join-modal-modal .input");
-              if (input) {
-                input.value = text;
-                input.dispatchEvent(new Event("input", { bubbles: true }));
-                document.querySelector(".btn")?.click();
-                observer.disconnect();
-              }
-            });
-
-            observer.observe(document.body, { childList: true, subtree: true });
-          });
+        interface.addEventListener("drop", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          interface.classList.remove("dragover");
+          quickJoinBtn.textContent = "QUICKJOIN";
+          const text = e.dataTransfer.getData("text/plain");
+          joinWithCode(text);
         });
 
         playContent.insertBefore(quickJoin, playContentUp);
@@ -2135,6 +2262,24 @@ window.addEventListener("DOMContentLoaded", async () => {
 
     waitForElement(".avatar-info .username", applyLobbyChanges);
   };
+
+  const handleJoin = () => {
+    let link = "";
+
+    const input = document.querySelector("#join-modal-modal input");
+    input.addEventListener("change", () => {
+      link = input.value;
+    })
+
+    const joinButton = document.querySelector("#join-modal-modal .btn");
+    joinButton.addEventListener("click", () => {
+      const match = link.match(/^https:\/\/kirka\.io\/___lobby___\/([A-Z]+)~/);
+      const region = match ? match[1] : null;
+      localStorage.setItem("solo-region", localStorage.getItem("current-region"));
+      localStorage.setItem("current-region", region);
+    }, true)
+  };
+  observeForElement("#join-modal-modal", handleJoin);
 
   const handleServers = async () => {
     const settings = ipcRenderer.sendSync("get-settings");
@@ -2404,328 +2549,9 @@ window.addEventListener("DOMContentLoaded", async () => {
       input.dispatchEvent(new Event("input", { bubbles: true }));
       sendBtn.click();
     }
-
-    const setInputValue = (value, cursorPos) => {
-      const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
-      nativeSetter.call(input, value);
-      input.dispatchEvent(new Event("input", { bubbles: true }));
-      if (cursorPos != null) {
-        input.setSelectionRange(cursorPos, cursorPos);
-      }
-    };
-
-    const commandDescriptions = {
-      "/trade offer": {
-        args: ["my:[<item>]", "your:[<item>]"],
-        desc: "Send an offer for everyone",
-      },
-      "/trade bump": "Re-send your ongoing trade offer",
-      "/trade cancel": "Cancel your ongoing trade offer",
-      "/trade accept": { args: ["<trade_id>"], desc: "Accept a trade" },
-      "/trade confirm": "Confirm your trade",
-
-      "/8ball": { args: ["<question>"], desc: "Ask the magic 8-ball a question." },
-      "/asset": "Link to the official Discord for submitting maps, weapons, and characters.",
-      "/banshee": "Info about Banshee, the first player to reach level 100.",
-      "/dice": { args: ["[faces]"], desc: "Roll a dice. Default 6 faces, supports 1-1000." },
-      "/roll": { args: ["[faces]"], desc: "Roll a dice. Default 6 faces, supports 1-1000." },
-      "/flip": "Flip a coin. Heads or Tails.",
-      "/coinflip": "Flip a coin. Heads or Tails.",
-      "/gecko": "Info about Gecko player.",
-      "/info": "Display bot info and data source credits.",
-      "/levels": "Show player level distribution stats.",
-      "/lvl": "Show player level distribution stats.",
-      "/naruto": { args: ["<t|r|s|b>"], desc: "Naruto jutsu game." },
-      "/trsb": { args: ["<t|r|s|b>"], desc: "Naruto jutsu game." },
-      "/ping": "Check bot latency in milliseconds.",
-      "/playercount": "Show current Kirka.io online player count.",
-      "/players": "Show current Kirka.io online player count.",
-      "/online": "Show current Kirka.io online player count.",
-      "/random": { args: ["[type]"], desc: "Show a random item. Optionally filter by weapon type." },
-      "/randomitem": { args: ["[type]"], desc: "Show a random item. Optionally filter by weapon type." },
-      "/rps": { args: ["<r|p|s>"], desc: "Rock-paper-scissors against the bot." },
-      "/skywalk": "Easter egg.",
-      "/tourney": "Show current tournament information.",
-      "/tournament": "Show current tournament information.",
-      "/zg-mario": "Info about ZG-Mario, the first player to reach level 101+.",
-
-      "/auto": { args: ["<item>"], desc: "Show the automatic (algorithm) price of an item." },
-      "/avg": { args: ["<item>"], desc: "Show the average price across all price lists." },
-      "/average": { args: ["<item>"], desc: "Show the average price across all price lists." },
-      "/bolt": { args: ["<item>"], desc: "Show Bolt price list value." },
-      "/bros": { args: ["<item>"], desc: "Show Bros price list value." },
-      "/cheapest": { args: ["[type]"], desc: "Show the 10 cheapest items." },
-      "/bottom10": { args: ["[type]"], desc: "Show the 10 cheapest items." },
-      "/credits": { args: ["<item>"], desc: "Show who created a skin." },
-      "/creator": { args: ["<item>"], desc: "Show who created a skin." },
-      "/diff": { args: ["<item>"], desc: "Show price difference between all price lists." },
-      "/pricediff": { args: ["<item>"], desc: "Show price difference between all price lists." },
-      "/fate": { args: ["<item>"], desc: "Show Fate price list value." },
-      "/fav": { args: ["[bros|bolt|fate|avg|auto]"], desc: "Set your favorite price list." },
-      "/favorite": { args: ["[bros|bolt|fate|avg|auto]"], desc: "Set your favorite price list." },
-      "/howmuch": { args: ["<item1, item2, ...>"], desc: "Calculate total value of multiple items." },
-      "/hm": { args: ["<item1, item2, ...>"], desc: "Calculate total value of multiple items." },
-      "/inv": { args: ["[player]"], desc: "Show a player's inventory and total value." },
-      "/inventory": { args: ["[player]"], desc: "Show a player's inventory and total value." },
-      "/invstats": "Show detailed inventory statistics.",
-      "/item": { args: ["<item>"], desc: "Show full price info for an item." },
-      "/price": { args: ["<item>"], desc: "Show full price info for an item." },
-      "/locate": { args: ["<item>"], desc: "Find which players own a specific item." },
-      "/finditem": { args: ["<item>"], desc: "Find which players own a specific item." },
-      "/owners": { args: ["<item>"], desc: "Show how many players own an item." },
-      "/top10": { args: ["[type]"], desc: "Show the 10 most expensive items." },
-      "/newitems": { args: ["[page]"], desc: "Show the newest items added to the game." },
-      "/ni": { args: ["[page]"], desc: "Show the newest items added to the game." },
-      "/newdates": { args: ["[page]"], desc: "Show dates when items were added." },
-      "/itemdates": { args: ["[page]"], desc: "Show dates when items were added." },
-      "/newitemdate": { args: ["<YYYY-MM-DD>", "[page]"], desc: "Show all items added on a specific date." },
-      "/nid": { args: ["<YYYY-MM-DD>", "[page]"], desc: "Show all items added on a specific date." },
-
-      "/daytrade": "Show today's price changes.",
-      "/dt": "Show today's price changes.",
-      "/gainers": { args: ["[days]"], desc: "Show items with the biggest price gains." },
-      "/winners": { args: ["[days]"], desc: "Show items with the biggest price gains." },
-      "/last10": { args: ["<item>"], desc: "Show last 10 price history entries for an item." },
-      "/losers": { args: ["[days]"], desc: "Show items with the biggest price losses." },
-      "/mytrade": "Show your trade statistics.",
-      "/st": { args: ["[item]"], desc: "Search for active trades involving an item." },
-      "/searchtrade": { args: ["[item]"], desc: "Search for active trades involving an item." },
-      "/vt": { args: ["<trade_id>"], desc: "View details of a specific trade." },
-      "/viewtrade": { args: ["<trade_id>"], desc: "View details of a specific trade." },
-      "/yourtrade": { args: ["<player>"], desc: "Show another player's trade statistics." },
-      "/yt": { args: ["<player>"], desc: "Show another player's trade statistics." },
-
-      "/biasedtrade": { args: ["[days]"], desc: "Show the most biased trades." },
-      "/bt": { args: ["[days]"], desc: "Show the most biased trades." },
-      "/expensivetrade": { args: ["[days]"], desc: "Show the most expensive trades." },
-      "/et": { args: ["[days]"], desc: "Show the most expensive trades." },
-      "/expensiveitems": "Show the most expensive items overall.",
-      "/ei": "Show the most expensive items overall.",
-      "/mostoffered": "Show the most offered items in trades.",
-      "/mo": "Show the most offered items in trades.",
-      "/mosttraded": "Show the most frequently traded items.",
-      "/mt": "Show the most frequently traded items.",
-      "/mostwanted": "Show the most wanted items in trades.",
-      "/mw": "Show the most wanted items in trades.",
-
-      "/myvotes": "Show your skin votes.",
-      "/myv": "Show your skin votes.",
-      "/rankskin": { args: ["<item>"], desc: "Show the vote rank of a specific skin." },
-      "/rs": { args: ["<item>"], desc: "Show the vote rank of a specific skin." },
-      "/topskin": { args: ["[type]"], desc: "Show the top voted skins." },
-      "/ts": { args: ["[type]"], desc: "Show the top voted skins." },
-      "/votetypes": "Show available weapon types you can vote on.",
-      "/types": "Show available weapon types you can vote on.",
-      "/voteskin": { args: ["<item>"], desc: "Vote for your favorite skin." },
-      "/vs": { args: ["<item>"], desc: "Vote for your favorite skin." },
-      "/vote": { args: ["<item>"], desc: "Vote for your favorite skin." },
-      "/votestats": "Show your voting statistics.",
-      "/yourvotes": { args: ["<player>"], desc: "Show another player's skin votes." },
-      "/yourv": { args: ["<player>"], desc: "Show another player's skin votes." },
-
-      "/goat": { args: ["<player>"], desc: "Vote for the Greatest of All Time player." },
-      "/goatstats": "Show GOAT voting statistics.",
-      "/mygoat": "Show your GOAT votes.",
-      "/rankgoat": { args: ["[page]"], desc: "Show GOAT player rankings." },
-      "/rg": { args: ["[page]"], desc: "Show GOAT player rankings." },
-      "/topgoat": { args: ["[page]"], desc: "Show the top GOAT voted players." },
-      "/tg": { args: ["[page]"], desc: "Show the top GOAT voted players." },
-
-      "/claim": "Claim your giveaway or lottery prize.",
-      "/donate": { args: ["<item>"], desc: "Donate a skin to the giveaway pool." },
-      "/donated": { args: ["[player]"], desc: "Show a player's total donation value." },
-      "/donators": { args: ["[page]"], desc: "Show the donation leaderboard." },
-      "/donors": { args: ["[page]"], desc: "Show the donation leaderboard." },
-      "/enter": "Enter the current active giveaway.",
-      "/giveaway": { args: ["<item>"], desc: "Start a giveaway by trading a skin to the bot." },
-      "/givers": { args: ["[page]"], desc: "Show the giveaway givers leaderboard." },
-      "/lottery": { args: ["<entries>"], desc: "Buy lottery entries with Golden (50 Golden per entry)." },
-      "/raffle": { args: ["<entries>"], desc: "Buy lottery entries with Golden (50 Golden per entry)." },
-      "/mylottery": "Show your lottery entries and stats.",
-      "/myraffle": "Show your lottery entries and stats.",
-      "/lotterystats": "Show lottery pool statistics.",
-      "/rafflestats": "Show lottery pool statistics.",
-      "/ranklottery": { args: ["[page]"], desc: "Show lottery participant rankings." },
-      "/rr": { args: ["[page]"], desc: "Show lottery participant rankings." },
-      "/toplottery": { args: ["[page]"], desc: "Show top lottery participants." },
-      "/tr": { args: ["[page]"], desc: "Show top lottery participants." },
-      "/unclaim": "Forfeit your active claim.",
-
-      "/cancelwager": "Cancel your pending wager.",
-      "/confirmwager": "Accept a wager challenge.",
-      "/acceptwager": "Accept a wager challenge.",
-      "/mywager": "Show your current and past wagers.",
-      "/topwager": { args: ["[page]"], desc: "Show the top wagerers leaderboard." },
-      "/tw": { args: ["[page]"], desc: "Show the top wagerers leaderboard." },
-      "/wager": { args: ["<player>", "<item>"], desc: "Challenge a player to a coin-flip wager." },
-
-      "/gift": { args: ["<player>", "<item>"], desc: "Gift a skin to another player." },
-      "/letter": { args: ["<player>"], desc: "Send a letter to a player (costs Golden)." },
-      "/mygift": "Show your gifts given and received.",
-      "/mygifts": "Show your gifts given and received.",
-      "/topgifter": { args: ["[page]"], desc: "Show the top gift givers leaderboard." },
-      "/topgifters": { args: ["[page]"], desc: "Show the top gift givers leaderboard." },
-
-      "/myrep": "Show your reputation score.",
-      "/repdown": { args: ["<player>"], desc: "Remove reputation from a player (costs Golden)." },
-      "/rep-": { args: ["<player>"], desc: "Remove reputation from a player (costs Golden)." },
-      "/repstats": "Show your reputation statistics.",
-      "/repup": { args: ["<player>"], desc: "Give reputation to a player (costs Golden)." },
-      "/rep+": { args: ["<player>"], desc: "Give reputation to a player (costs Golden)." },
-      "/toprep": { args: ["[page]"], desc: "Show the reputation leaderboard." },
-      "/yourrep": { args: ["<player>"], desc: "Check another player's reputation score." },
-      "/checkrep": { args: ["<player>"], desc: "Check another player's reputation score." },
-
-      "/rmwp": "Remove your wanted poster.",
-      "/rmwantedposter": "Remove your wanted poster.",
-      "/sp": { args: ["[item]"], desc: "Search wanted posters." },
-      "/searchposter": { args: ["[item]"], desc: "Search wanted posters." },
-      "/wp": { args: ["<item>", "<price>"], desc: "Create a wanted poster for an item." },
-      "/wantedposter": { args: ["<item>", "<price>"], desc: "Create a wanted poster for an item." },
-
-      "/announce": "Show the current announcement.",
-      "/announcement": "Show the current announcement.",
-      "/downtime": "Show current server downtime info.",
-      "/help": "Show all command categories.",
-      "/commands": "Show all command categories.",
-    };
-
-    function removeExistingHelpers(except) {
-      document.querySelectorAll(".chat-helper").forEach((el) => {
-        if (el !== except) el.remove();
-      });
-    }
-
-    removeExistingHelpers();
-
-    const chatHelper = document.createElement("div");
-    chatHelper.className = "chat-helper";
-    chatHelper.style.display = "none";
-    input.parentElement.appendChild(chatHelper);
-
-    let helperActiveIndex = 0;
-    let helperMatches = [];
-
-    function renderHelper(matches) {
-      chatHelper.innerHTML = "";
-      if (matches.length === 0) {
-        chatHelper.style.display = "none";
-        return;
-      }
-
-      matches.forEach((cmd, i) => {
-        const item = document.createElement("div");
-        item.className = "chat-helper-item" + (i === helperActiveIndex ? " active" : "");
-
-        const commandSpan = document.createElement("span");
-        commandSpan.className = "chat-helper-helper";
-        commandSpan.textContent = cmd.name;
-        item.appendChild(commandSpan);
-
-        const entry = commandDescriptions[cmd.name];
-        const argsList = typeof entry === "object" && Array.isArray(entry.args) ? entry.args : [];
-        const descText = typeof entry === "object" ? entry.desc : entry;
-
-        argsList.forEach((argText) => {
-          const argSpan = document.createElement("span");
-          argSpan.className = "chat-helper-arg";
-          argSpan.textContent = argText;
-          item.appendChild(argSpan);
-        });
-
-        const descSpan = document.createElement("span");
-        descSpan.className = "chat-helper-description";
-        descSpan.textContent = descText || "";
-        item.appendChild(descSpan);
-
-        item.addEventListener("mousedown", (e) => {
-          e.preventDefault();
-          applyHelperSelection(cmd.name);
-        });
-
-        chatHelper.appendChild(item);
-      });
-
-      chatHelper.style.display = "block";
-    }
-
-    function applyHelperSelection(commandName) {
-      const entry = commandDescriptions[commandName];
-      const argsList = typeof entry === "object" && Array.isArray(entry.args) ? entry.args : [];
-      const argsText = argsList.length > 0 ? " " + argsList.join(" ") : "";
-
-      const text = input.value;
-      const match = text.match(/^(\S*)(\s*)(.*)$/);
-      const rest = match ? match[3] : "";
-      const space = match && match[2] ? match[2] : " ";
-      const newText = commandName + argsText + (rest ? space + rest : "");
-      input.value = newText;
-      input.dispatchEvent(new Event("input", { bubbles: true }));
-      chatHelper.style.display = "none";
-      input.focus();
-    }
-
-    input.addEventListener("input", (e) => {
-      const settings = ipcRenderer.sendSync("get-settings");
-      if (!settings.command_abbreviations) {
-        chatHelper.style.display = "none";
-        return;
-      }
-
-      const text = input.value;
-
-      if (text.length === 0 || text[0] !== "/") {
-        chatHelper.style.display = "none";
-        return;
-      }
-
-      removeExistingHelpers(chatHelper);
-
-      const allCommands = Object.keys(commandDescriptions);
-
-      let matches = allCommands.filter((name) => name.startsWith(text));
-
-      if (matches.length === 0) {
-        const exact = allCommands.find((name) => text.startsWith(name + " "));
-        if (exact) {
-          const entry = commandDescriptions[exact];
-          const argsList = typeof entry === "object" && Array.isArray(entry.args) ? entry.args : [];
-
-          const afterCommand = text.slice(exact.length).trim();
-          const typedArgCount = afterCommand.length === 0 ? 0 : afterCommand.split(/\s+/).length;
-
-          if (typedArgCount < argsList.length) {
-            matches = [exact];
-          }
-        }
-      }
-
-      helperMatches = matches.map((name) => ({ name }));
-      helperActiveIndex = 0;
-      renderHelper(helperMatches);
-    });
-
-    input.addEventListener("keydown", (e) => {
-      if (chatHelper.style.display === "none" || helperMatches.length === 0) return;
-
-      if (e.key === "ArrowDown") {
-        e.preventDefault();
-        helperActiveIndex = (helperActiveIndex + 1) % helperMatches.length;
-        renderHelper(helperMatches);
-      } else if (e.key === "ArrowUp") {
-        e.preventDefault();
-        helperActiveIndex = (helperActiveIndex - 1 + helperMatches.length) % helperMatches.length;
-        renderHelper(helperMatches);
-      } else if (e.key === "Tab" || e.key === "Enter") {
-        e.preventDefault();
-        applyHelperSelection(helperMatches[helperActiveIndex].name);
-      } else if (e.key === "Escape") {
-        chatHelper.style.display = "none";
-      }
-    });
   };
 
-  let disconnectObservers = () => {};
+  let disconnectObservers = () => { };
 
   const handleProfile = () => {
     disconnectObservers();
@@ -2996,10 +2822,10 @@ window.addEventListener("DOMContentLoaded", async () => {
           customs?.gradient ||
           (settings.local_customizations && isOwnProfile && savedGradient
             ? {
-                rot: `${savedGradient.rotation}deg`,
-                stops: savedGradient.colors.map((c) => c.hex),
-                shadow: savedShadow ? (savedShadow.intensity > 0 ? `0px 0px ${savedShadow.intensity}px ${savedShadow.color}` : "none") : "none",
-              }
+              rot: `${savedGradient.rotation}deg`,
+              stops: savedGradient.colors.map((c) => c.hex),
+              shadow: savedShadow ? (savedShadow.intensity > 0 ? `0px 0px ${savedShadow.intensity}px ${savedShadow.color}` : "none") : "none",
+            }
             : null);
 
         const badgesData = customs?.badges || (settings.local_customizations && isOwnProfile ? savedBadges : null) || [];
@@ -3084,23 +2910,24 @@ window.addEventListener("DOMContentLoaded", async () => {
 
     const addClanListener = () => {
       const clan = document.querySelector(".profile .clan-tag");
+      if (!clan) return;
       const clanName = clan.textContent;
-      if (clan)
-        clan.addEventListener("click", () => {
-          document.querySelector("#profile-modal-modal .close")?.click();
-          const url = `${base_url}hub/clans`;
-          window.history.pushState({}, "", url);
-          window.dispatchEvent(new PopStateEvent("popstate"));
-          waitForElement(".lookup-input", () => {
-            setTimeout(() => {
-              const lookup = document.querySelector(".lookup-input");
-              lookup.value = clanName;
-              lookup.click();
-              const event = new KeyboardEvent("keydown", { key: "Enter" });
-              lookup.dispatchEvent(event);
-            }, 10);
-          });
+      clan.addEventListener("click", () => {
+        document.querySelector(".ktiers-icon")?.remove();
+        document.querySelector("#profile-modal-modal .close")?.click();
+        const url = `${base_url}hub/clans`;
+        window.history.pushState({}, "", url);
+        window.dispatchEvent(new PopStateEvent("popstate"));
+        waitForElement(".lookup-input", () => {
+          setTimeout(() => {
+            const lookup = document.querySelector(".lookup-input");
+            lookup.value = clanName;
+            lookup.click();
+            const event = new KeyboardEvent("keydown", { key: "Enter" });
+            lookup.dispatchEvent(event);
+          }, 10);
         });
+      });
     };
 
     let loading = null;
@@ -3146,16 +2973,24 @@ window.addEventListener("DOMContentLoaded", async () => {
     let settings = ipcRenderer.sendSync("get-settings");
     const nicknames = JSON.parse(localStorage.getItem("nicknames") || "{}");
 
-    document.addEventListener(
-      "keyup",
-      (e) => {
-        if (e.key === "8") {
-          e.preventDefault();
-          e.stopImmediatePropagation();
-        }
-      },
-      true,
-    );
+    let mode = null;
+    const loadingScene = document.querySelector(".loading-scene");
+    if (loadingScene) mode = loadingScene.querySelector(".mode").textContent;
+
+    document.addEventListener("keyup", (e) => {
+      if (e.key === "8") {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+      }
+    }, true);
+
+    const copyGameLink = () => {
+      const copyToClipboard = document.querySelector("#invite-game-modal .copy-cont .button");
+      if (!settings.auto_copy_link || !copyToClipboard) return;
+
+      copyToClipboard.click();
+    }
+    copyGameLink();
 
     let red_players = [];
     let blue_players = [];
@@ -3680,12 +3515,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         const observer = new MutationObserver((mutations) => {
           for (const mutation of mutations) {
             const animCont = mutation.target;
-            if (
-              mutation.attributeName === "class" &&
-              animCont.classList.contains("slide-fade-enter-active") &&
-              animCont.classList.contains("slide-fade-enter-to") &&
-              animCont.querySelector(".text")?.textContent.includes("ASSIST")
-            ) {
+            if (mutation.attributeName === "class" && animCont.classList.contains("slide-fade-enter-active") && animCont.classList.contains("slide-fade-enter-to") && animCont.querySelector(".text")?.textContent.includes("ASSIST")) {
               const now = Date.now();
               if (now - lastTriggered < 200) continue;
               lastTriggered = now;
@@ -3737,12 +3567,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         const observer = new MutationObserver((mutations) => {
           for (const mutation of mutations) {
             const animCont = mutation.target;
-            if (
-              mutation.attributeName === "class" &&
-              animCont.classList.contains("slide-fade-enter-active") &&
-              animCont.classList.contains("slide-fade-enter-to") &&
-              animCont.querySelector(".text")?.textContent.includes("POINT")
-            ) {
+            if (mutation.attributeName === "class" && animCont.classList.contains("slide-fade-enter-active") && animCont.classList.contains("slide-fade-enter-to") && animCont.querySelector(".text")?.textContent.includes("POINT")) {
               const now = Date.now();
               if (now - lastTriggered < 200) continue;
               lastTriggered = now;
@@ -3797,10 +3622,51 @@ window.addEventListener("DOMContentLoaded", async () => {
           }
         });
 
-        observer.observe(killBarCont, {
-          childList: true,
-        });
+        observer.observe(killBarCont, { childList: true });
       }
+    };
+
+    const toggleEnemyPointIndicator = () => {
+      let eop = document.querySelector(".enemy-point");
+
+      eop = document.createElement("div");
+      eop.classList.add("enemy-point");
+      eop.textContent = "Enemy Point!";
+      document.querySelector(".desktop-game-interface").append(eop);
+
+      setTimeout(() => {
+        eop.classList.add("fade-out");
+      }, 1500);
+
+      setTimeout(() => {
+        eop.remove();
+      }, 1900);
+    };
+
+    const observeTeamScores = () => {
+      const teamScores = document.querySelectorAll(".team-score .label");
+      if (!teamScores.length) return;
+      teamScores.forEach((label) => {
+        let oldScore = label.textContent;
+        new MutationObserver(() => {
+          const newScore = label.textContent;
+          if (newScore <= oldScore) {
+            oldScore = newScore;
+            return;
+          }
+
+          if (!ipcRenderer.sendSync("get-settings").enemy_point_indicator) return;
+
+          const player = document.querySelector(".tab-team-info .nickname.bolder");
+          const playerSide = player.parentElement.parentElement.parentElement;
+          const isLeft = playerSide.classList.contains("player-left-cont");
+          const isRight = playerSide.classList.contains("player-right-cont");
+
+          if ((isLeft && label.classList.contains("blue")) || (isRight && label.classList.contains("red"))) {
+            toggleEnemyPointIndicator();
+          }
+        }).observe(label, { characterData: true, childList: true, subtree: true });
+      });
     };
 
     const customizations = JSON.parse(localStorage.getItem("juice-customizations"));
@@ -4253,6 +4119,10 @@ window.addEventListener("DOMContentLoaded", async () => {
       updatePlayerLists();
       updateMessages();
       updateTeammates();
+      if (mode === "POINT") {
+        observeTeamScores()
+        initFlag();
+      };
       const observeElement = (selector, setting, execute) => {
         const elem = document.querySelector(selector);
         if (!elem) return;
@@ -4278,6 +4148,10 @@ window.addEventListener("DOMContentLoaded", async () => {
           updateMessages();
           updateTeammates();
           applyCustomizationsTab();
+          if (mode === "POINT") {
+            observeTeamScores()
+            initFlag();
+          };
           if (document.querySelector(".kill-death .hsp")) {
             document.querySelector(".kill-death .hsp").remove();
             createHeadshots();
@@ -4368,9 +4242,8 @@ window.addEventListener("DOMContentLoaded", async () => {
             </div>
             <div class="right-info">
               <div class="description background">${data.description ?? ""}</div>
-              ${
-                data.discordLink
-                  ? `
+              ${data.discordLink
+          ? `
                 <a class="discord-cont" href="${data.discordLink}" target="_blank">
                   <svg xmlns="http://www.w3.org/2000/svg" class="discord-icon svg-icon svg-icon--__discord-classic__">
                     <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#__discord-classic__"></use>
@@ -4378,8 +4251,8 @@ window.addEventListener("DOMContentLoaded", async () => {
                   DISCORD
                 </a>
               `
-                  : "<!---->"
-              }
+          : "<!---->"
+        }
             </div>
           </div>
         </div>
@@ -4724,6 +4597,11 @@ window.addEventListener("DOMContentLoaded", async () => {
         clearInterval(interval);
         return;
       }
+
+      document.querySelectorAll(".count").forEach((el) => {
+        const node = [...el.childNodes].find((n) => n.nodeType === 3 && n.textContent.trim());
+        if (node) node.textContent = " " + Number(node.textContent.replace(/\D/g, "")).toLocaleString();
+      });
     }, 250);
   };
 
@@ -4972,17 +4850,12 @@ window.addEventListener("DOMContentLoaded", async () => {
         document.querySelector(".home")?.click();
         document.querySelector(".join-btn")?.click();
 
-        const observer = new MutationObserver(() => {
-          const input = document.querySelector("#join-modal-modal .input");
-          if (input) {
-            input.value = code;
-            input.dispatchEvent(new Event("input", { bubbles: true }));
-            document.querySelector(".btn:nth-child(2)")?.click();
-            observer.disconnect();
-          }
-        });
-
-        observer.observe(document.body, { childList: true, subtree: true });
+        waitForElement("#join-modal-modal .input", (input) => {
+          input.value = code;
+          input.dispatchEvent(new Event("input", { bubbles: true }));
+          input.dispatchEvent(new Event("change", { bubbles: true }));
+          document.querySelector(".btn:nth-child(2)")?.click();
+        })
       });
     }
 
@@ -5406,18 +5279,14 @@ window.addEventListener("DOMContentLoaded", async () => {
           subject.classList.add("favorite");
           if (subject.dataset.favoriteBound) return;
           subject.dataset.favoriteBound = "1";
-          subject.addEventListener(
-            "click",
-            (e) => {
-              if (!ipcRenderer.sendSync("get-settings").prevent_selling_favorites) return;
-              const sellBtn = e.target.closest(".sell-btn");
-              if (sellBtn) {
-                e.stopImmediatePropagation();
-                return false;
-              }
-            },
-            true,
-          );
+          subject.addEventListener("click", (e) => {
+            if (!ipcRenderer.sendSync("get-settings").prevent_selling_favorites) return;
+            const sellBtn = e.target.closest(".sell-btn");
+            if (sellBtn) {
+              e.stopImmediatePropagation();
+              return false;
+            }
+          }, true);
         } else {
           delete subject.dataset.favoriteBound;
         }
@@ -5535,7 +5404,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       const stored = JSON.parse(localStorage.getItem("inventory_sort_settings") || "{}");
       return {
         sortBy: stored.sortBy || "rarity",
-        favoritesFirst: stored.favoritesFirst !== undefined ? stored.favoritesFirst : true,
+        favoritesFirst: stored.favoritesFirst !== undefined ? stored.favoritesFirst : true
       };
     }
 
@@ -5682,6 +5551,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   };
 
   const handleInspect = () => {
+    if (!settings.inspect_value) return;
     function getInspectItemName() {
       const nameEl = document.querySelector("#inspect-modal .name");
       if (!nameEl) return null;
@@ -5726,8 +5596,19 @@ window.addEventListener("DOMContentLoaded", async () => {
 
     waitForElement("#inspect-modal .name", updateInspectValue);
   };
-
   observeForElement("#inspect-modal", handleInspect);
+
+  const handleLogin = () => {
+    document.querySelectorAll(".card").forEach((card) => {
+      if (!card.textContent.includes("TWITCH") && !card.textContent.includes("DISCORD") && !card.textContent.includes("VK")) return;
+      card.parentElement.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        alert("This login is currently broken. Please use the Workaround in the Client Menu under Client > General");
+      }, true)
+    })
+  }
+  observeForElement("#auth-modal-modal", handleLogin);
 
   window.customNotification = (data) => {
     const notifElement = document.createElement("div");
@@ -5748,8 +5629,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         margin-left: 1rem;
         border: solid .15rem #ffb914;
         font-family: Exo\ 2;" class="alert-default"
-    > ${
-      data.icon
+    > ${data.icon
         ? `
         <img
           src="${data.icon}"
@@ -5759,7 +5639,7 @@ window.addEventListener("DOMContentLoaded", async () => {
             margin-right: .9rem;"
         />`
         : ""
-    }
+      }
       <span style="font-size: 1rem; font-weight: 600; text-align: left;" class="text">${data.message}</span>
     </div>`;
 
@@ -5776,12 +5656,8 @@ window.addEventListener("DOMContentLoaded", async () => {
     setTimeout(() => {
       try {
         notifElement.remove();
-      } catch {}
+      } catch { }
     }, 5000);
-  };
-
-  window.test = () => {
-    console.log(ipcRenderer.sendSync("get-settings").chat_height);
   };
 
   ipcRenderer.on("notification", (_, data) => customNotification(data));
@@ -5789,19 +5665,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   document.addEventListener("juice-settings-changed", ({ detail }) => {
     const { setting, value } = detail;
 
-    const directSettings = [
-      "weapon_offset_x",
-      "weapon_offset_y",
-      "weapon_offset_z",
-      "weapon_size",
-      "weapon_wireframe",
-      "weapon_rgb",
-      "weapon_color",
-      "include_arms",
-      "customizations",
-      "local_customizations",
-      "map_backgrounds",
-    ];
+    const directSettings = ["weapon_offset_x", "weapon_offset_y", "weapon_offset_z", "weapon_size", "weapon_wireframe", "weapon_rgb", "weapon_color", "include_arms", "customizations", "local_customizations", "map_backgrounds"];
 
     if (directSettings.includes(setting)) {
       settings[setting] = value;

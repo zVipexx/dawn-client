@@ -290,7 +290,7 @@ class Menu {
                 inputs[i].querySelector(".color-picker").value = m[1];
                 inputs[i].querySelector(".color-swatch").style.background = m[1];
               });
-            } catch (e) {}
+            } catch (e) { }
           }
         }
 
@@ -976,7 +976,7 @@ class Menu {
 
     const options = this.menu.querySelectorAll(".option");
     options.forEach((option) => {
-      if (!Array.from(option.children).some((child) => child.tagName === "INPUT")) return;
+      if (!Array.from(option.children).some((child) => child.tagName === "INPUT") && !Array.from(option.children).some((child) => child.tagName === "SELECT")) return;
       option.style.height = "24px";
     });
 
@@ -1515,7 +1515,6 @@ class Menu {
     const type = input.type;
     let value = type === "checkbox" ? input.checked : type === "range" || type === "number" ? Number(input.value) : input.value;
     this.settings[setting] = value;
-    console.log(setting, value);
     ipcRenderer.send("update-setting", setting, value);
     const event = new CustomEvent("juice-settings-changed", {
       detail: { setting: setting, value: value },
@@ -1537,7 +1536,6 @@ class Menu {
   handleMenuArmInputChange(input) {
     const setting = this.settings.active_weapon + "_" + this.settings.active_arm + "_" + input.dataset.settingArm;
     let value = input.value;
-    console.log(setting, value);
     this.settings[setting] = value;
     ipcRenderer.send("update-setting", setting, value);
     const event = new CustomEvent("juice-settings-changed", {
@@ -1839,6 +1837,43 @@ class Menu {
       }
     });
 
+    this.menu.querySelectorAll(".copy-code").forEach((copyBtn) => {
+      let timer = null;
+
+      copyBtn.addEventListener("click", () => {
+        const codeEl = [...copyBtn.parentElement.children].find(
+          (el) => el !== copyBtn && el.classList.contains("code")
+        );
+        if (!codeEl) return;
+
+        navigator.clipboard.writeText(codeEl.textContent);
+
+        clearTimeout(timer);
+        copyBtn.classList.remove("fa-copy");
+        copyBtn.classList.add("fa-check");
+        timer = setTimeout(() => {
+          copyBtn.classList.remove("fa-check");
+          copyBtn.classList.add("fa-copy");
+        }, 1000);
+      });
+    });
+
+    const loginWithToken = this.menu.querySelector("#login-with-token");
+    loginWithToken.addEventListener("click", () => {
+      const tokenInput = this.menu.querySelector(".token-input");
+      const token = tokenInput.value.replaceAll('"', '').trim();
+      if (!token) {
+        tokenInput.style.border = "0.1rem solid rgba(255, 0, 0, .5)"
+        setTimeout(() => {
+          tokenInput.style.border = "0.1rem solid rgba(var(--border))"
+        }, 800)
+        return;
+      };
+
+      this.localStorage.setItem("token", token);
+      window.location.reload();
+    })
+
     const openSwapperFolder = this.menu.querySelector("#open-swapper-folder");
     openSwapperFolder.addEventListener("click", () => {
       ipcRenderer.send("open-swapper-folder");
@@ -2008,13 +2043,6 @@ class Menu {
       }
     });
 
-    const resetMenuSize = this.menu.querySelector("#reset-menu-size");
-    resetMenuSize.addEventListener("click", () => {
-      this.localStorage.removeItem("menu-position");
-      this.localStorage.removeItem("menu-size");
-      window.location.reload();
-    });
-
     const remoteToStaticLinks = this.menu.querySelector("#remote-to-static-links");
     remoteToStaticLinks.addEventListener("click", async () => {
       const localStorageKeys = [
@@ -2131,18 +2159,22 @@ class Menu {
       }
     });
 
-    const quickCssDir = path.dirname(quickCSSPath);
-    const quickCssFilename = path.basename(quickCSSPath);
-
-    fs.watch(quickCssDir, { persistent: false }, (eventType, filename) => {
-      if (filename !== quickCssFilename) return;
-      const fileContent = fs.readFileSync(quickCSSPath, "utf8");
-      if (fileContent === lastKnownContent) return;
-      lastKnownContent = fileContent;
-      this.settings.advanced_css = fileContent;
-      quickCSSArea.value = fileContent;
+    const syncQuickCss = () => {
+      let content;
+      try {
+        content = fs.readFileSync(quickCSSPath, "utf8");
+      } catch {
+        return;
+      }
+      if (content === lastKnownContent) return;
+      lastKnownContent = content;
+      this.settings.advanced_css = content;
+      quickCSSArea.value = content;
       updateStyle();
-    });
+    };
+
+    fs.unwatchFile(quickCSSPath, syncQuickCss);
+    fs.watchFile(quickCSSPath, { interval: 300 }, syncQuickCss);
 
     const importCSSFromFile = this.menu.querySelector(".import-css");
     importCSSFromFile.addEventListener("click", () => {

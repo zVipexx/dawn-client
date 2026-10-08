@@ -5,6 +5,7 @@ const { registerShortcuts } = require("../util/shortcuts");
 const { applySwitches } = require("../util/switches");
 const DiscordRPC = require("../addons/rpc");
 const path = require("path");
+const https = require("https");
 const Store = require("electron-store");
 const fs = require("fs-extra");
 const ffmpeg = require("fluent-ffmpeg");
@@ -14,6 +15,10 @@ protocol.registerSchemesAsPrivileged([
   {
     scheme: "https",
     privileges: { bypassCSP: true, secure: true, supportFetchAPI: true },
+  },
+  {
+    scheme: "dawn-patch",
+    privileges: { standard: true, bypassCSP: true, secure: true, supportFetchAPI: true },
   },
 ]);
 
@@ -35,6 +40,32 @@ if (!allowed_urls.includes(settings.base_url)) {
   settings.base_url = default_settings.base_url;
   store.set("settings", settings);
 }
+
+const bundleFilter = "*://*/assets/js/app.*.js";
+const bundleRegex = /\/assets\/js\/app\.[^/?]+\.js/;
+
+const patchBundle = (src) => {
+  return src.replace(
+    /(function hM\(iJ,iK,iL\)\{var \w+=\w+,iM=)([^;]*?);(if\(iJ\)\{)/,
+    "$1window.flagHidden?false:$2;$3"
+  );
+};
+
+const downloadText = (url) => {
+  return new Promise((resolve, reject) => {
+    https
+      .get(url, { headers: { "user-agent": "Mozilla/5.0", "accept-encoding": "identity" } }, (res) => {
+        if (res.statusCode !== 200) {
+          reject(new Error("Status " + res.statusCode));
+          return;
+        }
+        const chunks = [];
+        res.on("data", (chunk) => chunks.push(chunk));
+        res.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
+      })
+      .on("error", reject);
+  });
+};
 
 ipcMain.on("get-settings", (e) => {
   e.returnValue = settings;
@@ -65,7 +96,7 @@ ipcMain.handle("ping-url", async (_event, url) => {
     setTimeout(() => {
       try {
         request.abort();
-      } catch {}
+      } catch { }
       done(null);
     }, 3000);
 
@@ -464,12 +495,27 @@ const createWindow = () => {
 const initGame = () => {
   const swap = initResourceSwapper();
 
-  if (swap.filter.urls.length) {
-    session.defaultSession.webRequest.onBeforeRequest({ urls: swap.filter.urls }, (details, callback) => {
-      const redirect = "dawnclient://" + (swap.files[details.url.replace(/https|http|(\?.*)|(#.*)|\_/gi, "")] || details.url);
-      return callback({ cancel: false, redirectURL: redirect });
-    });
-  }
+  protocol.registerBufferProtocol("dawn-patch", async (request, callback) => {
+    try {
+      const target = new URL(request.url).searchParams.get("u");
+      const src = await downloadText(target);
+      const out = patchBundle(src);
+      callback({ mimeType: "application/javascript", data: Buffer.from(out, "utf8") });
+    } catch (err) {
+      callback({ error: -2 });
+    }
+  });
+
+  session.defaultSession.webRequest.onBeforeRequest({ urls: [...swap.filter.urls, bundleFilter] }, (details, callback) => {
+    const swapped = swap.files[details.url.replace(/https|http|(\?.*)|(#.*)|\_/gi, "")];
+
+    if (!swapped && bundleRegex.test(details.url)) {
+      return callback({ cancel: false, redirectURL: "dawn-patch://bundle/?u=" + encodeURIComponent(details.url) });
+    }
+
+    const redirect = "dawnclient://" + (swapped || details.url);
+    return callback({ cancel: false, redirectURL: redirect });
+  });
 
   createWindow();
   if (settings.discord_rpc) {

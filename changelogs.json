@@ -1,5 +1,18 @@
 [
   {
+    "version": "1.4.0",
+    "date": "30/9/2026",
+    "changelogs": [
+      "Added hide flag on ADS",
+      "Added an enemy point indicator",
+      "Added drag/drop functionality for lobby/game links",
+      "Added a workaround for broken login methods",
+      "Fixed lobby ping not working while in a party",
+      "Fixed Medal not picking up Dawn Client (you have to re-add it)",
+      "Removed buggy command helper"
+    ]
+  },
+  {
     "version": "1.3.6",
     "date": "15/9/2026",
     "changelogs": [

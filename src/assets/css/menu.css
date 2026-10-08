@@ -578,12 +578,12 @@
     width: calc(100% - 6px);
 }
 
-.menu .option.dropdown i {
+.menu .option.dropdown .option.top i {
     transition: 0.2s;
     transform: rotate(-90deg);
 }
 
-.menu .option.dropdown.active i {
+.menu .option.dropdown.active .option.top i {
     transform: rotate(0deg);
 }
 
@@ -3082,6 +3082,14 @@ button:focus,
     border-radius: 2px;
     font-size: 18px;
     float: right;
+    white-space: nowrap;
+}
+
+.interface {
+    transition: .2s;
+}
+.interface.dragover {
+    filter: brightness(0.5);
 }
 
 .chat-helper {
@@ -3452,4 +3460,36 @@ button:focus,
 
 .menu .nowrap {
     white-space: nowrap;
+}
+
+.enemy-point {
+  position: absolute;
+  top: 6rem;
+  background: rgba(255, 0, 0, .3);
+  padding: .4em .5em;
+  border-radius: 8px;
+  font-weight: bold;
+  opacity: 1;
+  transition: .5s;
+  font-size: 18px;
+}
+
+.enemy-point.fade-out {
+  opacity: 0;
+}
+
+.copy-code.fa-copy {
+    cursor: pointer;
+}
+
+code {
+    background: #00000044;
+    padding: .2rem;
+    position: relative;
+    top: 2px;
+    border-radius: 4px;
+}
+
+.guide li {
+    margin-top: .4rem;
 }

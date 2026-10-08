@@ -243,10 +243,24 @@
                 <label for="hsp_indicator"></label>
               </div>
             </div>
+            <div class="option">
+              <span>Enemy Point Indicator</span>
+              <div class="checkbox">
+                <input type="checkbox" id="enemy_point_indicator" data-setting="enemy_point_indicator" />
+                <label for="enemy_point_indicator"></label>
+              </div>
+            </div>
           </div>
         </div>
       </div>
       <div class="option-group">
+        <div class="option">
+          <span>Skip Loading Screen</span>
+          <div class="checkbox">
+            <input type="checkbox" id="skip_loading" data-setting="skip_loading" />
+            <label for="skip_loading"></label>
+          </div>
+        </div>
         <div class="option">
           <span>Chat Height</span>
           <input type="range" min="0" max="20" step="0.25" class="range" data-setting="chat_height">
@@ -270,13 +284,6 @@
           <div class="checkbox">
             <input type="checkbox" id="hide_interface" data-setting="hide_interface" />
             <label for="hide_interface"></label>
-          </div>
-        </div>
-        <div class="option">
-          <span>Skip Loading Screen</span>
-          <div class="checkbox">
-            <input type="checkbox" id="skip_loading" data-setting="skip_loading" />
-            <label for="skip_loading"></label>
           </div>
         </div>
       </div>
@@ -373,6 +380,25 @@
         <div class="option-group">
           <div class="option">
             <div class="left">
+              <span>Auto Copy game Link</span>
+              <div class="description">Automatically copies the game link when you create a private game</div>
+            </div>
+            <div class="checkbox">
+              <input type="checkbox" id="auto_copy_link" data-setting="auto_copy_link" />
+              <label for="auto_copy_link"></label>
+            </div>
+          </div>
+          <div class="option">
+            <span>Hide Flag on ADS</span>
+            <div class="checkbox">
+              <input type="checkbox" id="hide_flag_ads" data-setting="hide_flag_ads" />
+              <label for="hide_flag_ads"></label>
+            </div>
+          </div>
+        </div>
+        <div class="option-group">
+          <div class="option">
+            <div class="left">
               <span>Show Lobby Ping</span>
               <div class="description">Shows Ping to your selected region, usually a bit lower ingame</div>
             </div>
@@ -415,6 +441,13 @@
           </div>
         </div>
         <div class="option-group">
+          <div class="option">
+            <span>Inspect Value</span>
+            <div class="checkbox">
+              <input type="checkbox" id="inspect_value" data-setting="inspect_value" />
+              <label for="inspect_value"></label>
+            </div>
+          </div>
           <div class="option">
             <span>Inventory Item Values</span>
             <div class="checkbox">
@@ -835,6 +868,34 @@
       </div>
       <div id="general-options" class="juice options inner active">
         <div class="option-group">
+          <div class="option dropdown">
+            <div class="option top" style="width:100%">
+              <i class=" fas fa-angle-down"></i>
+              <i class="fab fa-discord" style="color:#7289da; zoom:1.5; transform: rotate(0)"></i>
+              <div class="left" style="margin-right:auto">
+                <span>Discord/Twitch/VK Login</span>
+              </div>
+            </div>
+            <div class="content">
+              <ol class="guide">
+                <li>Open kirka.io in your browser and log in to the account you want to add</li>
+                <li>Open devtools with F12 or Ctrl+Shift+I and go to Console</li>
+                <li>Get your token (DO NOT SHARE):</li>
+                <code>
+                  <span class="code">copy(localStorage.getItem("token"))</span>
+                  <i class="copy-code fas fa-copy"></i>
+                </code>
+                <li>
+                  <input type="text" class="token-input" placeholder="paste token" style="width:30%; transition:.5s;" />
+                </li>
+                <li>
+                  <div id="login-with-token" class="juice-button" style="width:30%">Login</div>
+                </li>
+              </ol>
+            </div>
+          </div>
+        </div>
+        <div class="option-group">
           <div class="option">
             <div class="left">
               <div>
@@ -1059,13 +1120,6 @@
             <button id="reset-juice-settings" class="juice-button large">
               <span class="text">Reset Dawn Client Settings</span>
               <span class="description"> This action cannot be undone</span>
-              <div class="custom-border"></div>
-            </button>
-          </div>
-          <div class="option">
-            <button id="reset-menu-size" class="juice-button large">
-              <span class="text">Reset Menu Position</span>
-              <span class="description"> Reloads Client</span>
               <div class="custom-border"></div>
             </button>
           </div>

@@ -50,10 +50,6 @@ const getData = async (key) => {
 
 const filterItems = (data, key) => {
   let filtered = data;
-  if (key === "css") {
-    filtered = data.filter((i) => convert(i, key).availability === "free");
-  }
-
   filtered.sort((a, b) => {
     const aFeatured = (a.label || "").toLowerCase() === "featured";
     const bFeatured = (b.label || "").toLowerCase() === "featured";
@@ -180,7 +176,8 @@ const toStyleUrl = (url) => {
 
 const applyCss = (downloadUrl) => {
   const styleUrl = toStyleUrl(downloadUrl);
-  document.querySelector("input[data-setting='css_link'").value = styleUrl;
+  document.querySelector("input[data-setting='css_link']").value = styleUrl;
+  document.querySelector("input[data-setting='css_enabled']").click();
   ipcRenderer.send("update-setting", "css_link", styleUrl);
   ipcRenderer.send("update-setting", "css_enabled", true);
   document.dispatchEvent(new CustomEvent("juice-settings-changed", { detail: { setting: "css_link", value: styleUrl } }));
@@ -188,6 +185,7 @@ const applyCss = (downloadUrl) => {
 };
 
 const removeCss = () => {
+  document.querySelector("input[data-setting='css_link']").value = "";
   ipcRenderer.send("update-setting", "css_link", "");
   ipcRenderer.send("update-setting", "css_enabled", false);
   document.dispatchEvent(new CustomEvent("juice-settings-changed", { detail: { setting: "css_link", value: "" } }));
@@ -239,28 +237,15 @@ const removeSkybox = () => {
 };
 
 const applyKillIcon = (url) => {
+  document.querySelector("input[data-setting='killicon_link']").value = url;
+  ipcRenderer.send("update-setting", "killicon_link", url);
   document.dispatchEvent(new CustomEvent("juice-settings-changed", { detail: { setting: "killicon_link", value: url } }));
-
-  let styleEl = document.getElementById("juice-styles-ui-features");
-
-  const rule = `.animate-cont::before { content: ""; background: url(${url}); width: 10rem; height: 10rem; margin-bottom: 2rem; display: inline-block; background-position: center; background-size: contain; background-repeat: no-repeat; } .animate-cont svg { display: none; }`;
-  if (!styleEl.innerHTML.includes("animate-cont")) {
-    styleEl.innerHTML += rule;
-  } else {
-    styleEl.innerHTML = styleEl.innerHTML.replace(
-      /\.animate-cont::before \{[^}]*\}/,
-      `.animate-cont::before { content: ""; background: url(${url}); width: 10rem; height: 10rem; margin-bottom: 2rem; display: inline-block; background-position: center; background-size: contain; background-repeat: no-repeat; }`,
-    );
-  }
 };
 
 const removeKillIcon = () => {
+  document.querySelector("input[data-setting='killicon_link']").value = "";
+  ipcRenderer.send("update-setting", "killicon_link", "");
   document.dispatchEvent(new CustomEvent("juice-settings-changed", { detail: { setting: "killicon_link", value: "" } }));
-
-  const styleEl = document.getElementById("juice-styles-ui-features");
-  if (styleEl) {
-    styleEl.innerHTML = styleEl.innerHTML.replace(/\.animate-cont::before \{[^}]*\}/, "").replace(/\.animate-cont svg \{ display: none; \}/, "");
-  }
 };
 
 const soundsDir = ipcRenderer.sendSync("get-sounds-path");
