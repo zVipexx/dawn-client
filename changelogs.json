@@ -7,6 +7,7 @@
       "Added an enemy point indicator",
       "Added drag/drop functionality for lobby/game links",
       "Added a workaround for broken login methods",
+      "Added auto copy game link on creation",
       "Fixed lobby ping not working while in a party",
       "Fixed Medal not picking up Dawn Client (you have to re-add it)",
       "Removed buggy command helper"
