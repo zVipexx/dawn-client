@@ -2,7 +2,7 @@ const { shell, ipcRenderer } = require("electron");
 const fs = require("fs");
 const path = require("path");
 const { version } = require("../../package.json");
-const { addOpenerList } = require("../addons/opener");
+const { addOpenerList } = require("../addons/chestOpener");
 const { initBrowser } = require("../addons/browser");
 
 class Menu {
