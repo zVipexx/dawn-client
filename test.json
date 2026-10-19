@@ -2,19 +2,10 @@
    {
       "version": "0.0.1",
       "date": "10/18/2026",
-      "changes": {
-         "added": [
-            "Added ..."
-         ],
-         "removed": [
-            "Removed ..."
-         ],
-         "fixed": [
-            "Fixed ..."
-         ],
-         "other": [
-            "Made ..."
-         ]
-      }
+      "changes": [
+         "- ...",
+         "- ...",
+         "- ..."
+      ]
    }
 ]
