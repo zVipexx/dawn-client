@@ -1564,12 +1564,6 @@
     width: fit-content !important;
 }
 
-.headshotpercentage,
-.winrate {
-    opacity: 0.7;
-    font-size: 0.7em;
-}
-
 .menu .custom_gradient.active>.top,
 .menu .custom_badges.active>.top,
 .menu .custom_profile_background.active>.top {
@@ -3004,20 +2998,27 @@ button:focus,
     padding: 3px 4px 4px 4px;
     transition: 0.3s ease;
     border-radius: 16px;
+    color: #fff;
+}
+
+.favorite-btn svg {
+    display: block;
+    width: 16px;
+    height: 16px;
+}
+
+.favorite-btn svg path {
+    fill: currentColor;
 }
 
 .subject.favorite .favorite-btn {
-    color: yellow;
+    color: #FFB914;
 }
 
 .subject .selected {
     right: 2.7rem;
 }
 
-.favorite-btn:hover {
-    filter: drop-shadow(0 0 4px black);
-    cursor: pointer;
-}
 
 .inventory .bottom-inv {
     transition: background .3s ease !important;

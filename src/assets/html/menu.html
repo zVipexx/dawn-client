@@ -395,6 +395,36 @@
               <label for="hide_flag_ads"></label>
             </div>
           </div>
+          <div class="option">
+            <div class="left">
+              <span>Display Player Role</span>
+              <div class="description">Show a player role card in their profile</div>
+            </div>
+            <div class="checkbox">
+              <input type="checkbox" id="role_display_enabled" data-setting="role_display_enabled" />
+              <label for="role_display_enabled"></label>
+            </div>
+          </div>
+          <div class="option">
+            <div class="left">
+              <span>Show Last Seen</span>
+              <div class="description">Show when a player was last seen in a public game on their profile</div>
+            </div>
+            <div class="checkbox">
+              <input type="checkbox" id="last_seen_public_game" data-setting="last_seen_public_game" />
+              <label for="last_seen_public_game"></label>
+            </div>
+          </div>
+          <div class="option">
+            <div class="left">
+              <span>Profile Stat Hover Details</span>
+              <div class="description">Show extra profile statistics when hovering over a stat</div>
+            </div>
+            <div class="checkbox">
+              <input type="checkbox" id="profile_stat_swaps" data-setting="profile_stat_swaps" />
+              <label for="profile_stat_swaps"></label>
+            </div>
+          </div>
         </div>
         <div class="option-group">
           <div class="option">
@@ -1214,14 +1244,71 @@
       </div>
     </div>
     <div id="scripts-options" class="juice options">
-      <div class="option-group">
-        <div class="option">
-          <div class="left">
+        <div class="option-group">
+          <div class="option">
+            <div class="left">
             <span>Pack/Chest Opener</span>
             <span class="description">Refresh to stop</span>
           </div>
           <select id="opener">
           </select>
+        </div>
+        <div class="option dropdown opener-sell-dropdown">
+          <div class="option top" style="width: 100%">
+            <i class="fas fa-angle-down"></i>
+            <div class="left" style="margin-right: auto">
+              <span>Auto-sell Rarities</span>
+              <span class="description">Choose which drops to sell automatically</span>
+            </div>
+          </div>
+          <div class="content opener-sell-options">
+            <div class="option">
+              <span>Common</span>
+              <div class="checkbox">
+                <input type="checkbox" id="opener-sell-common" data-setting="opener_sell_common" />
+                <label for="opener-sell-common"></label>
+              </div>
+            </div>
+            <div class="option">
+              <span>Rare</span>
+              <div class="checkbox">
+                <input type="checkbox" id="opener-sell-rare" data-setting="opener_sell_rare" />
+                <label for="opener-sell-rare"></label>
+              </div>
+            </div>
+            <div class="option">
+              <span>Epic</span>
+              <div class="checkbox">
+                <input type="checkbox" id="opener-sell-epic" data-setting="opener_sell_epic" />
+                <label for="opener-sell-epic"></label>
+              </div>
+            </div>
+            <div class="option">
+              <span>Legendary</span>
+              <div class="checkbox">
+                <input type="checkbox" id="opener-sell-legendary" data-setting="opener_sell_legendary" />
+                <label for="opener-sell-legendary"></label>
+              </div>
+            </div>
+            <div class="option">
+              <span>Mythical</span>
+              <div class="checkbox">
+                <input type="checkbox" id="opener-sell-mythical" data-setting="opener_sell_mythical" />
+                <label for="opener-sell-mythical"></label>
+              </div>
+            </div>
+            <div class="option">
+              <span>Paranormal</span>
+              <div class="checkbox">
+                <input type="checkbox" id="opener-sell-paranormal" data-setting="opener_sell_paranormal" />
+                <label for="opener-sell-paranormal"></label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="option">
+          <button id="stop-opener" class="juice-button">Stop Opener</button>
+          <span id="opener-status" class="description" role="status" aria-live="polite"></span>
         </div>
       </div>
       <div class="option-group">
@@ -1336,6 +1423,18 @@
           <button id="open-sounds-folder" class="juice-button">Open Sounds Folder</button>
         </div>
       </div>
+      <div class="option-group">
+        <div class="option">
+          <div class="left">
+            <span>Health Bar Body Mod</span>
+            <div class="description">Show enemy health with their health bar color, have to enable hp in settings, requires refresh</div>
+          </div>
+          <div class="checkbox">
+            <input type="checkbox" id="health_bar_enabled" data-setting="health_bar_enabled" />
+            <label for="health_bar_enabled"></label>
+          </div>
+        </div>
+      </div>
     </div>
     <div id="about-client" class="juice options">
       <div class="option-group">
@@ -1402,6 +1501,12 @@
           </p>
           <p>
             - Skywalk for improved Custom Skin Link
+          </p>
+          <p>
+            - Pseudoical for hp bar mod
+          </p>
+          <p>
+            - Akuma for additional addons
           </p>
         </div>
       </div>

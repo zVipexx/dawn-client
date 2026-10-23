@@ -1,9 +1,13 @@
 const Menu = require("./menu");
-const { opener } = require("../addons/opener");
+const { opener } = require("../addons/chestOpener");
 const { editResourceSwapper } = require("../addons/swappermenu");
 const { customReqScripts } = require("../addons/customReqScripts");
 const { ipcRenderer, clipboard, app, contextBridge } = require("electron");
 const { initGallery } = require("../addons/gallery");
+const { initLastSeen } = require("../addons/lastSeen");
+const { initCreatedSwap } = require("../addons/createdSwap");
+const { roleDisplayAddon } = require("../addons/roleDisplay");
+const { healthBarAddon } = require("../addons/healthBar");
 const fs = require("fs");
 const path = require("path");
 
@@ -209,6 +213,10 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   const menu = new Menu();
   menu.init();
+  initLastSeen(settings.last_seen_public_game);
+  initCreatedSwap(settings.profile_stat_swaps);
+  roleDisplayAddon(settings.role_display_enabled);
+  healthBarAddon(settings.health_bar_enabled);
 
   opener();
   customReqScripts(settings);
@@ -2707,10 +2715,6 @@ window.addEventListener("DOMContentLoaded", async () => {
       const statistics = profile.querySelectorAll(".statistic");
       const progressExp = profile.querySelector(".progress-exp");
 
-      const formatRate = (val) => {
-        return val.toLocaleString(undefined, { maximumFractionDigits: 2 }) + "%";
-      };
-
       if (progressExp) {
         const [current, max] = progressExp.innerText.split("/");
         const c = Number(current.replace(/[^\d]/g, ""));
@@ -2720,47 +2724,17 @@ window.addEventListener("DOMContentLoaded", async () => {
         }
       }
 
-      let games = null;
-      let wins = null;
-      let kills = null;
-      let headshots = null;
-
-      const statMap = {};
-
       statistics.forEach((stat) => {
-        const name = stat.querySelector(".stat-name")?.innerText?.toLowerCase();
         const valueElem = stat.querySelector(".stat-value");
-        if (!name || !valueElem) return;
+        if (!valueElem) return;
 
         const rawText = valueElem.innerText.split(" ")[0];
         const num = Number(rawText.replace(/,/g, "").replace(/[^\d.]/g, ""));
         if (!Number.isFinite(num)) return;
 
         const trailingText = valueElem.innerText.slice(rawText.length);
-        statMap[name] = { stat, valueElem, num };
         valueElem.innerText = num.toLocaleString() + trailingText;
       });
-
-      games = statMap.games?.num ?? statMap.played?.num ?? null;
-      wins = statMap.win?.num ?? statMap.won?.num ?? null;
-      kills = statMap.kills?.num ?? null;
-      headshots = statMap.headshots?.num ?? null;
-
-      if (wins !== null && games !== null && games > 0) {
-        const rate = formatRate((wins / games) * 100);
-        const elem = statMap.win?.valueElem || statMap.won?.valueElem;
-        if (elem) {
-          elem.innerHTML += ` <span class="winrate">${rate}</span>`;
-        }
-      }
-
-      if (headshots !== null && kills !== null && kills > 0) {
-        const rate = formatRate((headshots / kills) * 100);
-        const elem = statMap.headshots?.valueElem;
-        if (elem) {
-          elem.innerHTML += ` <span class="headshotpercentage">${rate}</span>`;
-        }
-      }
     };
 
     const applyCustomizations = () => {
@@ -4187,34 +4161,48 @@ window.addEventListener("DOMContentLoaded", async () => {
 
     function buildClanPage(data, container) {
       const sorted = [...data.members].sort((a, b) => b.monthScores - a.monthScores);
+      const escapeHTML = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => {
+        const entities = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+        return entities[character];
+      });
+      let discordUrl = null;
+      try {
+        const parsedUrl = new URL(data.discordLink);
+        if (parsedUrl.protocol === "https:" || parsedUrl.protocol === "http:") discordUrl = parsedUrl.href;
+      } catch { }
 
       const memberRows = sorted
-        .map(
-          (m, i) => `
+        .map((m, i) => {
+          const role = escapeHTML(m.role);
+          const shortId = escapeHTML(m.user.shortId);
+          const name = escapeHTML(m.user.name);
+          const monthScores = Number(m.monthScores ?? 0).toLocaleString();
+          const allScores = Number(m.allScores ?? 0).toLocaleString();
+          return `
         <div class="item">
           <div class="number">${i + 1}</div>
           <div class="item-content">
             <div class="name-rang">
-              <div class="role-select ${m.role}">
-                ${m.role}
+              <div class="role-select ${role}">
+                ${role}
               </div>
-              <div class="name ${m.role === "LEADER" ? "bolder" : ""}" data-shortid="${m.user.shortId}">
-                ${m.user.name}
+              <div class="name ${m.role === "LEADER" ? "bolder" : ""}" data-shortid="${shortId}">
+                ${name}
               </div>
             </div>
             <div class="stats">
-              <div class="stat">${m.monthScores.toLocaleString()}</div>
-              <div class="stat">${m.allScores.toLocaleString()}</div>
+              <div class="stat">${monthScores}</div>
+              <div class="stat">${allScores}</div>
             </div>
           </div>
         </div>
-      `,
-        )
+      `;
+        })
         .join("");
 
       container.innerHTML = `
         <div class="card-cont">
-          <div class="clan-name text-1">${data.name}</div>
+          <div class="clan-name text-1">${escapeHTML(data.name)}</div>
           <div class="info">
             <div class="left-info">
               <div class="champions-stat background">
@@ -4223,13 +4211,13 @@ window.addEventListener("DOMContentLoaded", async () => {
                   <div class="champions-scores">scores</div>
                 </div>
                 <div class="champions-values">
-                  <div>${data.currentClanWarPosition ?? "—"}</div>
-                  <div class="">${(data.monthScores ?? 0).toLocaleString()}</div>
+                  <div>${escapeHTML(data.currentClanWarPosition ?? "—")}</div>
+                  <div class="">${Number(data.monthScores ?? 0).toLocaleString()}</div>
                 </div>
               </div>
               <div class="all-scores background">
                 <div class="all-scores-label">all scores</div>
-                <div class="all-scores-value">${data.allScores.toLocaleString()}</div>
+                <div class="all-scores-value">${Number(data.allScores ?? 0).toLocaleString()}</div>
               </div>
               <div class="ranks-cont">
                 <div class="ranks-label text-2">ranks:</div>
@@ -4241,10 +4229,10 @@ window.addEventListener("DOMContentLoaded", async () => {
               </div>
             </div>
             <div class="right-info">
-              <div class="description background">${data.description ?? ""}</div>
-              ${data.discordLink
+              <div class="description background">${escapeHTML(data.description)}</div>
+              ${discordUrl
           ? `
-                <a class="discord-cont" href="${data.discordLink}" target="_blank">
+                <a class="discord-cont" href="${escapeHTML(discordUrl)}" target="_blank" rel="noopener noreferrer">
                   <svg xmlns="http://www.w3.org/2000/svg" class="discord-icon svg-icon svg-icon--__discord-classic__">
                     <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#__discord-classic__"></use>
                   </svg>
@@ -5060,7 +5048,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       const header = panelEl.querySelector(".offer-header");
       if (header) header.appendChild(totalEl);
     }
-    totalEl.textContent = `Value: ${Math.round(total).toLocaleString()}`;
+    totalEl.textContent = `Bolt value: ${Math.round(total).toLocaleString()}`;
   }
 
   function getOrCreateDiffBadge() {
@@ -5298,7 +5286,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         if (subject.querySelector(".favorite-btn")) return;
         const toggleFavorite = document.createElement("div");
         toggleFavorite.classList.add("favorite-btn");
-        toggleFavorite.innerHTML = '<i class="fas fa-star"></i>';
+        toggleFavorite.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M12.44 9.74a.825.825 0 0 0-.24.727l.667 3.69a.81.81 0 0 1-.338.81.826.826 0 0 1-.877.06L8.33 13.296a.847.847 0 0 0-.375-.098h-.203a.609.609 0 0 0-.203.067l-3.322 1.741c-.165.082-.35.112-.533.082a.834.834 0 0 1-.667-.953l.667-3.69a.84.84 0 0 0-.24-.734L.748 7.085a.81.81 0 0 1-.202-.848.842.842 0 0 1 .667-.562l3.727-.54a.834.834 0 0 0 .66-.457L7.242 1.31a.78.78 0 0 1 .15-.203l.067-.052a.503.503 0 0 1 .12-.097l.083-.03.127-.053h.316c.282.03.53.198.66.45l1.664 3.353c.12.245.353.415.623.456l3.727.541a.85.85 0 0 1 .683.563c.098.3.013.63-.218.847L12.44 9.74z" fill="#ffffff"/></svg>';
         toggleFavorite.addEventListener("click", () => {
           subject.classList.toggle("favorite");
           const isFavorite = subject.classList.contains("favorite");
@@ -5378,7 +5366,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       if (settings.inventory_item_values) {
         const label = getOrCreateInventoryValueLabel();
         if (label) {
-          label.textContent = `Page Value: ${Math.round(total).toLocaleString()}`;
+          label.textContent = `Page Value (bolt): ${Math.round(total).toLocaleString()}`;
         }
       } else {
         removeInventoryValueLabel();
@@ -5433,7 +5421,7 @@ window.addEventListener("DOMContentLoaded", async () => {
               <div class="selected">${settings.sortBy === "price" ? "Price" : "Rarity"}</div>
               <div class="items selectHide">
                 <div data-value="rarity">Rarity</div>
-                <div data-value="price">Price</div>
+                <div data-value="price">Value</div>
               </div>
             </div>
           </label>
